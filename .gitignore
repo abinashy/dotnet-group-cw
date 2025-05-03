@@ -14,6 +14,9 @@ obj/
 *.temp
 *.cache
 
+# Ignore node_modules for the React frontend
+/client/node_modules/
+
 # Ignore build folders for the .NET backend
 /server/bin/
 /server/obj/
