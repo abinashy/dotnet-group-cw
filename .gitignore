@@ -2,6 +2,7 @@
 bin/
 obj/
 .vs/
+.vscode/
 .idea/
 *.user
 *.suo
@@ -13,5 +14,9 @@ obj/
 *.temp
 *.cache
 
-# Secrets and configurations
-appsettings.Development.json
+# Ignore build folders for the .NET backend
+/server/bin/
+/server/obj/
+
+# Ignore environment files that might contain sensitive information
+/server/appsettings.Development.json
