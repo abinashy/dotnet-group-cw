@@ -6,3 +6,12 @@ obj/
 *.user
 *.suo
 *.db
+
+# Temporary or cache files
+*.log
+*.tmp
+*.temp
+*.cache
+
+# Secrets and configurations
+appsettings.Development.json
