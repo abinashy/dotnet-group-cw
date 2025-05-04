@@ -1,6 +1,7 @@
 using BookNook.DTOs.Auth;
 using BookNook.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BookNook.Controllers;
 
@@ -35,5 +36,31 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = token });
         }
         return Ok(new { token });
+    }
+
+    [HttpGet("admin-only")]
+    [Authorize(Roles = "Admin")]
+    public IActionResult AdminOnly()
+    {
+        return Ok(new { message = "You are an admin!" });
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout()
+    {
+        try
+        {
+            var (success, message) = await _authService.LogoutAsync();
+            if (!success)
+            {
+                return BadRequest(new { message });
+            }
+            return Ok(new { message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred during logout" });
+        }
     }
 } 

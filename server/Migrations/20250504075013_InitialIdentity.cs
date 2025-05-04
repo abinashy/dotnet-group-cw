@@ -163,6 +163,36 @@ namespace BookNook.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Books",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Author = table.Column<string>(type: "text", nullable: false),
+                    ISBN = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Genre = table.Column<string>(type: "text", nullable: true),
+                    Publisher = table.Column<string>(type: "text", nullable: true),
+                    Language = table.Column<string>(type: "text", nullable: true),
+                    Format = table.Column<string>(type: "text", nullable: true),
+                    PublicationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Price = table.Column<decimal>(type: "numeric", nullable: false),
+                    Stock = table.Column<int>(type: "integer", nullable: false),
+                    IsOnSale = table.Column<bool>(type: "boolean", nullable: false),
+                    DiscountPrice = table.Column<decimal>(type: "numeric", nullable: true),
+                    DiscountStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DiscountEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Rating = table.Column<double>(type: "double precision", nullable: true),
+                    RatingsCount = table.Column<int>(type: "integer", nullable: true),
+                    IsAvailableInLibrary = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Books", x => x.Id);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -218,6 +248,9 @@ namespace BookNook.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Books");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

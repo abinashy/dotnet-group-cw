@@ -22,4 +22,6 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, long>
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(50);
         });
     }
+
+    public DbSet<Book> Books { get; set; }
 }

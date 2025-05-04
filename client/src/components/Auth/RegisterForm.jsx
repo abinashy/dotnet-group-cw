@@ -1,6 +1,7 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterSchema = Yup.object().shape({
   firstName: Yup.string().max(50).required('First name is required'),
@@ -12,7 +13,8 @@ const RegisterSchema = Yup.object().shape({
     .required('Confirm your password'),
 });
 
-export default function RegisterForm({ onSwitch }) {
+export default function RegisterForm() {
+  const navigate = useNavigate();
   return (
     <Formik
       initialValues={{
@@ -66,7 +68,11 @@ export default function RegisterForm({ onSwitch }) {
           <button type="submit" disabled={isSubmitting} className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold text-lg hover:bg-orange-600 transition">
             Register
           </button>
-          <button type="button" className="w-full border border-orange-500 text-orange-500 py-3 rounded-lg mt-2 font-semibold text-lg hover:bg-orange-50" onClick={onSwitch}>
+          <button
+            type="button"
+            className="w-full border border-orange-500 text-orange-500 py-3 rounded-lg mt-2 font-semibold text-lg hover:bg-orange-50"
+            onClick={() => navigate('/login')}
+          >
             Already have an account? Login
           </button>
         </Form>
