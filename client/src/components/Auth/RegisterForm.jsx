@@ -34,39 +34,39 @@ export default function RegisterForm({ onSwitch }) {
       }}
     >
       {({ isSubmitting, status }) => (
-        <Form className="space-y-4">
-          <h2 className="text-2xl font-bold mb-4">Create your account</h2>
+        <Form className="w-full space-y-6">
+          
           <div>
-            <label className="block font-medium">First Name</label>
-            <Field name="firstName" className="w-full p-2 border rounded" />
-            <ErrorMessage name="firstName" component="div" className="text-red-600 text-sm" />
+            <label className="block font-medium text-gray-700 mb-1">First Name</label>
+            <Field name="firstName" className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="First Name" />
+            <ErrorMessage name="firstName" component="div" className="text-red-600 text-sm mt-1" />
           </div>
           <div>
-            <label className="block font-medium">Last Name</label>
-            <Field name="lastName" className="w-full p-2 border rounded" />
-            <ErrorMessage name="lastName" component="div" className="text-red-600 text-sm" />
+            <label className="block font-medium text-gray-700 mb-1">Last Name</label>
+            <Field name="lastName" className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Last Name" />
+            <ErrorMessage name="lastName" component="div" className="text-red-600 text-sm mt-1" />
           </div>
           <div>
-            <label className="block font-medium">Email</label>
-            <Field name="email" type="email" className="w-full p-2 border rounded" />
-            <ErrorMessage name="email" component="div" className="text-red-600 text-sm" />
+            <label className="block font-medium text-gray-700 mb-1">E-mail</label>
+            <Field name="email" type="email" className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="john@mail.com" />
+            <ErrorMessage name="email" component="div" className="text-red-600 text-sm mt-1" />
           </div>
           <div>
-            <label className="block font-medium">Password</label>
-            <Field name="password" type="password" className="w-full p-2 border rounded" />
-            <ErrorMessage name="password" component="div" className="text-red-600 text-sm" />
+            <label className="block font-medium text-gray-700 mb-1">Password</label>
+            <Field name="password" type="password" className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Password" />
+            <ErrorMessage name="password" component="div" className="text-red-600 text-sm mt-1" />
           </div>
           <div>
-            <label className="block font-medium">Confirm Password</label>
-            <Field name="confirmPassword" type="password" className="w-full p-2 border rounded" />
-            <ErrorMessage name="confirmPassword" component="div" className="text-red-600 text-sm" />
+            <label className="block font-medium text-gray-700 mb-1">Confirm Password</label>
+            <Field name="confirmPassword" type="password" className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Confirm Password" />
+            <ErrorMessage name="confirmPassword" component="div" className="text-red-600 text-sm mt-1" />
           </div>
-          {status?.error && <div className="text-red-600">{status.error}</div>}
-          {status?.success && <div className="text-green-600">{status.success}</div>}
-          <button type="submit" disabled={isSubmitting} className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition">
+          {status?.error && <div className="text-red-600 font-medium text-center">{status.error}</div>}
+          {status?.success && <div className="text-green-600 font-medium text-center">{status.success}</div>}
+          <button type="submit" disabled={isSubmitting} className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold text-lg hover:bg-orange-600 transition">
             Register
           </button>
-          <button type="button" className="w-full border border-orange-500 text-orange-500 py-2 rounded mt-2 hover:bg-orange-50" onClick={onSwitch}>
+          <button type="button" className="w-full border border-orange-500 text-orange-500 py-3 rounded-lg mt-2 font-semibold text-lg hover:bg-orange-50" onClick={onSwitch}>
             Already have an account? Login
           </button>
         </Form>
