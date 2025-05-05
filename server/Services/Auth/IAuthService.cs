@@ -1,6 +1,6 @@
 using BookNook.DTOs.Auth;
 
-namespace BookNook.Interfaces;
+namespace BookNook.Services;
 
 public interface IAuthService
 {

@@ -4,7 +4,6 @@ using System.Text;
 using BookNook.Data;
 using BookNook.Entities;
 using BookNook.DTOs.Auth;
-using BookNook.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -103,10 +102,10 @@ public class AuthService : IAuthService
         return token;
     }
 
-    public async Task<(bool Success, string Message)> LogoutAsync()
+    public Task<(bool Success, string Message)> LogoutAsync()
     {
         // Since we're using JWT tokens, we don't need to do anything on the server side
         // The token will be invalidated by removing it from the client
-        return (true, "Logged out successfully");
+        return Task.FromResult((true, "Logged out successfully"));
     }
 } 

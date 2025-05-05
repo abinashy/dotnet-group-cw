@@ -1,5 +1,5 @@
+using BookNook.Services;
 using BookNook.DTOs.Auth;
-using BookNook.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
@@ -49,18 +49,11 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        try
+        var (success, message) = await _authService.LogoutAsync();
+        if (!success)
         {
-            var (success, message) = await _authService.LogoutAsync();
-            if (!success)
-            {
-                return BadRequest(new { message });
-            }
-            return Ok(new { message });
+            return BadRequest(new { message });
         }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred during logout" });
-        }
+        return Ok(new { message });
     }
 } 
