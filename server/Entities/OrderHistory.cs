@@ -16,7 +16,7 @@ namespace BookNook.Entities
         public string Status { get; set; } = string.Empty;
 
         [Required]
-        public DateTime StatusDate { get; set; } = DateTime.UtcNow;
+        public DateTime StatusDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         public string? Notes { get; set; }
 

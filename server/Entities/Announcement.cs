@@ -17,10 +17,10 @@ namespace BookNook.Entities
         public string Content { get; set; } = string.Empty;
 
         [Required]
-        public DateTime StartDate { get; set; }
+        public DateTime StartDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         [Required]
-        public DateTime EndDate { get; set; }
+        public DateTime EndDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         public bool IsActive { get; set; } = true;
 

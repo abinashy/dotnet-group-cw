@@ -10,7 +10,7 @@ namespace BookNook.Entities
         public int MemberDiscountId { get; set; }
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public long UserId { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(5,2)")]
@@ -19,9 +19,9 @@ namespace BookNook.Entities
         public bool IsUsed { get; set; } = false;
 
         [Required]
-        public DateTime ExpiryDate { get; set; }
+        public DateTime ExpiryDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow.AddMonths(1), DateTimeKind.Utc);
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         // Navigation properties
         [ForeignKey("UserId")]

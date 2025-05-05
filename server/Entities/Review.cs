@@ -20,7 +20,7 @@ namespace BookNook.Entities
 
         public string? Comment { get; set; }
 
-        public DateTime ReviewDate { get; set; } = DateTime.UtcNow;
+        public DateTime ReviewDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         // Navigation properties
         [ForeignKey("BookId")]

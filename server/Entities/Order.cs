@@ -11,7 +11,7 @@ namespace BookNook.Entities
         [Required]
         public string UserId { get; set; } = string.Empty;
 
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+        public DateTime OrderDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         [Required]
         [Column(TypeName = "decimal(10,2)")]
