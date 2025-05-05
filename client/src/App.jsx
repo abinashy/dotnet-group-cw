@@ -7,7 +7,7 @@ import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import LogoutHandler from './components/Auth/LogoutHandler';
 import './App.css';
-import Checkout from '../Checkout';
+import Checkout from './pages/Checkout';
 
 function App() {
   return (
