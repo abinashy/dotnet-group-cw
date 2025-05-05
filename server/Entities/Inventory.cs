@@ -13,7 +13,7 @@ namespace BookNook.Entities
 
         public int Quantity { get; set; } = 0;
 
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+        public DateTime LastUpdated { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         // Navigation properties
         [ForeignKey("BookId")]

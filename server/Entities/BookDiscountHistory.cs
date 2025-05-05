@@ -25,17 +25,17 @@ namespace BookNook.Entities
         public decimal DiscountPercentage { get; set; }
 
         [Required]
-        public DateTime StartDate { get; set; }
+        public DateTime StartDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         [Required]
-        public DateTime EndDate { get; set; }
+        public DateTime EndDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Utc);
 
         public bool IsActive { get; set; } = true;
 
         [Required]
         public long CreatedBy { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         // Navigation properties
         [ForeignKey("BookId")]
