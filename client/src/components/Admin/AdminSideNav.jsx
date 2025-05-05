@@ -2,8 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: '🏠' },
-  { to: '/admin/books', label: 'Manage Books', icon: '📚' },
-  { to: '/admin/upload', label: 'Upload Books', icon: '⬆️' },
+  { to: '/admin/books', label: 'Books', icon: '📚' },
   { to: '/admin/users', label: 'Users', icon: '👤' },
   { to: '/admin/product', label: 'Product', icon: '📦' },
   { to: '/logout', label: 'Logout', icon: '🚪', className: 'mt-auto' },

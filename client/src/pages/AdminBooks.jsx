@@ -1,4 +1,3 @@
-import AdminSideNav from '../components/Admin/AdminSideNav';
 import AddBookForm from '../components/Admin/AddBookForm';
 
 export default function AdminBooks() {
