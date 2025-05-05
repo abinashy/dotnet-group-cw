@@ -8,10 +8,18 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import LogoutHandler from './components/Auth/LogoutHandler';
 import './App.css';
 import Checkout from './pages/Checkout';
+import CartDrawer from './pages/Cart';
+import Header from './components/Header';
+import React, { useState } from 'react';
+import Confirmation from './pages/Confirmation';
 
 function App() {
+  const [cartOpen, setCartOpen] = useState(false);
+
   return (
     <Router>
+      <Header onCartClick={() => setCartOpen(true)} />
+      <CartDrawer userId={4} open={cartOpen} onClose={() => setCartOpen(false)} />
       <Routes>
         <Route
           path="/login"
@@ -40,6 +48,7 @@ function App() {
           }
         />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/confirmation" element={<Confirmation />} />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>

@@ -582,10 +582,20 @@ namespace BookNook.Migrations
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "IsActive", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1L, 0, "b4ebb49d-5498-4617-93ad-cf89ec621c3c", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAEGeuQne5tnYw+0HBfnVpt5yY3YukTgbpBnci9Yewenf64MV7dADLuiMsvjzXxHsZCg==", null, false, "cddfe2e4-aec9-4466-ac1f-15cd2db01aa7", false, "admin" },
-                    { 2L, 0, "08ed0af3-ac15-43a3-a1b1-30d89e65d670", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEG0YdAORbrxWkgOdPZb4tYkM+sHHG/ujH4AtqIVt3SXWl/h3enpfcyB/aPVKBzl0Wg==", null, false, "f02d66f6-abb8-4a47-a2e6-4ff4a0dea6e0", false, "staff1" },
-                    { 3L, 0, "55e9554c-6097-4f5f-9c40-e80c8dc734e3", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEF+7mp/ZKDODb1JS0VdbOMlnot81T85viIr8+pW79bscA8ZjztW2vA0sPilvgDqi8w==", null, false, "e61a14d0-61a7-4fea-bf98-7b456147b711", false, "staff2" }
+                    { 1L, 0, "eecffed4-1fea-4941-b4cb-3b748ae0944c", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAEKiv5pYS/FVk3aLBxyd/3I8c4xWxFKJJLDOCDU2bS53BnxAS/NNf82sPDgoH6qqSrw==", null, false, "0e75a82b-b755-4a92-9cdc-8b66f22b724f", false, "admin" },
+                    { 2L, 0, "5f1ed750-00e5-4d59-bd24-789c95e97d53", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEH8A26rjf/MJ1JR6LCMg+v6bYJekv97Jcwz5TyZlBS933KEU9Px3L1w8nX5wFXAa9Q==", null, false, "b9bc29ed-691c-4ee8-bcdd-a794cf8efad8", false, "staff1" },
+                    { 3L, 0, "08988d7d-529c-444a-8d5c-bbf1eca3e047", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEIt/0kq6S6kWWCXVMZrBGAvgqd8/y4i8dINchBCOCW08qIubNeDUJNK1o+fItVBMiA==", null, false, "4c3d6303-13cb-4579-9c13-2e2174b27ca8", false, "staff2" }
                 });
+
+            migrationBuilder.InsertData(
+                table: "Authors",
+                columns: new[] { "AuthorId", "Biography", "CreatedAt", "FirstName", "LastName" },
+                values: new object[] { 1, "Seed author for testing.", new DateTime(2025, 5, 5, 17, 9, 2, 956, DateTimeKind.Utc).AddTicks(1970), "John", "Doe" });
+
+            migrationBuilder.InsertData(
+                table: "Genres",
+                columns: new[] { "GenreId", "Description", "Name" },
+                values: new object[] { 1, "Seed genre for testing.", "Fiction" });
 
             migrationBuilder.InsertData(
                 table: "Publishers",
@@ -614,6 +624,26 @@ namespace BookNook.Migrations
                     { 1, null, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Paperback", null, "9780000000001", "English", 250, 19.99m, 2023, 1, "The BookNook Story", null },
                     { 2, null, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Hardcover", null, "9780000000002", "English", 180, 14.99m, 2022, 2, "Staff Picks Vol. 1", null },
                     { 3, null, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "eBook", null, "9780000000003", "English", 320, 29.99m, 2024, 1, "Learning ASP.NET Core", null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "BookAuthors",
+                columns: new[] { "BookAuthorId", "AuthorId", "BookId" },
+                values: new object[,]
+                {
+                    { 1, 1, 1 },
+                    { 2, 1, 2 },
+                    { 3, 1, 3 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "BookGenres",
+                columns: new[] { "BookGenreId", "BookId", "GenreId" },
+                values: new object[,]
+                {
+                    { 1, 1, 1 },
+                    { 2, 2, 1 },
+                    { 3, 3, 1 }
                 });
 
             migrationBuilder.CreateIndex(

@@ -46,7 +46,8 @@ builder.Services.AddAuthentication(options =>
 
 // Add Application Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
