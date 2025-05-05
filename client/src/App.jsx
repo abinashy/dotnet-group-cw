@@ -1,44 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LoginForm from './components/Auth/LoginForm';
+import RegisterForm from './components/Auth/RegisterForm';
+import AuthLayout from './components/Auth/AuthLayout';
+import Home from './pages/Home';
+import AdminPanel from './pages/AdminPanel';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import LogoutHandler from './components/Auth/LogoutHandler';
+import './App.css';
 import Checkout from '../Checkout';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route path="/" element={
-          <>
-            <div>
-              <a href="https://vite.dev" target="_blank">
-                <img src={viteLogo} className="logo" alt="Vite logo" />
-              </a>
-              <a href="https://react.dev" target="_blank">
-                <img src={reactLogo} className="logo react" alt="React logo" />
-              </a>
-            </div>
-            <h1>Vite + React</h1>
-            <div className="card">
-              <button onClick={() => setCount((count) => count + 1)}>
-                count is {count}
-              </button>
-              <p>
-                Edit <code>src/App.jsx</code> and save to test HMR
-              </p>
-            </div>
-            <p className="read-the-docs">
-              Click on the Vite and React logos to learn more
-            </p>
-          </>
-        } />
+        <Route
+          path="/login"
+          element={
+            <AuthLayout>
+              <LoginForm />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <AuthLayout>
+              <RegisterForm />
+            </AuthLayout>
+          }
+        />
+        <Route path="/home" element={<Home />} />
+        <Route path="/logout" element={<LogoutHandler />} />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/checkout" element={<Checkout />} />
+        {/* Redirect root to home */}
+        <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
-    </BrowserRouter>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;
