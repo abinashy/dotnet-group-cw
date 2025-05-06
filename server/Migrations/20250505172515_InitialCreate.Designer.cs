@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookNook.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250505153048_InitialCreate")]
+    [Migration("20250505172515_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -91,6 +91,16 @@ namespace BookNook.Migrations
                     b.HasKey("AuthorId");
 
                     b.ToTable("Authors");
+
+                    b.HasData(
+                        new
+                        {
+                            AuthorId = 1,
+                            Biography = "Seed author for testing.",
+                            CreatedAt = new DateTime(2025, 5, 5, 17, 25, 14, 827, DateTimeKind.Utc).AddTicks(2940),
+                            FirstName = "John",
+                            LastName = "Doe"
+                        });
                 });
 
             modelBuilder.Entity("BookNook.Entities.Book", b =>
@@ -225,6 +235,26 @@ namespace BookNook.Migrations
                     b.HasIndex("BookId");
 
                     b.ToTable("BookAuthors");
+
+                    b.HasData(
+                        new
+                        {
+                            BookAuthorId = 1,
+                            AuthorId = 1,
+                            BookId = 1
+                        },
+                        new
+                        {
+                            BookAuthorId = 2,
+                            AuthorId = 1,
+                            BookId = 2
+                        },
+                        new
+                        {
+                            BookAuthorId = 3,
+                            AuthorId = 1,
+                            BookId = 3
+                        });
                 });
 
             modelBuilder.Entity("BookNook.Entities.BookDiscountHistory", b =>
@@ -292,6 +322,26 @@ namespace BookNook.Migrations
                     b.HasIndex("GenreId");
 
                     b.ToTable("BookGenres");
+
+                    b.HasData(
+                        new
+                        {
+                            BookGenreId = 1,
+                            BookId = 1,
+                            GenreId = 1
+                        },
+                        new
+                        {
+                            BookGenreId = 2,
+                            BookId = 2,
+                            GenreId = 1
+                        },
+                        new
+                        {
+                            BookGenreId = 3,
+                            BookId = 3,
+                            GenreId = 1
+                        });
                 });
 
             modelBuilder.Entity("BookNook.Entities.Bookmark", b =>
@@ -371,6 +421,14 @@ namespace BookNook.Migrations
                     b.HasKey("GenreId");
 
                     b.ToTable("Genres");
+
+                    b.HasData(
+                        new
+                        {
+                            GenreId = 1,
+                            Description = "Seed genre for testing.",
+                            Name = "Fiction"
+                        });
                 });
 
             modelBuilder.Entity("BookNook.Entities.Inventory", b =>
@@ -763,7 +821,7 @@ namespace BookNook.Migrations
                         {
                             Id = 1L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "b4ebb49d-5498-4617-93ad-cf89ec621c3c",
+                            ConcurrencyStamp = "4089abcc-f532-4ece-b13b-85f587ca6ce9",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@booknook.com",
                             EmailConfirmed = true,
@@ -773,9 +831,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@BOOKNOOK.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGeuQne5tnYw+0HBfnVpt5yY3YukTgbpBnci9Yewenf64MV7dADLuiMsvjzXxHsZCg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEIVqVFEJ+xptdaX6iN7dtLGKEEDa4qMqDd6emsMGNVOUQ7qL0J9U8iAKGNQL5KtI0w==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "cddfe2e4-aec9-4466-ac1f-15cd2db01aa7",
+                            SecurityStamp = "0ccaddb9-e959-474d-aced-b6001a769dee",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -783,7 +841,7 @@ namespace BookNook.Migrations
                         {
                             Id = 2L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "08ed0af3-ac15-43a3-a1b1-30d89e65d670",
+                            ConcurrencyStamp = "96da6e3a-986c-44b0-a97c-736a89522211",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff1@booknook.com",
                             EmailConfirmed = true,
@@ -793,9 +851,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF1@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF1",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG0YdAORbrxWkgOdPZb4tYkM+sHHG/ujH4AtqIVt3SXWl/h3enpfcyB/aPVKBzl0Wg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMKFPtl4ZrSXSrEi8bvKzfr1Ey0tnKxGGcgDUXnDba09WL+WzRdB8i4dqyf13uvTIw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "f02d66f6-abb8-4a47-a2e6-4ff4a0dea6e0",
+                            SecurityStamp = "02ee2cca-5e4b-4602-b207-e045b35af6c1",
                             TwoFactorEnabled = false,
                             UserName = "staff1"
                         },
@@ -803,7 +861,7 @@ namespace BookNook.Migrations
                         {
                             Id = 3L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "55e9554c-6097-4f5f-9c40-e80c8dc734e3",
+                            ConcurrencyStamp = "1e05cebc-4b83-4a4a-922a-7f45bf6a8807",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff2@booknook.com",
                             EmailConfirmed = true,
@@ -813,9 +871,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF2@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF2",
-                            PasswordHash = "AQAAAAIAAYagAAAAEF+7mp/ZKDODb1JS0VdbOMlnot81T85viIr8+pW79bscA8ZjztW2vA0sPilvgDqi8w==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKP3aOloGUEn8BdflTdXiSJT5AOC4EWF3tVxb65ewUyxD0Xhw5W5iS0HNzF91VxYKw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "e61a14d0-61a7-4fea-bf98-7b456147b711",
+                            SecurityStamp = "fae9b2fb-e4be-4b14-b4af-661ec878e5de",
                             TwoFactorEnabled = false,
                             UserName = "staff2"
                         });
