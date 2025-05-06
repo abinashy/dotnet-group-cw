@@ -45,6 +45,21 @@ export default function AdminBooks() {
         throw new Error('No authentication token found');
       }
 
+      let coverImageUrl = '';
+      if (values.coverImageFile) {
+        const formData = new FormData();
+        formData.append('file', values.coverImageFile);
+
+        const uploadResponse = await axios.post('http://localhost:5124/api/Upload/Image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        coverImageUrl = uploadResponse.data.url;
+      }
+
       // Create new entities if needed
       let finalPublisherId = values.publisherId;
       let finalAuthorIds = values.authorIds;
@@ -91,7 +106,7 @@ export default function AdminBooks() {
         language: values.language,
         format: values.format,
         description: values.description,
-        coverImageUrl: values.coverImageUrl,
+        coverImageUrl: coverImageUrl,
         publisherId: finalPublisherId,
         authorIds: finalAuthorIds,
         genreIds: finalGenreIds,

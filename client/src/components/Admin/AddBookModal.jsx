@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import React, { useState, useEffect, useRef } from 'react';
+import { Formik, Form, Field, ErrorMessage, useFormikContext } from 'formik';
 import * as Yup from 'yup';
 
 const AddBookSchema = Yup.object().shape({
@@ -15,8 +15,8 @@ const AddBookSchema = Yup.object().shape({
   isAwardWinning: Yup.boolean(),
   status: Yup.string().required('Status is required').max(50, 'Status is too long'),
   publisherId: Yup.number().required('Publisher is required'),
-  authorIds: Yup.array().min(1, 'At least one author is required'),
-  genreIds: Yup.array().min(1, 'At least one genre is required'),
+  authorIds: Yup.array().of(Yup.number()).min(1, 'At least one author is required'),
+  genreIds: Yup.array().of(Yup.number()).min(1, 'At least one genre is required'),
   newPublisher: Yup.object().shape({
     name: Yup.string().max(200, 'Name is too long'),
     description: Yup.string()
@@ -29,7 +29,12 @@ const AddBookSchema = Yup.object().shape({
   newGenre: Yup.object().shape({
     name: Yup.string().max(50, 'Name is too long'),
     description: Yup.string()
-  }).nullable()
+  }).nullable(),
+  coverImageFile: Yup.mixed()
+    .test('fileSize', 'File too large', value => !value || value.size <= 10000000) // 10MB
+    .test('fileType', 'Unsupported file type', value => 
+      !value || ['image/jpeg', 'image/png', 'image/gif'].includes(value.type)
+    ),
 });
 
 const steps = [
@@ -135,6 +140,63 @@ function BasicInfoStep() {
 }
 
 function DetailsStep() {
+  const fileInputRef = useRef(null);
+  const { setFieldValue, values } = useFormikContext();
+  const [previewUrl, setPreviewUrl] = useState('');
+
+  // Initialize preview URL from existing file if any
+  useEffect(() => {
+    if (values.coverImageFile) {
+      setPreviewUrl(URL.createObjectURL(values.coverImageFile));
+    }
+  }, [values.coverImageFile]);
+
+  // Cleanup preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+      setFieldValue('coverImageFile', file);
+    }
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+      setFieldValue('coverImageFile', file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl('');
+    setFieldValue('coverImageFile', null);
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
   return (
     <div className="space-y-4 bg-white p-4 rounded-lg border border-gray-200">
       <div className="grid grid-cols-2 gap-4">
@@ -207,13 +269,70 @@ function DetailsStep() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Cover Image URL</label>
-        <Field
-          name="coverImageUrl"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          type="text"
-        />
-        <ErrorMessage name="coverImageUrl" component="div" className="mt-1 text-sm text-red-600" />
+        <label className="block text-sm font-medium text-gray-700">Cover Image</label>
+        <div
+          className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+          <div className="space-y-1 text-center">
+            {previewUrl ? (
+              <div className="relative">
+                <img
+                  src={previewUrl}
+                  alt="Cover preview"
+                  className="mx-auto h-32 w-auto object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <>
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <div className="flex text-sm text-gray-600">
+                  <label
+                    htmlFor="file-upload"
+                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                  >
+                    <span>Upload a file</span>
+                    <input
+                      id="file-upload"
+                      name="file-upload"
+                      type="file"
+                      className="sr-only"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                    />
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+              </>
+            )}
+          </div>
+        </div>
+        <ErrorMessage name="coverImageFile" component="div" className="mt-1 text-sm text-red-600" />
       </div>
     </div>
   );
@@ -511,11 +630,11 @@ export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, au
           initialValues={{
             title: '',
             isbn: '',
-            price: '',
+            price: 0,
             publicationYear: new Date().getFullYear(),
-            pageCount: '',
-            language: '',
-            format: '',
+            pageCount: 1,
+            language: 'English',
+            format: 'Paperback',
             description: '',
             coverImageUrl: '',
             publisherId: '',
@@ -525,10 +644,20 @@ export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, au
             newAuthor: null,
             newGenre: null,
             isAwardWinning: false,
-            status: 'Published'
+            status: 'Published',
+            coverImageFile: null
           }}
           validationSchema={AddBookSchema}
-          onSubmit={onSubmit}
+          onSubmit={(values, formikHelpers) => {
+            // Convert authorIds and genreIds to numbers
+            const processedValues = {
+              ...values,
+              authorIds: values.authorIds.map(id => Number(id)),
+              genreIds: values.genreIds.map(id => Number(id)),
+              publisherId: Number(values.publisherId)
+            };
+            onSubmit(processedValues, formikHelpers);
+          }}
         >
           {({ setFieldValue, isValid, dirty }) => (
             <Form className="p-6">
