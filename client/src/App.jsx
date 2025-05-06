@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import AdminPanel from './pages/AdminPanel'
 import ProtectedRoute from './components/Auth/ProtectedRoute'
 import LogoutHandler from './components/Auth/LogoutHandler'
+import BooksCatalogue from './pages/BooksCatalogue'
 import './App.css'
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           }
         />
         <Route path="/home" element={<Home />} />
+        <Route path="/books" element={<BooksCatalogue />} />
         <Route path="/logout" element={<LogoutHandler />} />
         <Route
           path="/admin/*"
