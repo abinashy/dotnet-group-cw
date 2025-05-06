@@ -14,6 +14,6 @@ namespace BookNook.Entities
         public string? Description { get; set; }
 
         // Navigation properties
-        public virtual ICollection<Book> Books { get; set; } = new List<Book>();
+        public virtual ICollection<BookGenre> BookGenres { get; set; } = new List<BookGenre>();
     }
 } 

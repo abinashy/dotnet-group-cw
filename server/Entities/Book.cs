@@ -43,6 +43,12 @@ namespace BookNook.Entities
         [MaxLength(500)]
         public string? CoverImageUrl { get; set; }
 
+        public bool IsAwardWinning { get; set; } = false;
+
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; } = "Published";
+
         public DateTime CreatedAt { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         public DateTime? UpdatedAt { get; set; } = null;
