@@ -9,9 +9,9 @@ namespace BookNook.Services
 {
     public interface IOrderService
     {
-        Task<Order> CreateOrderAsync(string userId, CreateOrderDto orderDto);
-        Task<Order> GetOrderByIdAsync(int orderId, string userId);
-        Task CancelOrderAsync(int orderId, string userId);
+        Task<Order> CreateOrderAsync(long userId, CreateOrderDto orderDto);
+        Task<Order> GetOrderByIdAsync(int orderId, long userId);
+        Task CancelOrderAsync(int orderId, long userId);
     }
 
     public class OrderService : IOrderService
@@ -25,10 +25,10 @@ namespace BookNook.Services
             _emailService = emailService;
         }
 
-        public async Task<Order> CreateOrderAsync(string userId, CreateOrderDto orderDto)
+        public async Task<Order> CreateOrderAsync(long userId, CreateOrderDto orderDto)
         {
             // No navigation property for Orders on User, so query directly
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
                 throw new Exception("User not found");
 
@@ -80,8 +80,14 @@ namespace BookNook.Services
                 discountAmount += totalAmount * 0.10m;
             }
 
+            // Before creating the Order, add:
+            if (string.IsNullOrWhiteSpace("Pending"))
+                throw new Exception("Order status cannot be null or empty.");
+
             // Generate claim code
             var claimCode = GenerateClaimCode();
+            if (string.IsNullOrWhiteSpace(claimCode))
+                throw new Exception("Claim code cannot be null or empty.");
 
             var order = new Order
             {
@@ -108,7 +114,7 @@ namespace BookNook.Services
             return order;
         }
 
-        public async Task<Order> GetOrderByIdAsync(int orderId, string userId)
+        public async Task<Order> GetOrderByIdAsync(int orderId, long userId)
         {
             return await _context.Orders
                 .Include(o => o.OrderItems)
@@ -117,7 +123,7 @@ namespace BookNook.Services
                 .FirstOrDefaultAsync(o => o.OrderId == orderId && o.UserId == userId);
         }
 
-        public async Task CancelOrderAsync(int orderId, string userId)
+        public async Task CancelOrderAsync(int orderId, long userId)
         {
             var order = await _context.Orders
                 .Include(o => o.OrderItems)

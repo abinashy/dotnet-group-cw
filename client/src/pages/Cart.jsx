@@ -29,7 +29,7 @@ const CartDrawer = ({ open, onClose }) => {
 
     // Get user ID from token
     const tokenData = JSON.parse(atob(token.split('.')[1]));
-    const userId = tokenData.nameid;
+    const userId = tokenData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
     const fetchUrl = `http://localhost:5124/api/cart?userId=${userId}`;
     console.log('Decoded userId from token:', userId);
     console.log('Cart fetch URL:', fetchUrl);

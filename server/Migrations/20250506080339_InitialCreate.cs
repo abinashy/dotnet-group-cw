@@ -95,7 +95,7 @@ namespace BookNook.Migrations
                 {
                     OrderId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
                     DiscountAmount = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
@@ -318,23 +318,11 @@ namespace BookNook.Migrations
                     Description = table.Column<string>(type: "text", nullable: true),
                     CoverImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    AuthorId = table.Column<int>(type: "integer", nullable: true),
-                    GenreId = table.Column<int>(type: "integer", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Books", x => x.BookId);
-                    table.ForeignKey(
-                        name: "FK_Books_Authors_AuthorId",
-                        column: x => x.AuthorId,
-                        principalTable: "Authors",
-                        principalColumn: "AuthorId");
-                    table.ForeignKey(
-                        name: "FK_Books_Genres_GenreId",
-                        column: x => x.GenreId,
-                        principalTable: "Genres",
-                        principalColumn: "GenreId");
                     table.ForeignKey(
                         name: "FK_Books_Publishers_PublisherId",
                         column: x => x.PublisherId,
@@ -582,15 +570,15 @@ namespace BookNook.Migrations
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "IsActive", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1L, 0, "eecffed4-1fea-4941-b4cb-3b748ae0944c", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAEKiv5pYS/FVk3aLBxyd/3I8c4xWxFKJJLDOCDU2bS53BnxAS/NNf82sPDgoH6qqSrw==", null, false, "0e75a82b-b755-4a92-9cdc-8b66f22b724f", false, "admin" },
-                    { 2L, 0, "5f1ed750-00e5-4d59-bd24-789c95e97d53", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEH8A26rjf/MJ1JR6LCMg+v6bYJekv97Jcwz5TyZlBS933KEU9Px3L1w8nX5wFXAa9Q==", null, false, "b9bc29ed-691c-4ee8-bcdd-a794cf8efad8", false, "staff1" },
-                    { 3L, 0, "08988d7d-529c-444a-8d5c-bbf1eca3e047", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEIt/0kq6S6kWWCXVMZrBGAvgqd8/y4i8dINchBCOCW08qIubNeDUJNK1o+fItVBMiA==", null, false, "4c3d6303-13cb-4579-9c13-2e2174b27ca8", false, "staff2" }
+                    { 1L, 0, "d90f094d-5256-4ed8-ad96-06d17b5f3584", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAEPjpuZz8dVwl3snjpdDZKuOXA51BYRJy2rR7gCOWLjrD2SLZNFSWUmVXW3N+zmwl7g==", null, false, "76c9dfa6-2ab5-4782-aa0c-2d4484bdcdad", false, "admin" },
+                    { 2L, 0, "d8740f2b-cb0f-49f8-9bf5-4fb134738cb7", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEOj6PRykuMDe7KZ/icbMw1djg7rQNPnpx8+gqHMHe5GCONdc+h/IBNM5GlWzdnR1oQ==", null, false, "498cd674-6319-4fb6-b884-7d27f9593da1", false, "staff1" },
+                    { 3L, 0, "609b0876-26f2-477e-9770-dea583a288b0", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEF9tgN2QW+QZZ/zpGBJ0qB5K6W9QW2/AHeo2nz4ZQU7SvXdwyB0YwhZDe6W/GszMfg==", null, false, "92b3ff72-b878-40a0-b024-4b712a6ad320", false, "staff2" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Authors",
                 columns: new[] { "AuthorId", "Biography", "CreatedAt", "FirstName", "LastName" },
-                values: new object[] { 1, "Seed author for testing.", new DateTime(2025, 5, 5, 17, 9, 2, 956, DateTimeKind.Utc).AddTicks(1970), "John", "Doe" });
+                values: new object[] { 1, "Seed author for testing.", new DateTime(2025, 5, 6, 8, 3, 38, 987, DateTimeKind.Utc).AddTicks(720), "John", "Doe" });
 
             migrationBuilder.InsertData(
                 table: "Genres",
@@ -618,12 +606,12 @@ namespace BookNook.Migrations
 
             migrationBuilder.InsertData(
                 table: "Books",
-                columns: new[] { "BookId", "AuthorId", "CoverImageUrl", "CreatedAt", "Description", "Format", "GenreId", "ISBN", "Language", "PageCount", "Price", "PublicationYear", "PublisherId", "Title", "UpdatedAt" },
+                columns: new[] { "BookId", "PublisherId", "CoverImageUrl", "CreatedAt", "Description", "Format", "ISBN", "Language", "PageCount", "Price", "PublicationYear", "Title", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, null, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Paperback", null, "9780000000001", "English", 250, 19.99m, 2023, 1, "The BookNook Story", null },
-                    { 2, null, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Hardcover", null, "9780000000002", "English", 180, 14.99m, 2022, 2, "Staff Picks Vol. 1", null },
-                    { 3, null, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "eBook", null, "9780000000003", "English", 320, 29.99m, 2024, 1, "Learning ASP.NET Core", null }
+                    { 1, 1, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Paperback", "9780000000001", "English", 250, 19.99m, 2023, "The BookNook Story", null },
+                    { 2, 2, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "Hardcover", "9780000000002", "English", 180, 14.99m, 2022, "Staff Picks Vol. 1", null },
+                    { 3, 1, null, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, "eBook", "9780000000003", "English", 320, 29.99m, 2024, "Learning ASP.NET Core", null }
                 });
 
             migrationBuilder.InsertData(
@@ -722,16 +710,6 @@ namespace BookNook.Migrations
                 name: "IX_Bookmarks_BookId",
                 table: "Bookmarks",
                 column: "BookId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Books_AuthorId",
-                table: "Books",
-                column: "AuthorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Books_GenreId",
-                table: "Books",
-                column: "GenreId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Books_PublisherId",

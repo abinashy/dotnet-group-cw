@@ -25,8 +25,8 @@ namespace BookNook.Controllers
         {
             try
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!long.TryParse(userIdStr, out var userId))
                 {
                     return Unauthorized(new { message = "User ID not found in token" });
                 }
@@ -55,8 +55,8 @@ namespace BookNook.Controllers
         {
             try
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!long.TryParse(userIdStr, out var userId))
                 {
                     return Unauthorized(new { message = "User ID not found in token" });
                 }
@@ -66,7 +66,25 @@ namespace BookNook.Controllers
                 if (order == null)
                     return NotFound();
 
-                return Ok(order);
+                var dto = new OrderConfirmationDto
+                {
+                    OrderId = order.OrderId,
+                    ClaimCode = order.ClaimCode,
+                    TotalAmount = order.TotalAmount,
+                    FinalAmount = order.FinalAmount,
+                    DiscountAmount = order.DiscountAmount,
+                    OrderDate = order.OrderDate,
+                    Status = order.Status,
+                    OrderItems = order.OrderItems.Select(oi => new OrderItemConfirmationDto
+                    {
+                        BookTitle = oi.Book.Title,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.UnitPrice * oi.Quantity
+                    }).ToList()
+                };
+
+                return Ok(dto);
             }
             catch (Exception ex)
             {
@@ -79,8 +97,8 @@ namespace BookNook.Controllers
         {
             try
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!long.TryParse(userIdStr, out var userId))
                 {
                     return Unauthorized(new { message = "User ID not found in token" });
                 }

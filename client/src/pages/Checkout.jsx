@@ -30,7 +30,7 @@ const Checkout = () => {
 
     // Get user ID from token
     const tokenData = JSON.parse(atob(token.split('.')[1]));
-    const userId = tokenData.nameid;
+    const userId = tokenData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
 
     fetch(`http://localhost:5124/api/cart/checkout?userId=${userId}`, {
       headers: {
@@ -74,7 +74,7 @@ const Checkout = () => {
 
       // Get user ID from token
       const tokenData = JSON.parse(atob(token.split('.')[1]));
-      const userId = tokenData.nameid;
+      const userId = tokenData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
 
       // Clear cart after successful order
       await axios.delete(`http://localhost:5124/api/cart/clear?userId=${userId}`);

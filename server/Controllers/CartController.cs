@@ -86,5 +86,14 @@ namespace BookNook.Controllers
                 .ToListAsync();
             return Ok(checkoutItems);
         }
+
+        [HttpDelete("clear")]
+        public async Task<IActionResult> ClearCart([FromQuery] string userId)
+        {
+            var cartItems = _context.ShoppingCarts.Where(c => c.UserId == userId);
+            _context.ShoppingCarts.RemoveRange(cartItems);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cart cleared successfully" });
+        }
     }
 } 

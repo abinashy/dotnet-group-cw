@@ -24,21 +24,34 @@ namespace BookNook.Services
 
         public async Task SendOrderConfirmationEmailAsync(Order order)
         {
-            var user = await _context.Users.FindAsync(int.Parse(order.UserId));
+            var user = await _context.Users.FindAsync(order.UserId);
             if (user == null || string.IsNullOrEmpty(user.Email))
                 throw new Exception("User email not found");
 
             var smtpSettings = _configuration.GetSection("SmtpSettings");
-            var smtpClient = new SmtpClient(smtpSettings["Host"])
+            var host = smtpSettings["Host"];
+            var port = smtpSettings["Port"];
+            var username = smtpSettings["Username"];
+            var password = smtpSettings["Password"];
+            var fromEmail = smtpSettings["FromEmail"];
+
+            if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(port) ||
+                string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password) ||
+                string.IsNullOrWhiteSpace(fromEmail))
             {
-                Port = int.Parse(smtpSettings["Port"]),
-                Credentials = new NetworkCredential(smtpSettings["Username"], smtpSettings["Password"]),
+                throw new Exception("SMTP configuration is missing required values. Please check your appsettings.json.");
+            }
+
+            var smtpClient = new SmtpClient(host)
+            {
+                Port = int.Parse(port),
+                Credentials = new NetworkCredential(username, password),
                 EnableSsl = true,
             };
 
             var message = new MailMessage
             {
-                From = new MailAddress(smtpSettings["FromEmail"], "BookNook Store"),
+                From = new MailAddress(fromEmail, "BookNook Store"),
                 Subject = $"Order Confirmation - Order #{order.OrderId}",
                 IsBodyHtml = true
             };
