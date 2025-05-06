@@ -1,43 +1,41 @@
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
-  { to: '/admin', label: 'Dashboard', icon: '🏠' },
+  { to: '/admin', label: 'Dashboard', icon: '📊' },
   { to: '/admin/books', label: 'Books', icon: '📚' },
-  { to: '/admin/users', label: 'Users', icon: '👤' },
+  { to: '/admin/users', label: 'Users', icon: '👥' },
   { to: '/admin/product', label: 'Product', icon: '📦' },
+  { to: '/admin/orders', label: 'Orders', icon: '📝' },
+  { to: '/admin/stats', label: 'Stats', icon: '📈' },
   { to: '/logout', label: 'Logout', icon: '🚪', className: 'mt-auto' },
-  { to: '/admin/help', label: 'Help', icon: '❓' },
 ];
 
 export default function AdminSideNav() {
   return (
-    <aside className="w-64 bg-gradient-to-b from-orange-500 to-orange-400 text-white min-h-screen shadow-lg flex flex-col">
-      <div className="py-8 px-6 border-b border-orange-300">
-        <h2 className="text-2xl font-extrabold tracking-wide">BookNook Admin</h2>
+    <aside className="w-64 bg-black text-white min-h-screen flex flex-col">
+      <div className="py-6 px-6 border-b border-gray-800">
+        <h2 className="text-xl font-semibold tracking-wide">Books</h2>
       </div>
-      <nav className="flex-1 px-4 py-8">
-        <ul className="space-y-2">
+      <nav className="flex-1 px-4 py-6">
+        <ul className="space-y-1">
           {navItems.map((item) => (
             <li key={item.to} className={item.className}>
               <NavLink
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2 rounded-lg transition font-medium text-lg hover:bg-orange-600 hover:shadow-md ${
-                    isActive ? 'bg-white text-orange-600 shadow font-bold' : 'text-white'
+                  `flex items-center gap-3 px-4 py-2.5 rounded-lg transition font-medium text-sm hover:bg-gray-800 ${
+                    isActive ? 'bg-gray-800 text-white' : 'text-gray-400'
                   }`
                 }
                 end={item.to === '/admin'}
               >
-                <span className="text-xl">{item.icon}</span>
+                <span className="text-lg">{item.icon}</span>
                 {item.label}
               </NavLink>
             </li>
           ))}
         </ul>
       </nav>
-      <div className="px-6 py-4 border-t border-orange-300 text-xs text-orange-100">
-        &copy; {new Date().getFullYear()} BookNook
-      </div>
     </aside>
   );
 }

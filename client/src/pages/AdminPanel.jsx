@@ -5,29 +5,31 @@ import AdminBooks from './AdminBooks';
 
 function AdminDashboard() {
   return (
-    <div className="max-w-2xl mx-auto mt-16 p-8 bg-white rounded-xl shadow-lg flex flex-col items-center">
-      <h1 className="text-4xl font-extrabold mb-4 text-orange-600">Admin Dashboard</h1>
-      <p className="text-gray-600 mb-6 text-center">Welcome to the BookNook admin panel. Use the sidebar to manage books, users, and more.</p>
-      <a
-        href="#"
-        className="inline-block mb-4 text-orange-500 hover:text-orange-700 underline text-lg"
-      >
-        Need help? Visit our docs
-      </a>
-      <button
-        className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold shadow hover:bg-orange-600 transition"
-      >
-        Example Action
-      </button>
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium mb-2">Total Books</h3>
+          <p className="text-3xl font-semibold">1,234</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium mb-2">Active Users</h3>
+          <p className="text-3xl font-semibold">567</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium mb-2">Total Orders</h3>
+          <p className="text-3xl font-semibold">890</p>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function AdminPanel() {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-orange-50 to-orange-100">
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSideNav />
-      <main className="flex-1 p-8">
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
           <Route path="books" element={<AdminBooks />} />
