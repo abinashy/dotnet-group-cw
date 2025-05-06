@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BookNook.DTOs.Books;
-using BookNook.Services;
+using BookNook.Services.Books;
 
 namespace BookNook.Controllers
 {

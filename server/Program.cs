@@ -1,5 +1,7 @@
 using BookNook.Data;
-using BookNook.Services;
+using BookNook.Services.Auth;
+using BookNook.Services.Books;
+using BookNook.Services.Cloudinary;
 using BookNook.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

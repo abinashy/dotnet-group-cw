@@ -1,6 +1,6 @@
 using BookNook.DTOs.Books;
 
-namespace BookNook.Services
+namespace BookNook.Services.Books
 {
     public interface IBookService
     {

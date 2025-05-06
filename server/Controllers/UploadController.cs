@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using BookNook.Services;
+using BookNook.Services.Cloudinary;
 
 namespace BookNook.Controllers
 {

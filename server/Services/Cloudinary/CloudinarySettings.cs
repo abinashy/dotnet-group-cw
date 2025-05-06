@@ -1,4 +1,4 @@
-namespace BookNook.Services
+namespace BookNook.Services.Cloudinary
 {
     public class CloudinarySettings
     {
