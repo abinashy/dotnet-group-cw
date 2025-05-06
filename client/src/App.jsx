@@ -12,6 +12,7 @@ import CartDrawer from './pages/Cart';
 import Header from './components/Header';
 import React, { useState } from 'react';
 import Confirmation from './pages/Confirmation';
+import StaffDashboard from './pages/Staff/StaffDashboard';
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -49,6 +50,14 @@ function App() {
         />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/confirmation" element={<Confirmation />} />
+        <Route 
+          path="/staff" 
+          element={
+            <ProtectedRoute allowedRoles={['Staff']}>
+              <StaffDashboard />
+            </ProtectedRoute>
+          } 
+        />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>

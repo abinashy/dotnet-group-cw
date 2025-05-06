@@ -10,8 +10,10 @@ namespace BookNook.Services
     public interface IOrderService
     {
         Task<Order> CreateOrderAsync(long userId, CreateOrderDto orderDto);
-        Task<Order> GetOrderByIdAsync(int orderId, long userId);
+        Task<Order> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false);
         Task CancelOrderAsync(int orderId, long userId);
+        Task<List<Order>> GetAllOrdersAsync();
+        Task SaveChangesAsync();
     }
 
     public class OrderService : IOrderService
@@ -114,13 +116,25 @@ namespace BookNook.Services
             return order;
         }
 
-        public async Task<Order> GetOrderByIdAsync(int orderId, long userId)
+        public async Task<Order> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false)
         {
-            return await _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Book)
-                .Include(o => o.OrderHistory)
-                .FirstOrDefaultAsync(o => o.OrderId == orderId && o.UserId == userId);
+            if (allowAnyUser)
+            {
+                return await _context.Orders
+                    .Include(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Book)
+                    .Include(o => o.OrderHistory)
+                    .FirstOrDefaultAsync(o => o.OrderId == orderId);
+            }
+            else if (userId.HasValue)
+            {
+                return await _context.Orders
+                    .Include(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Book)
+                    .Include(o => o.OrderHistory)
+                    .FirstOrDefaultAsync(o => o.OrderId == orderId && o.UserId == userId);
+            }
+            return null;
         }
 
         public async Task CancelOrderAsync(int orderId, long userId)
@@ -153,6 +167,20 @@ namespace BookNook.Services
             order.OrderHistory.StatusDate = DateTime.UtcNow;
             order.OrderHistory.Notes = "Order cancelled by user";
 
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Order>> GetAllOrdersAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Book)
+                .Include(o => o.OrderHistory)
+                .ToListAsync();
+        }
+
+        public async Task SaveChangesAsync()
+        {
             await _context.SaveChangesAsync();
         }
 
