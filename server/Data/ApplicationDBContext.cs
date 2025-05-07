@@ -23,12 +23,27 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, long>
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(50);
         });
 
+        // Configure Order and OrderHistory to prevent cascade delete
+        builder.Entity<Order>(entity =>
+        {
+            // Prevent cascade delete for OrderItems
+            entity.HasMany(o => o.OrderItems)
+                .WithOne(oi => oi.Order)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent cascade delete for OrderHistory
+            entity.HasOne(o => o.OrderHistory)
+                .WithOne(oh => oh.Order)
+                .HasForeignKey<OrderHistory>(oh => oh.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         // Seed Roles
         builder.Entity<Role>().HasData(
             new Role { Id = 1, Name = "Admin", NormalizedName = "ADMIN" },
             new Role { Id = 2, Name = "Staff", NormalizedName = "STAFF" },
             new Role { Id = 3, Name = "Member", NormalizedName = "MEMBER" }
-
         );
 
         // Seed Users

@@ -12,6 +12,7 @@ import CartDrawer from './pages/Cart';
 import Header from './components/Header';
 import React, { useState } from 'react';
 import Confirmation from './pages/Confirmation';
+import MyOrder from './pages/MyOrder';
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -49,6 +50,7 @@ function App() {
         />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/confirmation" element={<Confirmation />} />
+        <Route path="/myorders" element={<MyOrder />} />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>

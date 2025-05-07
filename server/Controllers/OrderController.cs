@@ -111,5 +111,59 @@ namespace BookNook.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("history")]
+        public async Task<IActionResult> GetOrderHistory()
+        {
+            try
+            {
+                var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                Console.WriteLine($"[OrderController] userIdStr from JWT: {userIdStr}");
+                if (string.IsNullOrEmpty(userIdStr))
+                {
+                    Console.WriteLine("[OrderController] userIdStr is null or empty. Returning Unauthorized.");
+                    return Unauthorized();
+                }
+                var userId = long.Parse(userIdStr);
+                Console.WriteLine($"[OrderController] Parsed userId: {userId}");
+
+                var orders = await _orderService.GetOrderHistoryAsync(userId);
+                Console.WriteLine($"[OrderController] Orders fetched: {orders.Count}");
+
+                // Map to DTOs to avoid cycles
+                var orderDtos = orders.Select(order => new DTOs.OrderHistoryDto
+                {
+                    OrderId = order.OrderId,
+                    ClaimCode = order.ClaimCode,
+                    OrderDate = order.OrderDate,
+                    Status = order.Status,
+                    FinalAmount = order.FinalAmount,
+                    OrderItems = order.OrderItems?.Select(oi => new DTOs.OrderItemDto
+                    {
+                        OrderItemId = oi.OrderItemId,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        Book = oi.Book == null ? null : new DTOs.BookDto
+                        {
+                            BookId = oi.Book.BookId,
+                            Title = oi.Book.Title
+                        }
+                    }).ToList(),
+                    OrderHistory = order.OrderHistory == null ? null : new DTOs.OrderHistoryDetailsDto
+                    {
+                        Status = order.OrderHistory.Status,
+                        StatusDate = order.OrderHistory.StatusDate,
+                        Notes = order.OrderHistory.Notes
+                    }
+                }).ToList();
+
+                return Ok(orderDtos);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrderController] Exception: {ex.Message}\n{ex.StackTrace}");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 } 

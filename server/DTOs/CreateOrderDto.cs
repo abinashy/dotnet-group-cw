@@ -2,10 +2,10 @@ namespace BookNook.DTOs
 {
     public class CreateOrderDto
     {
-        public List<OrderItemDto> Items { get; set; } = new List<OrderItemDto>();
+        public List<CreateOrderItemDto> Items { get; set; } = new List<CreateOrderItemDto>();
     }
 
-    public class OrderItemDto
+    public class CreateOrderItemDto
     {
         public int BookId { get; set; }
         public int Quantity { get; set; }

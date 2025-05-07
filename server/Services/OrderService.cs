@@ -12,6 +12,7 @@ namespace BookNook.Services
         Task<Order> CreateOrderAsync(long userId, CreateOrderDto orderDto);
         Task<Order> GetOrderByIdAsync(int orderId, long userId);
         Task CancelOrderAsync(int orderId, long userId);
+        Task<List<Order>> GetOrderHistoryAsync(long userId);
     }
 
     public class OrderService : IOrderService
@@ -154,6 +155,31 @@ namespace BookNook.Services
             order.OrderHistory.Notes = "Order cancelled by user";
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Order>> GetOrderHistoryAsync(long userId)
+        {
+            Console.WriteLine($"[OrderService] Fetching orders for userId: {userId}");
+            var orders = await _context.Orders
+                .Where(o => o.UserId == userId)
+                .Include(o => o.OrderHistory)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Book)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+            Console.WriteLine($"[OrderService] Orders fetched: {orders.Count}");
+            foreach (var order in orders)
+            {
+                if (order.OrderHistory == null)
+                {
+                    Console.WriteLine($"[OrderService] OrderId {order.OrderId} is missing OrderHistory!");
+                }
+                if (order.OrderItems == null || order.OrderItems.Count == 0)
+                {
+                    Console.WriteLine($"[OrderService] OrderId {order.OrderId} has no OrderItems!");
+                }
+            }
+            return orders;
         }
 
         private string GenerateClaimCode()
