@@ -18,6 +18,10 @@ namespace BookNook.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var cartItem = new ShoppingCart
             {
                 UserId = dto.UserId,

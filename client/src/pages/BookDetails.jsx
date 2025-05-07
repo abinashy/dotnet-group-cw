@@ -204,6 +204,7 @@ const BookDetails = () => {
                                     return;
                                 }
                                 const payload = JSON.parse(atob(token.split('.')[1]));
+                                console.log('JWT payload:', payload);
                                 const userIdRaw = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || payload["sub"] || payload["nameid"];
                                 const userId = Number(userIdRaw);
                                 console.log('userId:', userId, 'payload:', payload);
