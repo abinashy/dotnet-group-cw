@@ -17,6 +17,7 @@ namespace BookNook.Controllers
             _cloudinaryService = cloudinaryService;
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost("Image")]
         public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
         {
