@@ -1,5 +1,6 @@
 import React from 'react';
 import AddToCartButton from './Buttons/AddToCartButton';
+import { addToCart } from '../utils/cart';
 
 const BooksCard = ({ book, onAddToCart, onClick }) => {
     const [hover, setHover] = React.useState(false);
@@ -38,10 +39,23 @@ const BooksCard = ({ book, onAddToCart, onClick }) => {
                 Rs. {book.Price}
             </div>
             <AddToCartButton
-                onClick={e => {
+                onClick={async e => {
                     e.stopPropagation();
-                    if (onAddToCart) onAddToCart(book);
-                    else alert(`Added '${book.Title}' to cart!`);
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) {
+                            alert('You must be logged in to add to cart.');
+                            return;
+                        }
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        const userIdRaw = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || payload["sub"] || payload["nameid"];
+                        const userId = Number(userIdRaw);
+                        console.log('userId:', userId, 'payload:', payload);
+                        await addToCart({ userId, bookId: book.BookId, quantity: 1 });
+                        alert('Book added to cart!');
+                    } catch (err) {
+                        alert('Failed to add to cart.');
+                    }
                 }}
                 style={{
                     border: '1px solid #1976d2',

@@ -6,6 +6,7 @@ import { BiBarcode } from 'react-icons/bi';
 import { FiBox } from 'react-icons/fi';
 import { FaRegCopy } from 'react-icons/fa';
 import AddToCartButton from '../components/Buttons/AddToCartButton';
+import { addToCart } from '../utils/cart';
 
 // Helper to get initials from name
 function getInitials(name) {
@@ -194,7 +195,25 @@ const BookDetails = () => {
                         <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
                         <button onClick={handleIncrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>+</button>
                     </div>
-                    <AddToCartButton onClick={() => {/* handle add to cart logic here */ }}>
+                    <AddToCartButton
+                        onClick={async () => {
+                            try {
+                                const token = localStorage.getItem('token');
+                                if (!token) {
+                                    alert('You must be logged in to add to cart.');
+                                    return;
+                                }
+                                const payload = JSON.parse(atob(token.split('.')[1]));
+                                const userIdRaw = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || payload["sub"] || payload["nameid"];
+                                const userId = Number(userIdRaw);
+                                console.log('userId:', userId, 'payload:', payload);
+                                await addToCart({ userId, bookId: book.BookId, quantity });
+                                alert('Book added to cart!');
+                            } catch (err) {
+                                alert('Failed to add to cart.');
+                            }
+                        }}
+                    >
                         ADD TO CART
                     </AddToCartButton>
                 </div>

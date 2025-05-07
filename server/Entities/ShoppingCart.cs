@@ -9,7 +9,7 @@ namespace BookNook.Entities
         public int CartId { get; set; }
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public long UserId { get; set; }
 
         [Required]
         public int BookId { get; set; }
@@ -21,5 +21,8 @@ namespace BookNook.Entities
         // Navigation properties
         [ForeignKey("BookId")]
         public virtual Book Book { get; set; } = null!;
+
+        [ForeignKey("UserId")]
+        public virtual User User { get; set; } = null!;
     }
 } 
