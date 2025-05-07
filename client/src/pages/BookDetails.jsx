@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
+import { FaBook, FaHashtag, FaLanguage, FaGlobe } from 'react-icons/fa';
+import { BiBarcode } from 'react-icons/bi';
+import { FiBox } from 'react-icons/fi';
+import { FaRegCopy } from 'react-icons/fa';
+import AddToCartButton from '../components/Buttons/AddToCartButton';
 
 // Helper to get initials from name
 function getInitials(name) {
@@ -152,42 +157,46 @@ const BookDetails = () => {
                     {/* Description */}
                     <div style={{ margin: '24px 0' }}>
                         <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 8 }}>Description</h2>
-                        <div style={{ color: '#222', fontSize: 17, lineHeight: 1.7 }}>{book.Description || 'No description available.'}</div>
+                        <div style={{ color: '#222', fontSize: 17, lineHeight: 1.7, textAlign: 'justify' }}>{book.Description || 'No description available.'}</div>
                     </div>
                     {/* Other Info */}
-                    <div style={{ display: 'flex', gap: 32, marginTop: 24 }}>
-                        <div style={{ background: '#fafbfc', borderRadius: 10, padding: 24, minWidth: 180, textAlign: 'center', flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6 }}>Page Count</div>
-                            <div style={{ fontSize: 20 }}>{book.PageCount ? `${book.PageCount} Pages` : 'N/A'}</div>
-                        </div>
-                        <div style={{ background: '#fafbfc', borderRadius: 10, padding: 24, minWidth: 180, textAlign: 'center', flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6 }}>ISBN</div>
-                            <div style={{ fontSize: 20 }}>{book.ISBN || 'N/A'}</div>
-                        </div>
-                        <div style={{ background: '#fafbfc', borderRadius: 10, padding: 24, minWidth: 180, textAlign: 'center', flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6 }}>Language</div>
-                            <div style={{ fontSize: 20 }}>{book.Language || 'N/A'}</div>
+                    <div style={{ marginTop: 40, marginLeft: 8 /* adjust as needed to align with description */ }}>
+                        <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Other info</h2>
+                        <div style={{ display: 'flex', gap: 24, flexWrap: 'nowrap', justifyContent: 'flex-start' }}>
+                            {/* Page Count */}
+                            <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>Page Count</div>
+                                <FaRegCopy size={28} style={{ marginBottom: 8 }} />
+                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2 }}>{book.PageCount ? `${book.PageCount} Pages` : 'N/A'}</div>
+                            </div>
+                            {/* ISBN */}
+                            <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>ISBN</div>
+                                <BiBarcode size={28} style={{ marginBottom: 8 }} />
+                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2, wordBreak: 'break-all' }}>{book.ISBN || 'N/A'}</div>
+                            </div>
+                            {/* Language */}
+                            <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>Language</div>
+                                <FaGlobe size={28} style={{ marginBottom: 8 }} />
+                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2 }}>{book.Language || 'N/A'}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 {/* Right Side Card */}
                 <div style={{ minWidth: 300, background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                    <div style={{ fontWeight: 600, fontSize: 17, marginBottom: 12 }}>Get Estimated Arrival Time</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span role="img" aria-label="location">📍</span>
-                        <span>Kathmandu</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span role="img" aria-label="delivery">🚚</span>
-                        <span>Delivery Within 1 to 2 days</span>
-                    </div>
-                    <div style={{ fontWeight: 700, fontSize: 24, margin: '18px 0' }}>Rs. {book.Price}</div>
+                    <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
+                    <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
+                    <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.Price}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
                         <button onClick={handleDecrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>-</button>
                         <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
                         <button onClick={handleIncrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>+</button>
                     </div>
-                    <button style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 32px', fontWeight: 700, fontSize: 18, cursor: 'pointer', width: '100%' }}>ADD TO CART</button>
+                    <AddToCartButton onClick={() => {/* handle add to cart logic here */ }}>
+                        ADD TO CART
+                    </AddToCartButton>
                 </div>
             </div>
             {/* Ratings & Reviews */}
@@ -195,42 +204,7 @@ const BookDetails = () => {
                 <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Ratings & Reviews ({reviews.length})</h2>
                 {/* Summary and Input Row */}
                 <div style={{ display: 'flex', gap: 32, marginBottom: 36, alignItems: 'stretch' }}>
-                    {/* Left: Average Rating */}
-                    <div style={{ flex: '0 0 180px', background: '#1766a6', color: '#fff', borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 170, fontWeight: 700, fontSize: 32, boxShadow: '0 2px 12px rgba(23,102,166,0.08)' }}>
-                        <div style={{ fontSize: 48, fontWeight: 700 }}>{avgRating.toFixed(1)}</div>
-                        <div style={{ fontSize: 18, fontWeight: 400, marginTop: 4 }}>Out of 5.0</div>
-                    </div>
-                    {/* Right: Review Input */}
-                    <div style={{ flex: 1, background: '#eafaf7', borderRadius: 12, padding: 24, display: 'flex', alignItems: 'center', gap: 24, minHeight: 170, position: 'relative' }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 10 }}>How would you rate this book?</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <span
-                                        key={i}
-                                        style={{ fontSize: 32, color: i <= rating ? '#f7b500' : '#ccc', cursor: 'pointer', transition: 'color 0.2s' }}
-                                        onClick={() => setRating(i)}
-                                    >★</span>
-                                ))}
-                                <span style={{ fontWeight: 600, fontSize: 22, marginLeft: 8 }}>{rating > 0 ? rating.toFixed(1) : avgRating.toFixed(1)}</span>
-                            </div>
-                            <form onSubmit={handleReviewSubmit} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <input
-                                    type="text"
-                                    placeholder="Write a review..."
-                                    value={newReview}
-                                    onChange={e => setNewReview(e.target.value)}
-                                    style={{ flex: 1, padding: 12, borderRadius: 6, border: '1px solid #ddd', fontSize: 16 }}
-                                    disabled={submitting}
-                                />
-                                <button type="submit" style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} disabled={submitting || !newReview.trim() || rating === 0}>Submit</button>
-                            </form>
-                        </div>
-                        {/* Illustration (placeholder) */}
-                        <div style={{ minWidth: 120, minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="https://cdn-icons-png.flaticon.com/512/1040/1040230.png" alt="review" style={{ width: 90, height: 70, opacity: 0.7 }} />
-                        </div>
-                    </div>
+
                 </div>
                 {/* Reviews List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 32, marginTop: 8 }}>

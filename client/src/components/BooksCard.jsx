@@ -1,4 +1,5 @@
 import React from 'react';
+import AddToCartButton from './Buttons/AddToCartButton';
 
 const BooksCard = ({ book, onAddToCart, onClick }) => {
     const [hover, setHover] = React.useState(false);
@@ -36,7 +37,12 @@ const BooksCard = ({ book, onAddToCart, onClick }) => {
             <div style={{ fontWeight: 500, fontSize: 16, marginBottom: 12 }}>
                 Rs. {book.Price}
             </div>
-            <button
+            <AddToCartButton
+                onClick={e => {
+                    e.stopPropagation();
+                    if (onAddToCart) onAddToCart(book);
+                    else alert(`Added '${book.Title}' to cart!`);
+                }}
                 style={{
                     border: '1px solid #1976d2',
                     background: hover ? '#1976d2' : '#fff',
@@ -48,14 +54,9 @@ const BooksCard = ({ book, onAddToCart, onClick }) => {
                     cursor: 'pointer',
                     transition: 'background 0.2s, color 0.2s',
                 }}
-                onClick={e => {
-                    e.stopPropagation();
-                    if (onAddToCart) onAddToCart(book);
-                    else alert(`Added '${book.Title}' to cart!`);
-                }}
             >
                 ADD TO CART
-            </button>
+            </AddToCartButton>
         </div>
     );
 };
