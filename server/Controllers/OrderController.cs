@@ -77,6 +77,7 @@ namespace BookNook.Controllers
                     Status = order.Status,
                     OrderItems = order.OrderItems.Select(oi => new OrderItemConfirmationDto
                     {
+                        BookId = oi.BookId,
                         BookTitle = oi.Book.Title,
                         Quantity = oi.Quantity,
                         UnitPrice = oi.UnitPrice,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,7 +6,21 @@ const MyOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(null);
+  const [userReviews, setUserReviews] = useState([]);
   const navigate = useNavigate();
+
+  const fetchUserReviews = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:5124/api/review/user', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setUserReviews(response.data);
+    } catch (error) {
+      setUserReviews([]);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -24,7 +38,8 @@ const MyOrder = () => {
       }
     };
     fetchOrders();
-  }, []);
+    fetchUserReviews();
+  }, [fetchUserReviews]);
 
   const handleCancelOrder = async (orderId) => {
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
@@ -46,6 +61,14 @@ const MyOrder = () => {
   const handleLeaveReview = (orderId) => {
     // Redirect to a review page or open a modal (implement as needed)
     navigate(`/review?orderId=${orderId}`);
+  };
+
+  // Helper to check if all books in an order are reviewed
+  const isOrderReviewed = (order) => {
+    if (!userReviews.length) return false;
+    return order.orderItems.every(item =>
+      userReviews.some(r => r.bookId === (item.bookId || item.book?.bookId))
+    );
   };
 
   if (loading) {
@@ -97,12 +120,21 @@ const MyOrder = () => {
                   </button>
                 )}
                 {order.status === 'Completed' && (
-                  <button
-                    className="px-8 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-bold shadow hover:from-blue-700 hover:to-purple-700 transition-colors duration-200"
-                    onClick={() => handleLeaveReview(order.orderId)}
-                  >
-                    Leave a Review
-                  </button>
+                  isOrderReviewed(order) ? (
+                    <span className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold text-lg shadow">
+                      <svg className="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Review Submitted
+                    </span>
+                  ) : (
+                    <button
+                      className="px-8 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-bold shadow hover:from-blue-700 hover:to-purple-700 transition-colors duration-200"
+                      onClick={() => handleLeaveReview(order.orderId)}
+                    >
+                      Leave a Review
+                    </button>
+                  )
                 )}
               </div>
             </div>

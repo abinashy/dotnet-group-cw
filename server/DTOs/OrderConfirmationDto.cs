@@ -16,6 +16,7 @@ namespace BookNook.DTOs
 
     public class OrderItemConfirmationDto
     {
+        public int BookId { get; set; }
         public string BookTitle { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }

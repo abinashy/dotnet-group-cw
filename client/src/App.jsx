@@ -13,6 +13,7 @@ import Header from './components/Header';
 import React, { useState } from 'react';
 import Confirmation from './pages/Confirmation';
 import MyOrder from './pages/MyOrder';
+import Review from './pages/Review';
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -51,6 +52,8 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/myorders" element={<MyOrder />} />
+        <Route path="/review" element={<Review />} />
+        <Route path="/reviews" element={<Navigate to="/review" />} />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
