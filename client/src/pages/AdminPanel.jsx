@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import AdminSideNav from '../components/Admin/AdminSideNav';
 import AdminBooks from './AdminBooks';
+import AdminInventory from './AdminInventory';
+import AdminDiscounts from './AdminDiscounts';
 // import other admin pages as needed
 
 function AdminDashboard() {
@@ -33,6 +35,8 @@ export default function AdminPanel() {
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
           <Route path="books" element={<AdminBooks />} />
+          <Route path="inventory" element={<AdminInventory />} />
+          <Route path="discounts" element={<AdminDiscounts />} />
           {/* Add other admin routes here */}
         </Routes>
       </main>

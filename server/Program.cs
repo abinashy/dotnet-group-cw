@@ -2,6 +2,7 @@ using BookNook.Data;
 using BookNook.Services.Auth;
 using BookNook.Services.Books;
 using BookNook.Services.Cloudinary;
+using BookNook.Services.Inventory;
 using BookNook.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -55,8 +56,10 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 // Add Controllers
 builder.Services.AddControllers()

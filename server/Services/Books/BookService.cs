@@ -1,16 +1,19 @@
 using BookNook.DTOs.Books;
 using BookNook.Entities;
 using BookNook.Repositories;
+using BookNook.Services.Inventory;
 
 namespace BookNook.Services.Books
 {
     public class BookService : IBookService
     {
         private readonly IBookRepository _bookRepository;
+        private readonly IInventoryService _inventoryService;
 
-        public BookService(IBookRepository bookRepository)
+        public BookService(IBookRepository bookRepository, IInventoryService inventoryService)
         {
             _bookRepository = bookRepository;
+            _inventoryService = inventoryService;
         }
 
         public async Task<BookResponseDTO> CreateBookAsync(CreateBookDTO createBookDTO)
@@ -50,6 +53,13 @@ namespace BookNook.Services.Books
             var createdBook = await _bookRepository.CreateAsync(book);
             var bookWithRelations = await _bookRepository.GetByIdAsync(createdBook.BookId)
                 ?? throw new Exception("Failed to create book");
+
+            // Create inventory entry for the new book
+            await _inventoryService.CreateInventoryAsync(new DTOs.Inventory.CreateInventoryDTO
+            {
+                BookId = createdBook.BookId,
+                Quantity = 0
+            });
 
             return MapToBookResponseDTO(bookWithRelations);
         }
