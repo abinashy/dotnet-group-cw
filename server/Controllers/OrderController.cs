@@ -216,5 +216,27 @@ namespace BookNook.Controllers
             await _orderService.SaveChangesAsync();
             return Ok(new { message = "Order marked as completed" });
         }
+
+        [HttpPost("{orderId}/resend-confirmation")]
+        [Authorize(Roles = "Staff,Admin")]
+        public async Task<IActionResult> ResendOrderConfirmation(int orderId)
+        {
+            Console.WriteLine($"[ResendOrderConfirmation] Called for orderId={orderId}");
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null)
+            {
+                Console.WriteLine($"[ResendOrderConfirmation] Order not found for orderId={orderId}");
+                return NotFound(new { message = "Order not found" });
+            }
+            Console.WriteLine($"[ResendOrderConfirmation] Order found. Status={order.Status}");
+            if (!string.Equals(order.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"[ResendOrderConfirmation] Order status is not Pending. Status={order.Status}");
+                return BadRequest(new { message = "Can only resend confirmation for pending orders." });
+            }
+            await _emailService.SendOrderConfirmationEmailAsync(order);
+            Console.WriteLine($"[ResendOrderConfirmation] Email sent for orderId={orderId}");
+            return Ok(new { message = "Order confirmation email resent to user." });
+        }
     }
 } 

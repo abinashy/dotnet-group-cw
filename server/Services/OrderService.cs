@@ -114,6 +114,9 @@ namespace BookNook.Services
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
+            // Notify staff about new order
+            await _emailService.SendOrderNotificationToStaffAsync(order);
+
             return order;
         }
 
@@ -169,6 +172,9 @@ namespace BookNook.Services
             order.OrderHistory.Notes = "Order cancelled by user";
 
             await _context.SaveChangesAsync();
+
+            // Notify staff about order cancellation
+            await _emailService.SendOrderCancellationToStaffAsync(order);
         }
 
         public async Task<List<Order>> GetOrderHistoryAsync(long userId)

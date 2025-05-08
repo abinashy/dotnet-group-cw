@@ -15,14 +15,22 @@ import Confirmation from './pages/Confirmation';
 import MyOrder from './pages/MyOrder';
 import Review from './pages/Review';
 import StaffDashboard from './pages/Staff/StaffDashboard';
+import Footer from './components/Footer';
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
+  const token = localStorage.getItem('token');
+  const isLoggedIn = !!token;
 
   return (
     <Router>
-      <Header onCartClick={() => setCartOpen(true)} />
-      <CartDrawer userId={4} open={cartOpen} onClose={() => setCartOpen(false)} />
+      <Header onCartClick={() => { 
+        console.log('Cart icon clicked');
+        setCartOpen(true); 
+      }} />
+      {isLoggedIn && (
+        <CartDrawer userId={4} open={cartOpen} onClose={() => setCartOpen(false)} />
+      )}
       <Routes>
         <Route
           path="/login"
@@ -66,6 +74,7 @@ function App() {
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
+      <Footer />
     </Router>
   );
 }

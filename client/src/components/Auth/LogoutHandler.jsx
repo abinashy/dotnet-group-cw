@@ -47,7 +47,7 @@ export default function LogoutHandler() {
     <div className="flex items-center justify-center h-screen">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Logging out...</h2>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
       </div>
     </div>
   );
