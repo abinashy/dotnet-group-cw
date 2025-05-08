@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import OrderDetailsModal from './OrderDetailsModal';
 
-export default function OrderTokenInput({ onTokenValidated }) {
+const OrderTokenInput = ({ onOrderCompleted }) => {
   const [token, setToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,14 +18,14 @@ export default function OrderTokenInput({ onTokenValidated }) {
     setSuccess('');
     
     // Validate token format
-    if (!/^\d{8}$/.test(token)) {
-      setError('Token must be exactly 8 digits');
+    if (!/^[A-F0-9]{8}$/.test(token)) {
+      setError('Token must be exactly 8 characters (hexadecimal)');
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:5124/api/orders/validate-token', {
+      const response = await axios.post('http://localhost:5124/api/order/validate-token', {
         token: token
       }, {
         headers: {
@@ -38,7 +38,7 @@ export default function OrderTokenInput({ onTokenValidated }) {
         setSuccess('Token validated successfully!');
         setValidatedOrder(response.data.order);
         setShowModal(true);
-        onTokenValidated?.(response.data.order);
+        onOrderCompleted?.(response.data.order);
       } else {
         setError('Invalid token. Please try again.');
       }
@@ -56,47 +56,64 @@ export default function OrderTokenInput({ onTokenValidated }) {
 
   return (
     <>
-      <div className="card mb-4">
-        <div className="card-body">
-          <h5 className="card-title mb-3">Order Token Validation</h5>
-          <form onSubmit={validateToken}>
-            <div className="input-group">
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Validate Order Token</h2>
+        <form onSubmit={validateToken} className="space-y-4">
+          <div>
+            <label htmlFor="token" className="block text-sm font-medium text-gray-700">
+              Enter Order Token
+            </label>
+            <div className="mt-1">
               <input
                 type="text"
-                className={`form-control ${error ? 'is-invalid' : success ? 'is-valid' : ''}`}
-                placeholder="Enter 8-digit order token"
+                id="token"
                 value={token}
                 onChange={(e) => {
-                  // Only allow digits
-                  const value = e.target.value.replace(/\D/g, '');
-                  // Limit to 8 digits
+                  const value = e.target.value.toUpperCase();
                   if (value.length <= 8) {
                     setToken(value);
                     setError('');
                     setSuccess('');
                   }
                 }}
+                className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                  error ? 'border-red-300' : success ? 'border-green-300' : ''
+                }`}
+                placeholder="Enter 8-character token"
                 disabled={isLoading}
               />
-              <button 
-                className="btn btn-primary" 
-                type="submit"
-                disabled={isLoading || token.length !== 8}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Validating...
-                  </>
-                ) : (
-                  'Validate Token'
-                )}
-              </button>
             </div>
-            {error && <div className="invalid-feedback d-block mt-2">{error}</div>}
-            {success && <div className="valid-feedback d-block mt-2">{success}</div>}
-          </form>
-        </div>
+            {error && (
+              <p className="mt-2 text-sm text-red-600">{error}</p>
+            )}
+            {success && (
+              <p className="mt-2 text-sm text-green-600">{success}</p>
+            )}
+          </div>
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading || token.length !== 8}
+              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                isLoading || token.length !== 8
+                  ? 'bg-blue-300 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+              }`}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Validating...
+                </>
+              ) : (
+                'Validate Token'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
 
       <OrderDetailsModal
@@ -107,4 +124,6 @@ export default function OrderTokenInput({ onTokenValidated }) {
       />
     </>
   );
-} 
+};
+
+export default OrderTokenInput; 

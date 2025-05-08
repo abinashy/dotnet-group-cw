@@ -33,10 +33,22 @@ export default function LoginForm() {
             const payload = parseJwt(token);
             if (payload && payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]) {
               const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-              if (Array.isArray(roles) ? roles.includes('Admin') : roles === 'Admin') {
-                navigate('/admin');
+              if (Array.isArray(roles)) {
+                if (roles.includes('Admin')) {
+                  navigate('/admin');
+                } else if (roles.includes('Staff')) {
+                  navigate('/staff');
+                } else {
+                  navigate('/home');
+                }
               } else {
-                navigate('/home');
+                if (roles === 'Admin') {
+                  navigate('/admin');
+                } else if (roles === 'Staff') {
+                  navigate('/staff');
+                } else {
+                  navigate('/home');
+                }
               }
             } else {
               navigate('/home');

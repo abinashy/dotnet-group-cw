@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import Confirmation from './pages/Confirmation';
 import MyOrder from './pages/MyOrder';
 import Review from './pages/Review';
+import StaffDashboard from './pages/Staff/StaffDashboard';
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -54,6 +55,14 @@ function App() {
         <Route path="/myorders" element={<MyOrder />} />
         <Route path="/review" element={<Review />} />
         <Route path="/reviews" element={<Navigate to="/review" />} />
+        <Route 
+          path="/staff" 
+          element={
+            <ProtectedRoute allowedRoles={['Staff']}>
+              <StaffDashboard />
+            </ProtectedRoute>
+          } 
+        />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
