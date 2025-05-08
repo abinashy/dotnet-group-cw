@@ -34,12 +34,12 @@ namespace BookNook.Controllers
             {
                 foreach (var review in dto.Reviews)
                 {
-                    Console.WriteLine($"[ReviewController] Processing review: BookId={review.BookId}, Rating={review.Rating}, Review='{review.Review}'");
-                    // Prevent duplicate reviews for the same book/user
-                    var exists = _context.Reviews.Any(r => r.UserId == userIdStr && r.BookId == review.BookId);
+                    Console.WriteLine($"[ReviewController] Processing review: BookId={review.BookId}, OrderId={review.OrderId}, Rating={review.Rating}, Review='{review.Review}'");
+                    // Prevent duplicate reviews for the same book/order/user
+                    var exists = _context.Reviews.Any(r => r.UserId == userIdStr && r.BookId == review.BookId && r.OrderId == review.OrderId);
                     if (exists)
                     {
-                        Console.WriteLine($"[ReviewController] Duplicate review found for BookId={review.BookId}, skipping.");
+                        Console.WriteLine($"[ReviewController] Duplicate review found for BookId={review.BookId}, OrderId={review.OrderId}, skipping.");
                         continue;
                     }
 
@@ -47,6 +47,7 @@ namespace BookNook.Controllers
                     {
                         UserId = userIdStr,
                         BookId = review.BookId,
+                        OrderId = review.OrderId,
                         Rating = review.Rating,
                         Comment = review.Review,
                         ReviewDate = DateTime.UtcNow
@@ -69,7 +70,7 @@ namespace BookNook.Controllers
             }
             var reviews = _context.Reviews
                 .Where(r => r.UserId == userIdStr)
-                .Select(r => new { r.BookId, r.Rating, r.Comment, r.ReviewDate })
+                .Select(r => new { r.BookId, r.OrderId, r.Rating, r.Comment, r.ReviewDate })
                 .ToList();
             return Ok(reviews);
         }

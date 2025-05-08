@@ -9,6 +9,7 @@ namespace BookNook.DTOs
     public class ReviewDto
     {
         public int BookId { get; set; }
+        public int OrderId { get; set; }
         public int Rating { get; set; }
         public string Review { get; set; }
     }
