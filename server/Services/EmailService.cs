@@ -73,6 +73,7 @@ namespace BookNook.Services
                         
                         <div style='background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;'>
                             <p><strong>Order Number:</strong> #{order.OrderId}</p>
+                            <p><strong>Membership ID:</strong> {user.Id}</p>
                             <p><strong>Claim Code:</strong> {order.ClaimCode}</p>
                             <p><strong>Total Amount:</strong> ${order.TotalAmount:F2}</p>
                             <p><strong>Discount Amount:</strong> ${order.DiscountAmount:F2}</p>
@@ -92,7 +93,7 @@ namespace BookNook.Services
                 var book = await _context.Books.FindAsync(item.BookId);
                 body += $@"
                     <tr>
-                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{book.Title}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{book?.Title}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>{item.Quantity}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>${item.UnitPrice:F2}</td>
                     </tr>";
@@ -101,7 +102,7 @@ namespace BookNook.Services
             body += $@"
                         </table>
 
-                        <p><strong>Important:</strong> Please bring your membership ID and the claim code above when picking up your order at the store.</p>
+                        <p><strong>Important:</strong> Please bring your <strong>membership ID ({user.Id})</strong> and the claim code above when picking up your order at the store.</p>
                         
                         <p>If you have any questions, please don't hesitate to contact us.</p>
                         

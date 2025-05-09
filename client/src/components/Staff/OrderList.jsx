@@ -28,7 +28,7 @@ const OrderList = ({ orders, onOrderCompleted }) => {
   const handleResendEmail = async (orderId) => {
     setResendStatus((prev) => ({ ...prev, [orderId]: 'loading' }));
     try {
-      await axios.post(`/api/order/${orderId}/resend-confirmation`);
+      await axios.post(`http://localhost:5124/api/order/${orderId}/resend-confirmation`);
       setResendStatus((prev) => ({ ...prev, [orderId]: 'success' }));
       setTimeout(() => setResendStatus((prev) => ({ ...prev, [orderId]: undefined })), 2000);
     } catch (error) {

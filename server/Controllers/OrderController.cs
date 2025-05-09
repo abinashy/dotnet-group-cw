@@ -4,6 +4,7 @@ using BookNook.Services;
 using BookNook.DTOs;
 using System.Security.Claims;
 using BookNook.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookNook.Controllers
 {
@@ -222,7 +223,10 @@ namespace BookNook.Controllers
         public async Task<IActionResult> ResendOrderConfirmation(int orderId)
         {
             Console.WriteLine($"[ResendOrderConfirmation] Called for orderId={orderId}");
-            var order = await _context.Orders.FindAsync(orderId);
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Book)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
             if (order == null)
             {
                 Console.WriteLine($"[ResendOrderConfirmation] Order not found for orderId={orderId}");
