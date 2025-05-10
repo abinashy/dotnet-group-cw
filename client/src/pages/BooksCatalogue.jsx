@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import BooksCard from '../components/BooksCard';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const FILTER_TABS = [
     { key: 'all', label: 'All Books' },
@@ -28,16 +28,34 @@ const LANGUAGES = [
 const BooksCatalogue = () => {
     const [books, setBooks] = useState([]);
     const [genres, setGenres] = useState([]);
-    const [selectedGenre, setSelectedGenre] = useState(null);
-    const [activeTab, setActiveTab] = useState('all');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedPrice, setSelectedPrice] = useState(null);
     const [customPrice, setCustomPrice] = useState({ min: '', max: '' });
-    const [selectedLanguages, setSelectedLanguages] = useState([]);
-    const [sortPrice, setSortPrice] = useState('asc'); // 'asc' or 'desc'
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+
+    // Helper to get array param from searchParams
+    const getArrayParam = (key) => searchParams.getAll(key);
+    const getParam = (key, fallback = '') => searchParams.get(key) || fallback;
+
+    // UI state derived from URL
+    const selectedGenres = getArrayParam('genres');
+    const selectedLanguages = getArrayParam('languages');
+    const selectedPrice = getParam('selectedPrice', null);
+    const sortPrice = getParam('sortPrice', 'asc');
+    const searchQuery = getParam('search', '');
+    const activeTab = getParam('tab', 'all');
+
+    // Keep custom price UI in sync with URL
+    useEffect(() => {
+        if (selectedPrice === 'custom') {
+            setCustomPrice({
+                min: getParam('minPrice', ''),
+                max: getParam('maxPrice', ''),
+            });
+        } else {
+            setCustomPrice({ min: '', max: '' });
+        }
+        // eslint-disable-next-line
+    }, [selectedPrice, searchParams]);
 
     useEffect(() => {
         const fetchGenres = async () => {
@@ -51,94 +69,65 @@ const BooksCatalogue = () => {
         fetchGenres();
     }, []);
 
-    useEffect(() => {
-        const fetchBooks = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                // You may want to pass filters as query params here
-                const response = await axios.get('http://localhost:5124/api/book');
-                setBooks(response.data);
-            } catch (err) {
-                setError('Failed to fetch books.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchBooks();
-    }, [activeTab, selectedGenre]);
-
-    // Filtering logic (client-side for now)
-    const filteredBooks = books
-        .filter((book) => {
-            let genreMatch = true;
-            if (selectedGenre) {
-                genreMatch = book.Genres && book.Genres.some(g => g.GenreId === selectedGenre);
-            }
-            // Simulate filter logic for tabs (replace with real API logic as needed)
-            let tabMatch = true;
-            switch (activeTab) {
-                case 'new':
-                    tabMatch = book.IsNewArrival;
-                    break;
-                case 'bestseller':
-                    tabMatch = book.IsBestseller;
-                    break;
-                case 'discount':
-                    tabMatch = book.HasDiscount;
-                    break;
-                case 'award':
-                    tabMatch = book.IsAwardWinning;
-                    break;
-                case 'coming':
-                    tabMatch = book.Status && book.Status.toLowerCase() === 'upcoming';
-                    break;
-                default:
-                    tabMatch = true;
-            }
-            // Price filter
-            let priceMatch = true;
-            if (selectedPrice) {
-                if (selectedPrice === 'custom') {
-                    const min = parseFloat(customPrice.min) || 0;
-                    const max = parseFloat(customPrice.max) || Infinity;
-                    priceMatch = book.Price >= min && book.Price <= max;
-                } else {
-                    const range = PRICE_RANGES.find(r => r.key === selectedPrice);
-                    if (range) {
-                        priceMatch = book.Price >= range.min && book.Price <= range.max;
-                    }
+    // Build query string for backend filters from searchParams
+    const buildQuery = () => {
+        const params = new URLSearchParams();
+        if (searchQuery.trim() !== "") params.append('search', searchQuery.trim());
+        selectedGenres.forEach(g => params.append('genres', g));
+        selectedLanguages.forEach(l => params.append('languages', l));
+        if (selectedPrice) {
+            params.append('selectedPrice', selectedPrice);
+            if (selectedPrice === 'custom') {
+                if (customPrice.min) params.append('minPrice', customPrice.min);
+                if (customPrice.max) params.append('maxPrice', customPrice.max);
+            } else {
+                const range = PRICE_RANGES.find(r => r.key === selectedPrice);
+                if (range) {
+                    params.append('minPrice', range.min);
+                    if (range.max !== Infinity) params.append('maxPrice', range.max);
                 }
             }
-            // Language filter
-            let langMatch = true;
-            if (selectedLanguages.length > 0) {
-                langMatch = selectedLanguages.includes(book.Language);
-            }
-            let matches = genreMatch && tabMatch && priceMatch && langMatch;
-            // Search filter
-            if (searchQuery.trim() !== "") {
-                const q = searchQuery.trim().toLowerCase();
-                const titleMatch = book.Title && book.Title.toLowerCase().includes(q);
-                const authorMatch = book.Authors && book.Authors.some(a => (`${a.FirstName} ${a.LastName}`.toLowerCase().includes(q)));
-                matches = matches && (titleMatch || authorMatch);
-            }
-            return matches;
-        })
-        .sort((a, b) => {
-            if (sortPrice === 'asc') return a.Price - b.Price;
-            if (sortPrice === 'desc') return b.Price - a.Price;
-            return 0;
-        });
+        }
+        if (sortPrice) params.append('sortPrice', sortPrice);
+        if (activeTab && activeTab !== 'all') params.append('tab', activeTab);
+        return params.toString();
+    };
 
-    // Add a resetFilters function
+    // Fetch books from backend with filters
+    const fetchBooks = async () => {
+        try {
+            const query = buildQuery();
+            const response = await axios.get(`http://localhost:5124/api/book?${query}`);
+            setBooks(response.data);
+        } catch (err) {
+            setBooks([]);
+        }
+    };
+
+    // Fetch books whenever searchParams change
+    useEffect(() => {
+        fetchBooks();
+        // eslint-disable-next-line
+    }, [searchParams]);
+
+    // Update URL (searchParams) when a filter changes
+    const setFilter = (key, value, isArray = false) => {
+        const params = new URLSearchParams(searchParams);
+        if (isArray) {
+            params.delete(key);
+            value.forEach(v => params.append(key, v));
+        } else if (value !== null && value !== undefined && value !== '') {
+            params.set(key, value);
+        } else {
+            params.delete(key);
+        }
+        setSearchParams(params);
+    };
+
+    // Reset all filters
     const resetFilters = () => {
-        setSelectedGenre(null);
-        setSelectedPrice(null);
+        setSearchParams({});
         setCustomPrice({ min: '', max: '' });
-        setSelectedLanguages([]);
-        setSortPrice('asc');
-        setSearchQuery('');
     };
 
     return (
@@ -149,47 +138,27 @@ const BooksCatalogue = () => {
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
                     <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>All Genres</div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li key="all-genres">
-                            <button
-                                onClick={() => setSelectedGenre(null)}
-                                style={{
-                                    background: selectedGenre === null ? '#1976d2' : 'transparent',
-                                    color: selectedGenre === null ? '#fff' : '#222',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    padding: '8px 16px',
-                                    marginBottom: 6,
-                                    width: '100%',
-                                    textAlign: 'left',
-                                    cursor: 'pointer',
-                                    fontWeight: 500,
-                                }}
-                            >
-                                All Genres
-                            </button>
-                        </li>
                         {genres.length === 0 && (
                             <li key="no-genres" style={{ color: 'red', fontSize: 14 }}>No genres found. Check API response.</li>
                         )}
-                        {genres.map((genre) => (
-                            <li key={`genre-${genre.GenreId}`}>
-                                <button
-                                    onClick={() => setSelectedGenre(genre.GenreId)}
-                                    style={{
-                                        background: selectedGenre === genre.GenreId ? '#1976d2' : 'transparent',
-                                        color: selectedGenre === genre.GenreId ? '#fff' : '#222',
-                                        border: 'none',
-                                        borderRadius: 8,
-                                        padding: '8px 16px',
-                                        marginBottom: 6,
-                                        width: '100%',
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        fontWeight: 500,
-                                    }}
-                                >
+                        {genres.map((genre, idx) => (
+                            <li key={`genre-${genre.GenreId}`} style={{ marginBottom: idx !== genres.length - 1 ? 6 : 0 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedGenres.includes(genre.Name)}
+                                        onChange={() => {
+                                            let newGenres;
+                                            if (selectedGenres.includes(genre.Name)) {
+                                                newGenres = selectedGenres.filter(g => g !== genre.Name);
+                                            } else {
+                                                newGenres = [...selectedGenres, genre.Name];
+                                            }
+                                            setFilter('genres', newGenres, true);
+                                        }}
+                                    />
                                     {genre.Name}
-                                </button>
+                                </label>
                             </li>
                         ))}
                     </ul>
@@ -204,7 +173,12 @@ const BooksCatalogue = () => {
                                     <input
                                         type="checkbox"
                                         checked={selectedPrice === range.key}
-                                        onChange={() => setSelectedPrice(selectedPrice === range.key ? null : range.key)}
+                                        onChange={() => {
+                                            setFilter('selectedPrice', selectedPrice === range.key ? null : range.key);
+                                            if (range.key !== 'custom') {
+                                                setCustomPrice({ min: '', max: '' });
+                                            }
+                                        }}
                                     />
                                     {range.label}
                                 </label>
@@ -214,14 +188,20 @@ const BooksCatalogue = () => {
                                             type="number"
                                             placeholder="Min"
                                             value={customPrice.min}
-                                            onChange={e => setCustomPrice({ ...customPrice, min: e.target.value })}
+                                            onChange={e => {
+                                                setCustomPrice({ ...customPrice, min: e.target.value });
+                                                setFilter('minPrice', e.target.value);
+                                            }}
                                             style={{ width: 60, padding: 4, border: '1px solid #ccc', borderRadius: 4 }}
                                         />
                                         <input
                                             type="number"
                                             placeholder="Max"
                                             value={customPrice.max}
-                                            onChange={e => setCustomPrice({ ...customPrice, max: e.target.value })}
+                                            onChange={e => {
+                                                setCustomPrice({ ...customPrice, max: e.target.value });
+                                                setFilter('maxPrice', e.target.value);
+                                            }}
                                             style={{ width: 60, padding: 4, border: '1px solid #ccc', borderRadius: 4 }}
                                         />
                                     </div>
@@ -236,7 +216,7 @@ const BooksCatalogue = () => {
                             <input
                                 type="radio"
                                 checked={sortPrice === 'asc'}
-                                onChange={() => setSortPrice('asc')}
+                                onChange={() => setFilter('sortPrice', 'asc')}
                             />
                             Price Low To High (Default)
                         </label>
@@ -244,7 +224,7 @@ const BooksCatalogue = () => {
                             <input
                                 type="radio"
                                 checked={sortPrice === 'desc'}
-                                onChange={() => setSortPrice('desc')}
+                                onChange={() => setFilter('sortPrice', 'desc')}
                             />
                             Price High To Low
                         </label>
@@ -261,9 +241,13 @@ const BooksCatalogue = () => {
                                         type="checkbox"
                                         checked={selectedLanguages.includes(lang)}
                                         onChange={() => {
-                                            setSelectedLanguages(selectedLanguages.includes(lang)
-                                                ? selectedLanguages.filter(l => l !== lang)
-                                                : [...selectedLanguages, lang]);
+                                            let newLangs;
+                                            if (selectedLanguages.includes(lang)) {
+                                                newLangs = selectedLanguages.filter(l => l !== lang);
+                                            } else {
+                                                newLangs = [...selectedLanguages, lang];
+                                            }
+                                            setFilter('languages', newLangs, true);
                                         }}
                                     />
                                     {lang}
@@ -299,7 +283,7 @@ const BooksCatalogue = () => {
                     {FILTER_TABS.map(tab => (
                         <button
                             key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
+                            onClick={() => setFilter('tab', tab.key)}
                             style={{
                                 background: activeTab === tab.key ? '#1976d2' : '#f4f6fa',
                                 color: activeTab === tab.key ? '#fff' : '#222',
@@ -324,17 +308,19 @@ const BooksCatalogue = () => {
                 {/* Title and Search Bar Row */}
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32 }}>
                     <h2 style={{ fontWeight: 700, fontSize: 24, marginBottom: 0 }}>
-                        {selectedGenre
-                            ? (genres.find(g => g.GenreId === selectedGenre)?.Name || 'Genre')
-                            : 'All Genres'}
+                        {selectedGenres.length === 1
+                            ? selectedGenres[0]
+                            : selectedGenres.length > 1
+                                ? `${selectedGenres.length} Genres`
+                                : 'All Genres'}
                     </h2>
                     <div style={{ flex: 1 }} />
                     <div style={{ position: 'relative', width: 340 }}>
                         <input
                             type="text"
                             value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            placeholder={`Search on ${selectedGenre ? (genres.find(g => g.GenreId === selectedGenre)?.Name || 'Genre') : 'All Genres'}`}
+                            onChange={e => setFilter('search', e.target.value)}
+                            placeholder={`Search on ${selectedGenres.length === 1 ? selectedGenres[0] : 'All Genres'}`}
                             style={{
                                 width: '100%',
                                 padding: '10px 44px 10px 18px',
@@ -358,14 +344,11 @@ const BooksCatalogue = () => {
                         </span>
                     </div>
                 </div>
-                {loading ? (
-                    <p>Loading...</p>
-                ) : error ? (
-                    <p style={{ color: 'red' }}>{error}</p>
+                {books.length === 0 ? (
+                    <p>No books found.</p>
                 ) : (
                     <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                        {filteredBooks.length === 0 && <div>No books found.</div>}
-                        {filteredBooks.map((book) => (
+                        {books.map((book) => (
                             <BooksCard
                                 key={book.BookId}
                                 book={book}
