@@ -203,12 +203,7 @@ const BookDetails = () => {
                                     alert('You must be logged in to add to cart.');
                                     return;
                                 }
-                                const payload = JSON.parse(atob(token.split('.')[1]));
-                                console.log('JWT payload:', payload);
-                                const userIdRaw = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || payload["sub"] || payload["nameid"];
-                                const userId = Number(userIdRaw);
-                                console.log('userId:', userId, 'payload:', payload);
-                                await addToCart({ userId, bookId: book.BookId, quantity });
+                                await addToCart({ bookId: book.BookId, quantity });
                                 alert('Book added to cart!');
                             } catch (err) {
                                 alert('Failed to add to cart.');
