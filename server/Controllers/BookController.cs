@@ -23,28 +23,25 @@ namespace BookNook.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks(
             [FromQuery] string? search,
-            [FromQuery] string? genre,
-            [FromQuery] string? format,
-            [FromQuery] string? language,
+            [FromQuery] List<string>? genres,
+            [FromQuery] List<string>? languages,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
-            [FromQuery] string? sortBy)
+            [FromQuery] string? sortPrice
+        )
         {
             try
             {
                 _logger.LogInformation("Received request to fetch books with parameters: " +
-                    "search={Search}, genre={Genre}, format={Format}, language={Language}, " +
-                    "minPrice={MinPrice}, maxPrice={MaxPrice}, sortBy={SortBy}",
-                    search, genre, format, language, minPrice, maxPrice, sortBy);
+                    "search={Search}, genres={Genres}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}",
+                    search, genres, languages, minPrice, maxPrice, sortPrice);
 
-                // Check if we can connect to the database
                 if (!await _context.Database.CanConnectAsync())
                 {
                     _logger.LogError("Cannot connect to the database");
                     return StatusCode(500, "Database connection error");
                 }
 
-                // Check if we have any books
                 if (!await _context.Books.AnyAsync())
                 {
                     _logger.LogInformation("No books found in database, adding sample data");
@@ -53,62 +50,63 @@ namespace BookNook.Controllers
 
                 var query = _context.Books
                     .Include(b => b.Publisher)
-                    .Include(b => b.BookAuthors)
-                        .ThenInclude(ba => ba.Author)
-                    .Include(b => b.BookGenres)
-                        .ThenInclude(bg => bg.Genre)
+                    .Include(b => b.BookAuthors).ThenInclude(ba => ba.Author)
+                    .Include(b => b.BookGenres).ThenInclude(bg => bg.Genre)
                     .AsQueryable();
 
-                // Apply filters
+                // Search filter
                 if (!string.IsNullOrWhiteSpace(search))
                 {
-                    search = search.ToLower();
+                    var lowerSearch = search.ToLower();
                     query = query.Where(b =>
-                        b.Title.ToLower().Contains(search) ||
-                        b.ISBN.ToLower().Contains(search) ||
-                        b.BookAuthors.Any(ba => 
-                            ba.Author.FirstName.ToLower().Contains(search) ||
-                            ba.Author.LastName.ToLower().Contains(search)));
+                        b.Title.ToLower().Contains(lowerSearch) ||
+                        b.ISBN.ToLower().Contains(lowerSearch) ||
+                        b.BookAuthors.Any(ba =>
+                            ba.Author.FirstName.ToLower().Contains(lowerSearch) ||
+                            ba.Author.LastName.ToLower().Contains(lowerSearch))
+                    );
                 }
 
-                if (!string.IsNullOrWhiteSpace(genre))
+                // Genre filter (multi-select)
+                if (genres != null && genres.Count > 0)
                 {
-                    query = query.Where(b => b.BookGenres.Any(bg => bg.Genre.Name == genre));
+                    var lowerGenres = genres.Select(g => g.ToLower()).ToList();
+                    query = query.Where(b => b.BookGenres.Any(bg => lowerGenres.Contains(bg.Genre.Name.ToLower())));
                 }
 
-                if (!string.IsNullOrWhiteSpace(format))
+                // Language filter (multi-select)
+                if (languages != null && languages.Count > 0)
                 {
-                    query = query.Where(b => b.Format == format);
+                    var lowerLanguages = languages.Select(l => l.ToLower()).ToList();
+                    query = query.Where(b => lowerLanguages.Contains(b.Language.ToLower()));
                 }
 
-                if (!string.IsNullOrWhiteSpace(language))
-                {
-                    query = query.Where(b => b.Language == language);
-                }
-
+                // Price filter
                 if (minPrice.HasValue)
                 {
                     query = query.Where(b => b.Price >= minPrice.Value);
                 }
-
                 if (maxPrice.HasValue)
                 {
                     query = query.Where(b => b.Price <= maxPrice.Value);
                 }
 
-                // Apply sorting
-                query = sortBy?.ToLower() switch
+                // Sort by price
+                if (!string.IsNullOrWhiteSpace(sortPrice))
                 {
-                    "title" => query.OrderBy(b => b.Title),
-                    "price" => query.OrderBy(b => b.Price),
-                    "year" => query.OrderByDescending(b => b.PublicationYear),
-                    _ => query.OrderBy(b => b.Title)
-                };
+                    if (sortPrice.ToLower() == "asc")
+                        query = query.OrderBy(b => b.Price);
+                    else if (sortPrice.ToLower() == "desc")
+                        query = query.OrderByDescending(b => b.Price);
+                }
+                else
+                {
+                    query = query.OrderBy(b => b.Title); // Default sort
+                }
 
                 var books = await query.ToListAsync();
                 _logger.LogInformation("Found {Count} books matching the criteria", books.Count);
 
-                // Map to DTOs
                 var bookDtos = books.Select(b => new BookDto
                 {
                     BookId = b.BookId,
