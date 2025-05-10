@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-namespace BookNook.Services;
+namespace BookNook.Services.Auth;
 
 public class AuthService : IAuthService
 {

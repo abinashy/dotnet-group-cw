@@ -14,22 +14,35 @@ const AddBookSchema = Yup.object().shape({
   coverImageUrl: Yup.string().max(500, 'URL is too long'),
   isAwardWinning: Yup.boolean(),
   status: Yup.string().required('Status is required').max(50, 'Status is too long'),
-  publisherId: Yup.number().required('Publisher is required'),
-  authorIds: Yup.array().of(Yup.number()).min(1, 'At least one author is required'),
-  genreIds: Yup.array().of(Yup.number()).min(1, 'At least one genre is required'),
+  publisherId: Yup.string().test('publisher-required', 'Publisher is required', function(value) {
+    // Either publisherId or newPublisher should be provided
+    return !!value || !!this.parent.newPublisher?.name;
+  }),
+  authorIds: Yup.array().of(Yup.string()).test('authors-required', 'At least one author is required', function(value) {
+    // Either authorIds or newAuthors should be provided
+    return (value && value.length > 0) || (this.parent.newAuthors && this.parent.newAuthors.length > 0 && this.parent.newAuthors[0].firstName);
+  }),
+  genreIds: Yup.array().of(Yup.string()).test('genres-required', 'At least one genre is required', function(value) {
+    // Either genreIds or newGenres should be provided
+    return (value && value.length > 0) || (this.parent.newGenres && this.parent.newGenres.length > 0 && this.parent.newGenres[0].name);
+  }),
   newPublisher: Yup.object().shape({
     name: Yup.string().max(200, 'Name is too long'),
     description: Yup.string()
   }).nullable(),
-  newAuthor: Yup.object().shape({
+  newAuthors: Yup.array().of(
+    Yup.object().shape({
     firstName: Yup.string().max(100, 'First name is too long'),
     lastName: Yup.string().max(100, 'Last name is too long'),
     biography: Yup.string()
-  }).nullable(),
-  newGenre: Yup.object().shape({
+    })
+  ),
+  newGenres: Yup.array().of(
+    Yup.object().shape({
     name: Yup.string().max(50, 'Name is too long'),
     description: Yup.string()
-  }).nullable(),
+    })
+  ),
   coverImageFile: Yup.mixed()
     .test('fileSize', 'File too large', value => !value || value.size <= 10000000) // 10MB
     .test('fileType', 'Unsupported file type', value => 
@@ -40,7 +53,9 @@ const AddBookSchema = Yup.object().shape({
 const steps = [
   { id: 'basic', title: 'Basic Info', description: 'Basic book information' },
   { id: 'details', title: 'Details', description: 'Additional book details' },
-  { id: 'relations', title: 'Relations', description: 'Publisher, authors, and genres' }
+  { id: 'publishers', title: 'Publisher', description: 'Select or add publisher' },
+  { id: 'authors', title: 'Authors', description: 'Select or add authors' },
+  { id: 'genres', title: 'Genres', description: 'Select or add genres' }
 ];
 
 function StepIndicator({ currentStep, steps, onStepClick }) {
@@ -52,22 +67,22 @@ function StepIndicator({ currentStep, steps, onStepClick }) {
             <div className="flex items-center">
               <button
                 onClick={() => onStepClick(index)}
-                className={`relative flex h-8 w-8 items-center justify-center rounded-full ${
+                className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${
                   index < currentStep
-                    ? 'bg-blue-600 hover:bg-blue-900'
+                    ? 'bg-black hover:bg-gray-800'
                     : index === currentStep
-                    ? 'bg-blue-600'
-                    : 'bg-gray-200'
+                    ? 'bg-black'
+                    : 'bg-gray-300'
                 } ${index <= currentStep ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                 disabled={index > currentStep}
               >
                 <span className="text-white text-sm">{index + 1}</span>
               </button>
               {index !== steps.length - 1 && (
-                <div className={`absolute top-4 w-full h-0.5 ${index < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`absolute top-4 left-7 h-1 w-16 sm:w-24 ${index < currentStep ? 'bg-black' : 'bg-gray-300'}`} />
               )}
             </div>
-            <div className="absolute -bottom-6 w-max text-center text-xs font-medium">
+            <div className="absolute -bottom-6 w-max text-center text-xs font-medium text-gray-700">
               {step.title}
             </div>
           </li>
@@ -79,12 +94,12 @@ function StepIndicator({ currentStep, steps, onStepClick }) {
 
 function BasicInfoStep() {
   return (
-    <div className="space-y-4 bg-white p-4 rounded-lg border border-gray-200">
+    <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div>
         <label className="block text-sm font-medium text-gray-700">Title</label>
         <Field
           name="title"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
           type="text"
         />
         <ErrorMessage name="title" component="div" className="mt-1 text-sm text-red-600" />
@@ -94,7 +109,7 @@ function BasicInfoStep() {
         <label className="block text-sm font-medium text-gray-700">ISBN</label>
         <Field
           name="isbn"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
           type="text"
         />
         <ErrorMessage name="isbn" component="div" className="mt-1 text-sm text-red-600" />
@@ -104,7 +119,7 @@ function BasicInfoStep() {
         <label className="block text-sm font-medium text-gray-700">Price</label>
         <Field
           name="price"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
           type="number"
           step="0.01"
         />
@@ -116,7 +131,7 @@ function BasicInfoStep() {
         <Field
           name="status"
           as="select"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
         >
           <option value="Published">Published</option>
           <option value="Draft">Draft</option>
@@ -131,7 +146,7 @@ function BasicInfoStep() {
         <Field
           name="isAwardWinning"
           type="checkbox"
-          className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          className="mt-1 h-4 w-4 rounded border-gray-300 text-black focus:ring-gray-500"
         />
         <ErrorMessage name="isAwardWinning" component="div" className="mt-1 text-sm text-red-600" />
       </div>
@@ -144,31 +159,45 @@ function DetailsStep() {
   const { setFieldValue, values } = useFormikContext();
   const [previewUrl, setPreviewUrl] = useState('');
 
-  // Initialize preview URL from existing file if any
+  // Initialize preview URL from existing coverImageUrl or file
   useEffect(() => {
+    // If we have a file, use that for preview
     if (values.coverImageFile) {
-      setPreviewUrl(URL.createObjectURL(values.coverImageFile));
+      const objectUrl = URL.createObjectURL(values.coverImageFile);
+      setPreviewUrl(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
+    } 
+    // If we have a coverImageUrl (from existing book), use that
+    else if (values.coverImageUrl) {
+      setPreviewUrl(values.coverImageUrl);
     }
-  }, [values.coverImageFile]);
+  }, [values.coverImageFile, values.coverImageUrl]);
 
   // Cleanup preview URL when component unmounts
   useEffect(() => {
     return () => {
-      if (previewUrl) {
+      // Only revoke object URLs created from files (not remote URLs)
+      if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [previewUrl]);
+  }, []);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (previewUrl) {
+      // Revoke previous object URL if it exists and is a blob
+      if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
+      
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
       setFieldValue('coverImageFile', file);
+      // Clear the old coverImageUrl when a new file is selected
+      if (values.coverImageUrl) {
+        setFieldValue('coverImageUrl', '');
+      }
     }
   };
 
@@ -176,21 +205,30 @@ function DetailsStep() {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
     if (file) {
-      if (previewUrl) {
+      // Revoke previous object URL if it exists and is a blob
+      if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
+      
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
       setFieldValue('coverImageFile', file);
+      // Clear the old coverImageUrl when a new file is dropped
+      if (values.coverImageUrl) {
+        setFieldValue('coverImageUrl', '');
+      }
     }
   };
 
   const handleRemoveImage = () => {
-    if (previewUrl) {
+    // Revoke previous object URL if it exists and is a blob
+    if (previewUrl && previewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(previewUrl);
     }
+    
     setPreviewUrl('');
     setFieldValue('coverImageFile', null);
+    setFieldValue('coverImageUrl', '');
   };
 
   const handleDragOver = (event) => {
@@ -198,13 +236,13 @@ function DetailsStep() {
   };
 
   return (
-    <div className="space-y-4 bg-white p-4 rounded-lg border border-gray-200">
+    <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Publication Year</label>
           <Field
             name="publicationYear"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
             type="number"
           />
           <ErrorMessage name="publicationYear" component="div" className="mt-1 text-sm text-red-600" />
@@ -214,7 +252,7 @@ function DetailsStep() {
           <label className="block text-sm font-medium text-gray-700">Page Count</label>
           <Field
             name="pageCount"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
             type="number"
           />
           <ErrorMessage name="pageCount" component="div" className="mt-1 text-sm text-red-600" />
@@ -227,7 +265,7 @@ function DetailsStep() {
           <Field
             name="language"
             as="select"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
           >
             <option value="">Select a language</option>
             <option value="English">English</option>
@@ -245,7 +283,7 @@ function DetailsStep() {
           <Field
             name="format"
             as="select"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
           >
             <option value="">Select a format</option>
             <option value="Paperback">Paperback</option>
@@ -262,7 +300,7 @@ function DetailsStep() {
         <Field
           name="description"
           as="textarea"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
           rows="3"
         />
         <ErrorMessage name="description" component="div" className="mt-1 text-sm text-red-600" />
@@ -270,8 +308,11 @@ function DetailsStep() {
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Cover Image</label>
+        {values.coverImageUrl && (
+          <p className="text-xs text-gray-500 mb-2">Current image URL: {values.coverImageUrl}</p>
+        )}
         <div
-          className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
+          className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
         >
@@ -281,12 +322,17 @@ function DetailsStep() {
                 <img
                   src={previewUrl}
                   alt="Cover preview"
-                  className="mx-auto h-32 w-auto object-cover"
+                  className="mx-auto h-40 w-auto object-cover"
+                  onError={(e) => {
+                    console.error('Image failed to load:', previewUrl);
+                    e.target.onerror = null;
+                    e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="200" viewBox="0 0 150 200" fill="none"><rect width="150" height="200" fill="%23E5E7EB"/><text x="75" y="100" font-family="Arial" font-size="20" font-weight="bold" text-anchor="middle" fill="%234B5563">No Cover</text></svg>`;
+                  }}
                 />
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
+                  className="absolute top-0 right-0 -mt-2 -mr-2 bg-black text-white rounded-full p-1"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -312,7 +358,7 @@ function DetailsStep() {
                 <div className="flex text-sm text-gray-600">
                   <label
                     htmlFor="file-upload"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                    className="relative cursor-pointer bg-white rounded-md font-medium text-black hover:text-gray-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-gray-500"
                   >
                     <span>Upload a file</span>
                     <input
@@ -338,49 +384,79 @@ function DetailsStep() {
   );
 }
 
-function RelationsStep({ publishers, authors, genres, setFieldValue }) {
+function PublisherStep({ publishers }) {
   const [publisherMode, setPublisherMode] = useState('select');
-  const [authorMode, setAuthorMode] = useState('select');
-  const [genreMode, setGenreMode] = useState('select');
+  const { setFieldValue, values } = useFormikContext();
+  const [addedPublisher, setAddedPublisher] = useState(null);
 
-  // Handle mode changes
+  // Initialize component state based on form values
   useEffect(() => {
-    if (publisherMode === 'select') {
-      setFieldValue('newPublisher', null);
-    } else {
-      setFieldValue('publisherId', '');
+    // Check if we have a publisherId set (existing publisher selected)
+    if (values.publisherId) {
+      setPublisherMode('select');
+    } 
+    // Check if we have a new publisher that was being created or was confirmed
+    else if (values.newPublisher?.name) {
+      // If it was confirmed, show as added
+      if (values.newPublisher._isConfirmed) {
+        setAddedPublisher({
+          name: values.newPublisher.name,
+          description: values.newPublisher.description || ''
+        });
+        setPublisherMode('added');
+      } 
+      // Otherwise, keep in creation mode
+      else {
+        setPublisherMode('create');
+      }
     }
-  }, [publisherMode, setFieldValue]);
+  }, []);
 
+  // DON'T reset publisher data when changing modes - this caused data loss
   useEffect(() => {
-    if (authorMode === 'select') {
-      setFieldValue('newAuthor', null);
-    } else {
-      setFieldValue('authorIds', []);
+    // We only need to clear opposite data when switching modes
+    // But KEEP the data that was entered
+    if (publisherMode === 'select' && addedPublisher) {
+      // Clear added publisher display if we switch to select mode
+      setAddedPublisher(null);
     }
-  }, [authorMode, setFieldValue]);
+  }, [publisherMode, addedPublisher]);
 
-  useEffect(() => {
-    if (genreMode === 'select') {
-      setFieldValue('newGenre', null);
-    } else {
-      setFieldValue('genreIds', []);
+  // Handle adding a new publisher
+  const handleAddPublisher = (e) => {
+    // Prevent form submission
+    if (e) e.preventDefault();
+    
+    if (values.newPublisher?.name) {
+      // Store the newly added publisher for display
+      setAddedPublisher({
+        name: values.newPublisher.name,
+        description: values.newPublisher.description || ''
+      });
+      
+      // Mark the publisher as explicitly confirmed
+      setFieldValue('newPublisher', {
+        ...values.newPublisher,
+        _isConfirmed: true
+      });
+      
+      // Switch to added mode to show the added publisher
+      setPublisherMode('added');
     }
-  }, [genreMode, setFieldValue]);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Publisher Section */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+    <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <label className="block text-sm font-medium text-gray-700">Publisher</label>
+        <h3 className="text-lg font-medium text-gray-800">Publisher Information</h3>
+        {!addedPublisher && (
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setPublisherMode('select')}
               className={`px-3 py-1 text-sm rounded-md ${
                 publisherMode === 'select'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -391,21 +467,50 @@ function RelationsStep({ publishers, authors, genres, setFieldValue }) {
               onClick={() => setPublisherMode('create')}
               className={`px-3 py-1 text-sm rounded-md ${
                 publisherMode === 'create'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              Create New
+              Add New
             </button>
           </div>
+        )}
         </div>
 
-        {publisherMode === 'select' ? (
+      {addedPublisher ? (
+        <div className="p-4 border rounded-md bg-gray-50">
+          <div className="flex justify-between items-start">
           <div>
+              <h4 className="font-medium text-lg">{addedPublisher.name}</h4>
+              {addedPublisher.description && (
+                <p className="text-gray-600 mt-1">{addedPublisher.description}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setAddedPublisher(null);
+                setPublisherMode('select');
+                setFieldValue('newPublisher', null);
+              }}
+              className="text-gray-600 hover:text-black"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-3 text-sm text-gray-500">
+            <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">New Publisher Added</span>
+          </div>
+        </div>
+      ) : publisherMode === 'select' ? (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Select Publisher</label>
             <Field
               name="publisherId"
               as="select"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
             >
               <option value="">Select a publisher</option>
               {publishers.map(publisher => (
@@ -419,38 +524,143 @@ function RelationsStep({ publishers, authors, genres, setFieldValue }) {
         ) : (
           <div className="space-y-3">
             <div>
+            <label className="block text-sm font-medium text-gray-700">Publisher Name</label>
               <Field
                 name="newPublisher.name"
                 type="text"
-                placeholder="Publisher Name"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
               />
               <ErrorMessage name="newPublisher.name" component="div" className="mt-1 text-sm text-red-600" />
             </div>
             <div>
+            <label className="block text-sm font-medium text-gray-700">Publisher Description</label>
               <Field
                 name="newPublisher.description"
                 as="textarea"
-                placeholder="Publisher Description"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
                 rows={2}
               />
+            </div>
+          <div className="flex justify-end pt-2">
+            <button 
+              type="button"
+              onClick={(e) => handleAddPublisher(e)}
+              className="px-3 py-1 text-sm rounded-md bg-black text-white hover:bg-gray-800 disabled:opacity-50 disabled:bg-gray-400"
+              disabled={!values.newPublisher?.name}
+            >
+              Add Publisher
+            </button>
             </div>
           </div>
         )}
       </div>
+  );
+}
 
-      {/* Authors Section */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+function AuthorsStep({ authors }) {
+  const [authorMode, setAuthorMode] = useState('select');
+  const { setFieldValue, values } = useFormikContext();
+  const [newAuthorFields, setNewAuthorFields] = useState([{ firstName: '', lastName: '', biography: '' }]);
+  const [addedAuthors, setAddedAuthors] = useState([]);
+
+  // Initialize component state based on form values
+  useEffect(() => {
+    // If we have selected existing authors, go to select mode
+    if (values.authorIds && values.authorIds.length > 0) {
+      setAuthorMode('select');
+    }
+    
+    // If we have new authors data being created
+    if (values.newAuthors && values.newAuthors.length > 0) {
+      // Restore the added authors
+      setAddedAuthors([...values.newAuthors]);
+      
+      // Set to create mode if we have added authors
+      setAuthorMode('create');
+      
+      // Don't lose authors in the creation form
+      if (values.newAuthorInProgress) {
+        setNewAuthorFields([...values.newAuthorInProgress]);
+      }
+    }
+  }, []);
+
+  // Track in-progress author entries (not yet added)
+  useEffect(() => {
+    // Save the in-progress author fields to form values
+    setFieldValue('newAuthorInProgress', newAuthorFields);
+  }, [newAuthorFields, setFieldValue]);
+
+  // Don't reset authors when switching modes to prevent data loss
+  useEffect(() => {
+    // We only update form values based on the selected mode
+    // but we don't clear data to prevent loss
+    if (authorMode === 'select') {
+      // Nothing to do - we keep newAuthors in case user switches back
+    } else if (authorMode === 'create') {
+      // Nothing to do - we keep authorIds in case user switches back
+    }
+  }, [authorMode]);
+
+  // Add a new author field
+  const addNewAuthor = () => {
+    setNewAuthorFields([...newAuthorFields, { firstName: '', lastName: '', biography: '' }]);
+  };
+
+  // Remove an author field
+  const removeAuthor = (index) => {
+    const updatedFields = [...newAuthorFields];
+    updatedFields.splice(index, 1);
+    setNewAuthorFields(updatedFields);
+  };
+
+  // Handle adding an author from the form
+  const handleAddAuthor = (index, e) => {
+    // Prevent form submission
+    if (e) e.preventDefault();
+    
+    const author = newAuthorFields[index];
+    if (author.firstName && author.lastName) {
+      // Add the author to our list of added authors
+      const updatedAuthors = [...addedAuthors, author];
+      setAddedAuthors(updatedAuthors);
+      
+      // Remove the author from the editing fields
+      const updatedFields = [...newAuthorFields];
+      updatedFields.splice(index, 1);
+      
+      // If there are no more fields, add an empty one
+      if (updatedFields.length === 0) {
+        updatedFields.push({ firstName: '', lastName: '', biography: '' });
+      }
+      
+      setNewAuthorFields(updatedFields);
+      
+      // Update the form values
+      setFieldValue('newAuthors', updatedAuthors);
+      setFieldValue('newAuthorInProgress', updatedFields);
+    }
+  };
+  
+  // Remove an added author
+  const removeAddedAuthor = (index) => {
+    const updatedAuthors = [...addedAuthors];
+    updatedAuthors.splice(index, 1);
+    setAddedAuthors(updatedAuthors);
+    setFieldValue('newAuthors', updatedAuthors);
+  };
+
+  return (
+    <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <label className="block text-sm font-medium text-gray-700">Authors</label>
+        <h3 className="text-lg font-medium text-gray-800">Author Information</h3>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setAuthorMode('select')}
               className={`px-3 py-1 text-sm rounded-md ${
                 authorMode === 'select'
-                  ? 'bg-blue-600 text-white'
+                ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -461,25 +671,26 @@ function RelationsStep({ publishers, authors, genres, setFieldValue }) {
               onClick={() => setAuthorMode('create')}
               className={`px-3 py-1 text-sm rounded-md ${
                 authorMode === 'create'
-                  ? 'bg-blue-600 text-white'
+                ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              Create New
+            Add New
             </button>
           </div>
         </div>
 
         {authorMode === 'select' ? (
-          <div className="space-y-2">
-            <div className="max-h-48 overflow-y-auto p-2 border rounded-md">
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">Select Authors</label>
+          <div className="max-h-60 overflow-y-auto p-2 border rounded-md">
               {authors.map(author => (
                 <label key={author.authorId} className="flex items-center p-2 hover:bg-gray-50 rounded">
                   <Field
                     type="checkbox"
                     name="authorIds"
                     value={author.authorId.toString()}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-300 text-black focus:ring-gray-500"
                   />
                   <span className="ml-2">{`${author.firstName} ${author.lastName}`}</span>
                 </label>
@@ -488,51 +699,244 @@ function RelationsStep({ publishers, authors, genres, setFieldValue }) {
             <ErrorMessage name="authorIds" component="div" className="mt-1 text-sm text-red-600" />
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-4">
+          {/* Display already added authors */}
+          {addedAuthors.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-medium text-gray-700 mb-2">Added Authors:</h4>
+              <div className="space-y-2">
+                {addedAuthors.map((author, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-3 rounded-md bg-gray-50 border border-gray-200">
               <div>
-                <Field
-                  name="newAuthor.firstName"
-                  type="text"
-                  placeholder="First Name"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-                <ErrorMessage name="newAuthor.firstName" component="div" className="mt-1 text-sm text-red-600" />
-              </div>
-              <div>
-                <Field
-                  name="newAuthor.lastName"
-                  type="text"
-                  placeholder="Last Name"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-                <ErrorMessage name="newAuthor.lastName" component="div" className="mt-1 text-sm text-red-600" />
+                      <span className="font-medium">{author.firstName} {author.lastName}</span>
+                      {author.biography && (
+                        <p className="text-sm text-gray-600 mt-1">{author.biography}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeAddedAuthor(idx)}
+                      className="text-gray-600 hover:text-black"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
+          )}
+
+          {/* Author creation fields */}
+          {newAuthorFields.map((field, index) => (
+            <div key={index} className="p-4 border rounded-md bg-gray-50">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-gray-700">Author #{index + 1}</h4>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={(e) => handleAddAuthor(index, e)}
+                    className="text-gray-600 hover:text-black"
+                    disabled={!field.firstName || !field.lastName}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  {newAuthorFields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeAuthor(index)}
+                      className="text-gray-600 hover:text-black"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">First Name</label>
+                  <input
+                  type="text"
+                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                    value={field.firstName}
+                    onChange={(e) => {
+                      const updatedFields = [...newAuthorFields];
+                      updatedFields[index].firstName = e.target.value;
+                      setNewAuthorFields(updatedFields);
+                    }}
+                  />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                  <input
+                  type="text"
+                    className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                    value={field.lastName}
+                    onChange={(e) => {
+                      const updatedFields = [...newAuthorFields];
+                      updatedFields[index].lastName = e.target.value;
+                      setNewAuthorFields(updatedFields);
+                    }}
+                  />
+              </div>
+            </div>
+              
             <div>
-              <Field
-                name="newAuthor.biography"
-                as="textarea"
-                placeholder="Author Biography"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                rows={3}
-              />
+                <label className="block text-sm font-medium text-gray-700">Biography</label>
+                <textarea
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                  rows={2}
+                  value={field.biography}
+                  onChange={(e) => {
+                    const updatedFields = [...newAuthorFields];
+                    updatedFields[index].biography = e.target.value;
+                    setNewAuthorFields(updatedFields);
+                  }}
+                />
+              </div>
+              <div className="flex justify-end pt-2">
+                <button 
+                  type="button"
+                  onClick={(e) => handleAddAuthor(index, e)}
+                  className="px-3 py-1 text-sm rounded-md bg-black text-white hover:bg-gray-800 disabled:opacity-50 disabled:bg-gray-400"
+                  disabled={!field.firstName || !field.lastName}
+                >
+                  Add Author
+                </button>
+              </div>
+            </div>
+          ))}
+          
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={addNewAuthor}
+              className="px-4 py-2 border border-black text-black rounded-md hover:bg-gray-100"
+            >
+              <span className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Add Another Author
+              </span>
+            </button>
             </div>
           </div>
         )}
       </div>
+  );
+}
 
-      {/* Genres Section */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+function GenresStep({ genres }) {
+  const [genreMode, setGenreMode] = useState('select');
+  const { setFieldValue, values } = useFormikContext();
+  const [newGenreFields, setNewGenreFields] = useState([{ name: '', description: '' }]);
+  const [addedGenres, setAddedGenres] = useState([]);
+
+  // Initialize component state based on form values
+  useEffect(() => {
+    // If we have selected existing genres, go to select mode
+    if (values.genreIds && values.genreIds.length > 0) {
+      setGenreMode('select');
+    }
+    
+    // If we have new genres data being created
+    if (values.newGenres && values.newGenres.length > 0) {
+      // Restore the added genres
+      setAddedGenres([...values.newGenres]);
+      
+      // Set to create mode if we have added genres
+      setGenreMode('create');
+      
+      // Don't lose genres in the creation form
+      if (values.newGenreInProgress) {
+        setNewGenreFields([...values.newGenreInProgress]);
+      }
+    }
+  }, []);
+
+  // Track in-progress genre entries (not yet added)
+  useEffect(() => {
+    // Save the in-progress genre fields to form values
+    setFieldValue('newGenreInProgress', newGenreFields);
+  }, [newGenreFields, setFieldValue]);
+
+  // Don't reset genres when switching modes to prevent data loss
+  useEffect(() => {
+    // We only update form values based on the selected mode
+    // but we don't clear data to prevent loss
+    if (genreMode === 'select') {
+      // Nothing to do - we keep newGenres in case user switches back
+    } else if (genreMode === 'create') {
+      // Nothing to do - we keep genreIds in case user switches back
+    }
+  }, [genreMode]);
+
+  // Add a new genre field
+  const addNewGenre = () => {
+    setNewGenreFields([...newGenreFields, { name: '', description: '' }]);
+  };
+
+  // Remove a genre field
+  const removeGenre = (index) => {
+    const updatedFields = [...newGenreFields];
+    updatedFields.splice(index, 1);
+    setNewGenreFields(updatedFields);
+  };
+
+  // Handle adding a genre from the form
+  const handleAddGenre = (index, e) => {
+    // Prevent form submission
+    if (e) e.preventDefault();
+    
+    const genre = newGenreFields[index];
+    if (genre.name) {
+      // Add the genre to our list of added genres
+      const updatedGenres = [...addedGenres, genre];
+      setAddedGenres(updatedGenres);
+      
+      // Remove the genre from the editing fields
+      const updatedFields = [...newGenreFields];
+      updatedFields.splice(index, 1);
+      
+      // If there are no more fields, add an empty one
+      if (updatedFields.length === 0) {
+        updatedFields.push({ name: '', description: '' });
+      }
+      
+      setNewGenreFields(updatedFields);
+      
+      // Update the form values
+      setFieldValue('newGenres', updatedGenres);
+      setFieldValue('newGenreInProgress', updatedFields);
+    }
+  };
+  
+  // Remove an added genre
+  const removeAddedGenre = (index) => {
+    const updatedGenres = [...addedGenres];
+    updatedGenres.splice(index, 1);
+    setAddedGenres(updatedGenres);
+    setFieldValue('newGenres', updatedGenres);
+  };
+
+  return (
+    <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <label className="block text-sm font-medium text-gray-700">Genres</label>
+        <h3 className="text-lg font-medium text-gray-800">Genre Information</h3>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setGenreMode('select')}
               className={`px-3 py-1 text-sm rounded-md ${
                 genreMode === 'select'
-                  ? 'bg-blue-600 text-white'
+                ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -543,25 +947,26 @@ function RelationsStep({ publishers, authors, genres, setFieldValue }) {
               onClick={() => setGenreMode('create')}
               className={`px-3 py-1 text-sm rounded-md ${
                 genreMode === 'create'
-                  ? 'bg-blue-600 text-white'
+                ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              Create New
+            Add New
             </button>
           </div>
         </div>
 
         {genreMode === 'select' ? (
-          <div className="space-y-2">
-            <div className="max-h-48 overflow-y-auto p-2 border rounded-md">
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">Select Genres</label>
+          <div className="max-h-60 overflow-y-auto p-2 border rounded-md">
               {genres.map(genre => (
                 <label key={genre.genreId} className="flex items-center p-2 hover:bg-gray-50 rounded">
                   <Field
                     type="checkbox"
                     name="genreIds"
                     value={genre.genreId.toString()}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-300 text-black focus:ring-gray-500"
                   />
                   <span className="ml-2">{genre.name}</span>
                 </label>
@@ -570,34 +975,172 @@ function RelationsStep({ publishers, authors, genres, setFieldValue }) {
             <ErrorMessage name="genreIds" component="div" className="mt-1 text-sm text-red-600" />
           </div>
         ) : (
-          <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Display already added genres */}
+          {addedGenres.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-medium text-gray-700 mb-2">Added Genres:</h4>
+              <div className="space-y-2">
+                {addedGenres.map((genre, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-3 rounded-md bg-gray-50 border border-gray-200">
             <div>
-              <Field
-                name="newGenre.name"
+                      <span className="font-medium">{genre.name}</span>
+                      {genre.description && (
+                        <p className="text-sm text-gray-600 mt-1">{genre.description}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeAddedGenre(idx)}
+                      className="text-gray-600 hover:text-black"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Genre creation fields */}
+          {newGenreFields.map((field, index) => (
+            <div key={index} className="p-4 border rounded-md bg-gray-50">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-gray-700">Genre #{index + 1}</h4>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={(e) => handleAddGenre(index, e)}
+                    className="text-gray-600 hover:text-black"
+                    disabled={!field.name}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  {newGenreFields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeGenre(index)}
+                      className="text-gray-600 hover:text-black"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700">Genre Name</label>
+                <input
                 type="text"
-                placeholder="Genre Name"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              <ErrorMessage name="newGenre.name" component="div" className="mt-1 text-sm text-red-600" />
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                  value={field.name}
+                  onChange={(e) => {
+                    const updatedFields = [...newGenreFields];
+                    updatedFields[index].name = e.target.value;
+                    setNewGenreFields(updatedFields);
+                  }}
+                />
             </div>
+              
             <div>
-              <Field
-                name="newGenre.description"
-                as="textarea"
-                placeholder="Genre Description"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
                 rows={2}
+                  value={field.description}
+                  onChange={(e) => {
+                    const updatedFields = [...newGenreFields];
+                    updatedFields[index].description = e.target.value;
+                    setNewGenreFields(updatedFields);
+                  }}
               />
             </div>
+              <div className="flex justify-end pt-2">
+                <button 
+                  type="button"
+                  onClick={(e) => handleAddGenre(index, e)}
+                  className="px-3 py-1 text-sm rounded-md bg-black text-white hover:bg-gray-800 disabled:opacity-50 disabled:bg-gray-400"
+                  disabled={!field.name}
+                >
+                  Add Genre
+                </button>
           </div>
-        )}
       </div>
+          ))}
+          
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={addNewGenre}
+              className="px-4 py-2 border border-black text-black rounded-md hover:bg-gray-100"
+            >
+              <span className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Add Another Genre
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, authors, genres }) {
+export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, authors, genres, editingBook }) {
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Initialize form with editing book data or defaults
+  const initialValues = editingBook ? {
+    title: editingBook.title || '',
+    isbn: editingBook.isbn || '',
+    price: editingBook.price || 0,
+    publicationYear: editingBook.publicationYear || new Date().getFullYear(),
+    pageCount: editingBook.pageCount || 1,
+    language: editingBook.language || 'English',
+    format: editingBook.format || 'Paperback',
+    description: editingBook.description || '',
+    coverImageUrl: editingBook.coverImageUrl || '',
+    publisherId: editingBook.publisherId?.toString() || '',
+    authorIds: editingBook.authors?.map(a => a.authorId.toString()) || [],
+    genreIds: editingBook.genres?.map(g => g.genreId.toString()) || [],
+    newPublisher: null,
+    newAuthors: [],
+    newGenres: [],
+    newAuthorInProgress: [{ firstName: '', lastName: '', biography: '' }],
+    newGenreInProgress: [{ name: '', description: '' }],
+    isAwardWinning: editingBook.isAwardWinning || false,
+    status: editingBook.status || 'Published',
+    coverImageFile: null
+  } : {
+    title: '',
+    isbn: '',
+    price: 0,
+    publicationYear: new Date().getFullYear(),
+    pageCount: 1,
+    language: 'English',
+    format: 'Paperback',
+    description: '',
+    coverImageUrl: '',
+    publisherId: '',
+    authorIds: [],
+    genreIds: [],
+    newPublisher: null,
+    newAuthors: [],
+    newGenres: [],
+    newAuthorInProgress: [{ firstName: '', lastName: '', biography: '' }],
+    newGenreInProgress: [{ name: '', description: '' }],
+    isAwardWinning: false,
+    status: 'Published',
+    coverImageFile: null
+  };
 
   if (!isOpen) return null;
 
@@ -607,14 +1150,16 @@ export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, au
     }
   };
 
+  const modalTitle = editingBook ? `Edit Book: ${editingBook.title}` : 'Add New Book';
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-100 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Add New Book</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-xl flex flex-col">
+        <div className="sticky top-0 z-20 bg-black border-b border-gray-300 px-6 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-white">{modalTitle}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            className="text-gray-300 hover:text-white"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -622,94 +1167,86 @@ export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, au
           </button>
         </div>
 
-        <div className="pt-8 pb-4 bg-white border-b border-gray-200">
+        <div className="sticky top-[60px] z-10 pt-8 pb-4 bg-gray-100 border-b border-gray-200">
           <StepIndicator currentStep={currentStep} steps={steps} onStepClick={handleStepClick} />
         </div>
         
         <Formik
-          initialValues={{
-            title: '',
-            isbn: '',
-            price: 0,
-            publicationYear: new Date().getFullYear(),
-            pageCount: 1,
-            language: 'English',
-            format: 'Paperback',
-            description: '',
-            coverImageUrl: '',
-            publisherId: '',
-            authorIds: [],
-            genreIds: [],
-            newPublisher: null,
-            newAuthor: null,
-            newGenre: null,
-            isAwardWinning: false,
-            status: 'Published',
-            coverImageFile: null
-          }}
+          initialValues={initialValues}
           validationSchema={AddBookSchema}
-          onSubmit={(values, formikHelpers) => {
-            // Convert authorIds and genreIds to numbers
-            const processedValues = {
-              ...values,
-              authorIds: values.authorIds.map(id => Number(id)),
-              genreIds: values.genreIds.map(id => Number(id)),
-              publisherId: Number(values.publisherId)
-            };
-            onSubmit(processedValues, formikHelpers);
+          onSubmit={async (values, formikHelpers) => {
+            const { setSubmitting } = formikHelpers;
+            try {
+              // Process the form data
+              const processedValues = {
+                ...values,
+                authorIds: values.authorIds.map(id => Number(id)),
+                genreIds: values.genreIds.map(id => Number(id)),
+                publisherId: values.publisherId ? Number(values.publisherId) : null
+              };
+              
+              // Add bookId if editing
+              if (editingBook) {
+                processedValues.bookId = editingBook.bookId;
+              }
+              
+              // Submit the data
+              await onSubmit(processedValues, formikHelpers);
+            } catch (error) {
+              console.error("Form submission error:", error);
+              setSubmitting(false);
+            }
           }}
+          enableReinitialize
         >
-          {({ setFieldValue, isValid, dirty }) => (
-            <Form className="p-6">
+          {({ isSubmitting }) => (
+            <Form className="p-6 flex-grow overflow-y-auto">
               <div className="min-h-[400px]">
                 {currentStep === 0 && <BasicInfoStep />}
                 {currentStep === 1 && <DetailsStep />}
-                {currentStep === 2 && (
-                  <RelationsStep
-                    publishers={publishers}
-                    authors={authors}
-                    genres={genres}
-                    setFieldValue={setFieldValue}
-                  />
-                )}
+                {currentStep === 2 && <PublisherStep publishers={publishers} />}
+                {currentStep === 3 && <AuthorsStep authors={authors} />}
+                {currentStep === 4 && <GenresStep genres={genres} />}
               </div>
 
-              <div className="flex justify-between pt-6 border-t mt-6">
+              <div className="mt-8 pt-5 border-t border-gray-200 flex justify-between">
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                  className={`px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    currentStep === 0 ? 'invisible' : ''
-                  }`}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 rounded-md border border-gray-300"
+                  onClick={currentStep === 0 ? onClose : () => setCurrentStep(step => step - 1)}
                 >
-                  Previous
+                  {currentStep === 0 ? 'Cancel' : 'Previous'}
                 </button>
-                <div className="flex gap-3">
+                {currentStep < 4 ? (
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Cancel
-                  </button>
-                  {currentStep < steps.length - 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(currentStep + 1)}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    onClick={(e) => {
+                      e.preventDefault(); // Prevent any default form submission
+                      setCurrentStep(step => step + 1);
+                    }}
+                    className="ml-3 inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 rounded-md"
                     >
                       Next
                     </button>
                   ) : (
                     <button
                       type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!isValid || !dirty}
-                    >
-                      Add Book
+                    disabled={isSubmitting}
+                    className="ml-3 inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      editingBook ? 'Update Book' : 'Save Book'
+                    )}
                     </button>
                   )}
-                </div>
               </div>
             </Form>
           )}

@@ -3,16 +3,11 @@ using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
 
-namespace BookNook.Services
+namespace BookNook.Services.Cloudinary
 {
-    public interface ICloudinaryService
-    {
-        Task<string> UploadImageAsync(IFormFile file);
-    }
-
     public class CloudinaryService : ICloudinaryService
     {
-        private readonly Cloudinary _cloudinary;
+        private readonly CloudinaryDotNet.Cloudinary _cloudinary;
 
         public CloudinaryService(IOptions<CloudinarySettings> config)
         {
@@ -21,7 +16,7 @@ namespace BookNook.Services
                 config.Value.ApiKey,
                 config.Value.ApiSecret
             );
-            _cloudinary = new Cloudinary(acc);
+            _cloudinary = new CloudinaryDotNet.Cloudinary(acc);
         }
 
         public async Task<string> UploadImageAsync(IFormFile file)

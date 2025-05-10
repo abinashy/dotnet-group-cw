@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using BookNook.Services;
+using BookNook.Services.Cloudinary;
 
 namespace BookNook.Controllers
 {
@@ -17,6 +17,7 @@ namespace BookNook.Controllers
             _cloudinaryService = cloudinaryService;
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost("Image")]
         [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> UploadImage([FromForm] IFormFile file)

@@ -1,4 +1,4 @@
-using BookNook.Services;
+using BookNook.Services.Auth;
 using BookNook.DTOs.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;

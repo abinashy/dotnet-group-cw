@@ -2,7 +2,7 @@ using BookNook.DTOs.Books;
 using BookNook.Entities;
 using BookNook.Repositories;
 
-namespace BookNook.Services
+namespace BookNook.Services.Books
 {
     public class BookService : IBookService
     {
