@@ -19,7 +19,6 @@ namespace BookNook.Controllers
 
         [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost("Image")]
-        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
         {
             try
