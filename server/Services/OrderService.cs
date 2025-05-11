@@ -36,7 +36,8 @@ namespace BookNook.Services
                 throw new Exception("User not found");
 
             // Calculate total amount and apply discounts
-            decimal totalAmount = 0;
+            decimal totalAmount = 0; // sum of original prices
+            decimal perBookDiscountAmount = 0; // sum of all per-book discounts
             var orderItems = new List<OrderItem>();
 
             foreach (var item in orderDto.Items)
@@ -60,9 +61,11 @@ namespace BookNook.Services
                     .OrderByDescending(d => d.DiscountPercentage)
                     .FirstOrDefaultAsync();
                 decimal unitPrice = book.Price;
+                decimal itemDiscount = 0;
                 if (discount != null)
                 {
                     unitPrice = book.Price * (1 - discount.DiscountPercentage / 100);
+                    itemDiscount = (book.Price - unitPrice) * item.Quantity;
                 }
 
                 var orderItem = new OrderItem
@@ -73,18 +76,20 @@ namespace BookNook.Services
                 };
 
                 orderItems.Add(orderItem);
-                totalAmount += unitPrice * item.Quantity;
+                totalAmount += book.Price * item.Quantity; // original price
+                perBookDiscountAmount += itemDiscount;
 
                 // Update book stock
                 book.Inventory.Quantity -= item.Quantity;
             }
 
-            decimal discountAmount = 0;
+            decimal discountAmount = perBookDiscountAmount;
 
-            // Apply 5% discount for 5+ books
+            // Apply 5% discount for 5+ books (on original total)
             if (orderItems.Sum(i => i.Quantity) >= 5)
             {
-                discountAmount = totalAmount * 0.05m;
+                var globalDiscount = totalAmount * 0.05m;
+                discountAmount += globalDiscount;
             }
 
             // Apply 10% stackable discount if eligible (10+ successful orders)
@@ -92,7 +97,8 @@ namespace BookNook.Services
                 .CountAsync(o => o.UserId == userId && o.Status == "Completed");
             if (successfulOrders >= 10)
             {
-                discountAmount += totalAmount * 0.10m;
+                var globalDiscount = totalAmount * 0.10m;
+                discountAmount += globalDiscount;
             }
 
             // Before creating the Order, add:
