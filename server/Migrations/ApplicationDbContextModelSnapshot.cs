@@ -94,7 +94,7 @@ namespace BookNook.Migrations
                         {
                             AuthorId = 1,
                             Biography = "Seed author for testing.",
-                            CreatedAt = new DateTime(2025, 5, 6, 20, 58, 56, 422, DateTimeKind.Utc).AddTicks(8080),
+                            CreatedAt = new DateTime(2025, 5, 11, 13, 29, 54, 627, DateTimeKind.Utc).AddTicks(7471),
                             FirstName = "John",
                             LastName = "Doe"
                         });
@@ -128,6 +128,11 @@ namespace BookNook.Migrations
                         .HasMaxLength(13)
                         .HasColumnType("character varying(13)");
 
+                    b.Property<bool>("IsAwardWinning")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Language")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -144,6 +149,13 @@ namespace BookNook.Migrations
 
                     b.Property<int>("PublisherId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Published");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -166,11 +178,13 @@ namespace BookNook.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Format = "Paperback",
                             ISBN = "9780000000001",
+                            IsAwardWinning = false,
                             Language = "English",
                             PageCount = 250,
                             Price = 19.99m,
                             PublicationYear = 2023,
                             PublisherId = 1,
+                            Status = "Published",
                             Title = "The BookNook Story"
                         },
                         new
@@ -179,11 +193,13 @@ namespace BookNook.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Format = "Hardcover",
                             ISBN = "9780000000002",
+                            IsAwardWinning = true,
                             Language = "English",
                             PageCount = 180,
                             Price = 14.99m,
                             PublicationYear = 2022,
                             PublisherId = 2,
+                            Status = "Published",
                             Title = "Staff Picks Vol. 1"
                         },
                         new
@@ -192,11 +208,13 @@ namespace BookNook.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Format = "eBook",
                             ISBN = "9780000000003",
+                            IsAwardWinning = false,
                             Language = "English",
                             PageCount = 320,
                             Price = 29.99m,
                             PublicationYear = 2024,
                             PublisherId = 1,
+                            Status = "Upcoming",
                             Title = "Learning ASP.NET Core"
                         });
                 });
@@ -626,19 +644,23 @@ namespace BookNook.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("text");
 
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("ReviewDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("ReviewId");
 
                     b.HasIndex("BookId");
+
+                    b.HasIndex("OrderId");
 
                     b.ToTable("Reviews");
                 });
@@ -807,7 +829,7 @@ namespace BookNook.Migrations
                         {
                             Id = 1L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "3f6e032f-a508-47ec-b86f-756fe2ebdba0",
+                            ConcurrencyStamp = "2b35b38a-3957-436e-8158-85ca3995c1f7",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@booknook.com",
                             EmailConfirmed = true,
@@ -817,9 +839,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@BOOKNOOK.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAECMiV/N61p5lgGDxEw/eYESpwqLseoWrvU3BGdSiCy/rLkxVcC4ykmLHq0f7S31ZZA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEHmXGEjv23HUzl2KHvhjSKek/Zs5MTikuMf9TQIRiAUDkUbF5uqRJEVEWRN2jlVzrw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "febd413d-e258-4e7d-9593-3358e6eccdf2",
+                            SecurityStamp = "2a949636-630a-4021-a49d-2d88455e8a1f",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -827,7 +849,7 @@ namespace BookNook.Migrations
                         {
                             Id = 2L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "88276dd9-7717-42c9-9527-70aa9dc9d859",
+                            ConcurrencyStamp = "1344a5bb-b213-4299-855f-c5966fb0c706",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff1@booknook.com",
                             EmailConfirmed = true,
@@ -837,9 +859,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF1@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF1",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDZ8XtVmQN/4TkZ2JUZN+xk3dif2L0DClfbD0BiBFuptXluZtdNqUCByKit0Zx6Dvw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFBHpm6dGbGXmJVAoDT0B51fB1DtmfbHbxq15h1D+X7G+GNQ8u0P+CIP3YWJwtZnyA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "2b9dc5c9-b8ce-4cbf-856a-2eabb2c20188",
+                            SecurityStamp = "dbbf4615-ab32-4c21-aa77-323da6aa3766",
                             TwoFactorEnabled = false,
                             UserName = "staff1"
                         },
@@ -847,7 +869,7 @@ namespace BookNook.Migrations
                         {
                             Id = 3L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "bd4ee88f-bb18-472a-a13b-fed4aefaddb4",
+                            ConcurrencyStamp = "a4b76ada-c3d0-4bee-bf42-c455f05ca3c5",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff2@booknook.com",
                             EmailConfirmed = true,
@@ -857,9 +879,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF2@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF2",
-                            PasswordHash = "AQAAAAIAAYagAAAAEIlcRkohdiqR5jOu7o2uq9b7SUdY4ODNCRVJMvIxOj1tVWIkxGWno9KIsH7yaQW6Lw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECFF+gU2ZUOjiPyiixTmda9XzHO9ISHXebhlwGsCMQqHAqXCiDRJiEiOrgdJruog+Q==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "428597a2-09d6-4721-8abb-9f40e9d657e0",
+                            SecurityStamp = "7fd94802-70e6-481a-abfb-c40a00bed3d8",
                             TwoFactorEnabled = false,
                             UserName = "staff2"
                         });
@@ -1146,7 +1168,15 @@ namespace BookNook.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BookNook.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Book");
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("BookNook.Entities.ShoppingCart", b =>

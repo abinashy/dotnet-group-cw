@@ -25,7 +25,7 @@ const OrderDetailsModal = ({ order, show, onClose, onOrderCompleted }) => {
     }
     setLoading(true);
     try {
-      const response = await axios.put(`http://localhost:5124/api/order/${order.orderId}/complete`, { claimCode: claimInput.trim().toUpperCase() }, {
+      await axios.put(`http://localhost:5124/api/order/${order.orderId}/complete`, { claimCode: claimInput.trim().toUpperCase() }, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

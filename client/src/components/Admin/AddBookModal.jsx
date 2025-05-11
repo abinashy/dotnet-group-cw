@@ -459,6 +459,7 @@ function PublisherStep({ publishers }) {
                   ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
+              disabled={!!values.newPublisher?.name}
             >
               Select Existing
             </button>
@@ -470,6 +471,7 @@ function PublisherStep({ publishers }) {
                   ? 'bg-black text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
+              disabled={!!values.publisherId}
             >
               Add New
             </button>
@@ -510,7 +512,8 @@ function PublisherStep({ publishers }) {
             <Field
               name="publisherId"
               as="select"
-            className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+              disabled={publisherMode === 'create' || !!values.newPublisher?.name}
             >
               <option value="">Select a publisher</option>
               {publishers.map(publisher => (
@@ -1180,6 +1183,7 @@ export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, au
               // Process the form data
               const processedValues = {
                 ...values,
+                isAwardWinning: !!values.isAwardWinning, // always boolean
                 authorIds: values.authorIds.map(id => Number(id)),
                 genreIds: values.genreIds.map(id => Number(id)),
                 publisherId: values.publisherId ? Number(values.publisherId) : null

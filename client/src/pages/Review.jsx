@@ -47,7 +47,7 @@ const Review = () => {
           rating: 0,
           review: ''
         })));
-      } catch (error) {
+      } catch {
         setOrder(null);
       }
     };
@@ -77,7 +77,7 @@ const Review = () => {
       });
       setSuccess(true);
       setTimeout(() => navigate('/myorders'), 2000);
-    } catch (error) {
+    } catch {
       alert('Failed to submit reviews.');
     } finally {
       setSubmitting(false);

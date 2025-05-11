@@ -18,6 +18,8 @@ namespace BookNook.Controllers
         [HttpPost]
         public async Task<ActionResult<BookResponseDTO>> CreateBook([FromBody] CreateBookDTO createBookDTO)
         {
+            // Log the incoming DTO
+            Console.WriteLine("[BooksController] Incoming CreateBookDTO: " + System.Text.Json.JsonSerializer.Serialize(createBookDTO));
             try
             {
                 var book = await _bookService.CreateBookAsync(createBookDTO);

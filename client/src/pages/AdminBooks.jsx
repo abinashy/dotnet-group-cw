@@ -71,85 +71,33 @@ export default function AdminBooks() {
 
   const handleAddBook = async (values, { setSubmitting, resetForm }) => {
     try {
-      console.log('Form values submitted:', values);
-      
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
-      console.log('Auth token available:', token ? 'Yes (length: ' + token.length + ')' : 'No');
 
-      // Determine if we're editing or adding a new book
-      const isEditing = values.bookId != null;
-      console.log('Is editing existing book:', isEditing, 'Book ID:', values.bookId);
+      let coverImageUrl = values.coverImageUrl;
+      let finalPublisherId = values.publisherId;
 
-      let coverImageUrl = values.coverImageUrl || '';
+      // Handle cover image upload if a new file is selected
       if (values.coverImageFile) {
-        console.log('Uploading new cover image...');
-        try {
-          const formData = new FormData();
-          formData.append('file', values.coverImageFile);
+        const formData = new FormData();
+        formData.append('file', values.coverImageFile);
 
-          // Log the request headers and token info for debugging
-          console.log('Upload request headers:', {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${token.substring(0, 10)}...` // Log part of token for security
-          });
-          
-          // Check if the token has the right format (Bearer token) 
-          if (!token.startsWith('Bearer ')) {
-            console.log('Adding Bearer prefix to token');
-            // Ensure the token has the Bearer prefix
-            const authToken = `Bearer ${token}`;
-            
-            const uploadResponse = await axios.post('http://localhost:5124/api/Upload/Image', formData, {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': authToken
-              }
-            });
-            coverImageUrl = uploadResponse.data.url;
-          } else {
-            // Token already has Bearer prefix
-            const uploadResponse = await axios.post('http://localhost:5124/api/Upload/Image', formData, {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': token
-              }
-            });
-            coverImageUrl = uploadResponse.data.url;
-          }
-          
-          console.log('New cover image URL:', coverImageUrl);
-        } catch (uploadError) {
-          console.error('Image upload failed:', uploadError);
-          console.error('Upload response:', uploadError.response?.status, uploadError.response?.statusText);
-          console.error('Upload error details:', uploadError.response?.data);
-          
-          // Log more specific error information for debugging
-          if (uploadError.response?.status === 401) {
-            console.error('Authentication failed for image upload. Token might be invalid or expired.');
-            // Use the existing image URL if editing, or continue without an image if creating new
-            if (isEditing && values.coverImageUrl) {
-              console.warn('Continuing with the existing cover image URL');
-              coverImageUrl = values.coverImageUrl;
-            } else {
-              console.warn('Continuing with book save without image');
+        const uploadResponse = await axios.post(
+          'http://localhost:5124/api/Upload/Image',
+          formData,
+          {
+            headers: { 
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${token}`
             }
-          } else {
-            console.warn('Continuing with book save without new image');
           }
-        }
-      } else {
-        console.log('Using existing cover image URL:', coverImageUrl);
+        );
+        coverImageUrl = uploadResponse.data.url;
       }
 
-      // Create new entities if needed
-      let finalPublisherId = values.publisherId;
-      let finalAuthorIds = [...values.authorIds];
-      let finalGenreIds = [...values.genreIds];
-
-      // Handle new publisher
+      // Handle new publisher if provided
       if (values.newPublisher?.name) {
         const publisherResponse = await axios.post('http://localhost:5124/api/Publishers', {
           name: values.newPublisher.name,
@@ -157,8 +105,12 @@ export default function AdminBooks() {
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        finalPublisherId = publisherResponse.data.publisherId;
+        finalPublisherId = publisherResponse.data.publisherId.toString();
       }
+
+      // Create arrays to store all author and genre creation promises
+      const authorPromises = [];
+      const genrePromises = [];
 
       // Handle new authors
       if (values.newAuthors && values.newAuthors.length > 0) {
@@ -166,14 +118,15 @@ export default function AdminBooks() {
           // Skip empty author entries
           if (!author.firstName || !author.lastName) continue;
           
-        const authorResponse = await axios.post('http://localhost:5124/api/Authors', {
-            firstName: author.firstName,
-            lastName: author.lastName,
-            biography: author.biography
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-          finalAuthorIds.push(authorResponse.data.authorId.toString());
+          authorPromises.push(
+            axios.post('http://localhost:5124/api/Authors', {
+              firstName: author.firstName,
+              lastName: author.lastName,
+              biography: author.biography
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          );
         }
       }
 
@@ -183,15 +136,33 @@ export default function AdminBooks() {
           // Skip empty genre entries
           if (!genre.name) continue;
           
-        const genreResponse = await axios.post('http://localhost:5124/api/Genres', {
-            name: genre.name,
-            description: genre.description
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-          finalGenreIds.push(genreResponse.data.genreId.toString());
+          genrePromises.push(
+            axios.post('http://localhost:5124/api/Genres', {
+              name: genre.name,
+              description: genre.description
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          );
         }
       }
+
+      // Wait for all author and genre creations to complete
+      const [authorResponses, genreResponses] = await Promise.all([
+        Promise.all(authorPromises),
+        Promise.all(genrePromises)
+      ]);
+
+      // Collect all IDs
+      const finalAuthorIds = [
+        ...(values.authorIds || []),
+        ...authorResponses.map(response => response.data.authorId.toString())
+      ];
+
+      const finalGenreIds = [
+        ...(values.genreIds || []),
+        ...genreResponses.map(response => response.data.genreId.toString())
+      ];
 
       // Prepare the book data
       const bookData = {
@@ -213,42 +184,28 @@ export default function AdminBooks() {
 
       console.log('Book data being sent to API:', bookData);
 
-      if (isEditing) {
-        // Update existing book
-        console.log(`Updating book with ID ${values.bookId}...`);
-        try {
-          const response = await axios.put(`http://localhost:5124/api/Books/${values.bookId}`, bookData, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          console.log('Update response:', response.data);
-        } catch (updateError) {
-          console.error('Error updating book:', updateError.response?.data || updateError.message);
-          throw new Error(`Failed to update book: ${updateError.response?.data?.message || updateError.message}`);
-        }
-      } else {
-        // Create new book
-        console.log('Creating new book...');
-        try {
-          const response = await axios.post('http://localhost:5124/api/Books', bookData, {
+      // Create or update the book
+      const isEditing = !!values.bookId;
+      const url = isEditing 
+        ? `http://localhost:5124/api/Books/${values.bookId}`
+        : 'http://localhost:5124/api/Books';
+      
+      const method = isEditing ? 'put' : 'post';
+      
+      console.log(isEditing ? 'Updating existing book...' : 'Creating new book...');
+      
+      await axios[method](url, bookData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-          console.log('Create response:', response.data);
-        } catch (createError) {
-          console.error('Error creating book:', createError.response?.data || createError.message);
-          throw new Error(`Failed to create book: ${createError.response?.data?.message || createError.message}`);
-        }
-      }
 
-      console.log('Book saved successfully, refreshing data...');
-
-      // Refresh the data
+      // Refresh the books list
       const [booksRes, publishersRes, authorsRes, genresRes] = await Promise.all([
         axios.get('http://localhost:5124/api/Books'),
         axios.get('http://localhost:5124/api/Publishers'),
         axios.get('http://localhost:5124/api/Authors'),
         axios.get('http://localhost:5124/api/Genres')
       ]);
-
+      
       console.log('New books data:', booksRes.data);
       
       // Process books data to include full author and genre information
