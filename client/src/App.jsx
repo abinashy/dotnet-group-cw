@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import LogoutHandler from './components/Auth/LogoutHandler';
+import BooksCatalogue from './pages/BooksCatalogue';
+import BookDetails from './pages/BookDetails';
 import './App.css';
 import Checkout from './pages/Checkout';
 import CartDrawer from './pages/Cart';
@@ -49,6 +51,8 @@ function App() {
           }
         />
         <Route path="/home" element={<Home />} />
+        <Route path="/books" element={<BooksCatalogue />} />
+        <Route path="/books/:id" element={<BookDetails />} />
         <Route path="/logout" element={<LogoutHandler />} />
         <Route
           path="/admin/*"
