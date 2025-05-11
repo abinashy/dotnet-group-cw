@@ -15,51 +15,48 @@ namespace BookNook.Repositories.Cart
             _logger = logger;
         }
 
-        public async Task<Cart?> GetCartByUserIdAsync(int userId)
+        public async Task<ShoppingCart?> GetCartByUserIdAsync(int userId)
         {
-            return await _context.Carts
-                .Include(c => c.CartItems)
+            return await _context.ShoppingCarts
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 
-        public async Task<Cart> CreateCartAsync(int userId)
+        public async Task<ShoppingCart> CreateCartAsync(int userId)
         {
-            var cart = new Cart
+            var cart = new ShoppingCart
             {
                 UserId = userId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                AddedAt = DateTime.UtcNow
             };
-            _context.Carts.Add(cart);
+            _context.ShoppingCarts.Add(cart);
             await _context.SaveChangesAsync();
             return cart;
         }
 
-        public async Task<CartItem?> GetCartItemAsync(int cartId, int bookId)
+        public async Task<ShoppingCart?> GetCartItemAsync(int userId, int bookId)
         {
-            return await _context.CartItems
-                .FirstOrDefaultAsync(ci => ci.CartId == cartId && ci.BookId == bookId);
+            return await _context.ShoppingCarts
+                .FirstOrDefaultAsync(ci => ci.UserId == userId && ci.BookId == bookId);
         }
 
-        public async Task<CartItem> AddCartItemAsync(int cartId, int bookId, int quantity)
+        public async Task<ShoppingCart> AddCartItemAsync(int userId, int bookId, int quantity)
         {
-            var cartItem = new CartItem
+            var cartItem = new ShoppingCart
             {
-                CartId = cartId,
+                UserId = userId,
                 BookId = bookId,
                 Quantity = quantity,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                AddedAt = DateTime.UtcNow
             };
-            _context.CartItems.Add(cartItem);
+            _context.ShoppingCarts.Add(cartItem);
             await _context.SaveChangesAsync();
             return cartItem;
         }
 
-        public async Task UpdateCartItemQuantityAsync(CartItem cartItem, int quantity)
+        public async Task UpdateCartItemQuantityAsync(ShoppingCart cartItem, int quantity)
         {
             cartItem.Quantity = quantity;
-            cartItem.UpdatedAt = DateTime.UtcNow;
+            cartItem.AddedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
 

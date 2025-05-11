@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BookNook.Services.Cart;
-using BookNook.DTOs;
+using BookNook.DTOs.Cart;
 using System.Security.Claims;
 
 namespace BookNook.Controllers

@@ -5,6 +5,8 @@ using BookNook.Services.Cloudinary;
 using BookNook.Repositories;
 using BookNook.Services.BooksCatalogue;
 using BookNook.Repositories.BooksCatalogue;
+using BookNook.Services.Cart;
+using BookNook.Repositories.Cart;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

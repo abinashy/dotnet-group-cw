@@ -23,15 +23,8 @@ namespace BookNook.Services.Cart
                     throw new Exception($"Book with ID {bookId} not found");
                 }
 
-                // Get or create cart
-                var cart = await _cartRepository.GetCartByUserIdAsync(userId);
-                if (cart == null)
-                {
-                    cart = await _cartRepository.CreateCartAsync(userId);
-                }
-
                 // Check if item already exists in cart
-                var cartItem = await _cartRepository.GetCartItemAsync(cart.CartId, bookId);
+                var cartItem = await _cartRepository.GetCartItemAsync(userId, bookId);
                 if (cartItem != null)
                 {
                     // Update quantity if item exists
@@ -40,7 +33,7 @@ namespace BookNook.Services.Cart
                 else
                 {
                     // Add new item to cart
-                    await _cartRepository.AddCartItemAsync(cart.CartId, bookId, quantity);
+                    await _cartRepository.AddCartItemAsync(userId, bookId, quantity);
                 }
             }
             catch (Exception ex)
