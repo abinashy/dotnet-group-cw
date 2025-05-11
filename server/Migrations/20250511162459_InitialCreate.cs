@@ -585,15 +585,15 @@ namespace BookNook.Migrations
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "IsActive", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1L, 0, "2730160b-a3a7-49c3-aadd-d45086a02fa7", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAENdMPgVJGBnpldl2/sbhm4LUlXHwI4JmUM4ouHL4H/zr3Pdrin2Q4I5kBC5NKLsNVA==", null, false, "2b62c209-7a70-4614-9c0f-f8f7efca2fd7", false, "admin" },
-                    { 2L, 0, "10fa109e-66f7-465f-85bd-ce07434351c0", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEGNJDse40bPCfeHWFhQ3oUlWAqt1iCrXrl38vQBHkYCCko1P5MdFEx/AsI3b3TFU4g==", null, false, "6aff93ba-9a7c-4820-9154-2293634ce11d", false, "staff1" },
-                    { 3L, 0, "58397d0f-eb49-4b4e-ba85-d2a5b51d3d64", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEJXYXS+kddgavQ0jUBv01m1r9rBI097eDE/Wf6hIffI4xnCEVYBDyd0VtFOsYrT/Kw==", null, false, "0c15a6b7-028c-4aaa-8b6d-bb292fc49a35", false, "staff2" }
+                    { 1L, 0, "b5d198f0-7233-4813-be7c-53eb350bce5c", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAEL2BqVJfFizn0QCBUR/C7EiYqRz/HWV1j4ZWMuW3VKrk1l6KJbcJ5mV+q63JJkAwwg==", null, false, "efbfd018-47c1-49fe-bc1d-8937b7fa043a", false, "admin" },
+                    { 2L, 0, "26e71828-ba5a-42db-bc5b-5eb31dab7aff", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEF6hU7om3W7brHb395Jv4/8VELKaMg4by1iHZq+nncixEXgJIy6ld0iXM3vhMmgp1A==", null, false, "bd8e1023-5c07-41fc-a7a8-b94278db4a1c", false, "staff1" },
+                    { 3L, 0, "a404f3f5-177b-4138-a5f8-2c62ca3689be", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEJU3AKiTIdgJWqnUmy++YZejsQwDJ5734JfGXGvbO4SoWQ4o2LJD0A9sbBZpgWX6AQ==", null, false, "330c0bd6-0033-4e28-97d5-a92f0e11c83f", false, "staff2" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Authors",
                 columns: new[] { "AuthorId", "Biography", "CreatedAt", "FirstName", "LastName" },
-                values: new object[] { 1, "Seed author for testing.", new DateTime(2025, 5, 11, 14, 1, 6, 220, DateTimeKind.Utc).AddTicks(500), "John", "Doe" });
+                values: new object[] { 1, "Seed author for testing.", new DateTime(2025, 5, 11, 16, 24, 58, 769, DateTimeKind.Utc).AddTicks(6060), "John", "Doe" });
 
             migrationBuilder.InsertData(
                 table: "Genres",
