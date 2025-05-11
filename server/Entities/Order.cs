@@ -9,7 +9,7 @@ namespace BookNook.Entities
         public int OrderId { get; set; }
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public long UserId { get; set; }
 
         public DateTime OrderDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 

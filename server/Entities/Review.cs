@@ -22,8 +22,14 @@ namespace BookNook.Entities
 
         public DateTime ReviewDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
+        [Required]
+        public int OrderId { get; set; }
+
         // Navigation properties
         [ForeignKey("BookId")]
         public virtual Book Book { get; set; } = null!;
+
+        [ForeignKey("OrderId")]
+        public virtual Order Order { get; set; } = null!;
     }
 } 

@@ -1,16 +1,36 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import LoginForm from './components/Auth/LoginForm'
-import RegisterForm from './components/Auth/RegisterForm'
-import AuthLayout from './components/Auth/AuthLayout'
-import Home from './pages/Home'
-import AdminPanel from './pages/AdminPanel'
-import ProtectedRoute from './components/Auth/ProtectedRoute'
-import LogoutHandler from './components/Auth/LogoutHandler'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LoginForm from './components/Auth/LoginForm';
+import RegisterForm from './components/Auth/RegisterForm';
+import AuthLayout from './components/Auth/AuthLayout';
+import Home from './pages/Home';
+import AdminPanel from './pages/AdminPanel';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import LogoutHandler from './components/Auth/LogoutHandler';
+import './App.css';
+import Checkout from './pages/Checkout';
+import CartDrawer from './pages/Cart';
+import Header from './components/Header';
+import React, { useState } from 'react';
+import Confirmation from './pages/Confirmation';
+import MyOrder from './pages/MyOrder';
+import Review from './pages/Review';
+import StaffDashboard from './pages/Staff/StaffDashboard';
+import Footer from './components/Footer';
 
 function App() {
+  const [cartOpen, setCartOpen] = useState(false);
+  const token = localStorage.getItem('token');
+  const isLoggedIn = !!token;
+
   return (
     <Router>
+      <Header onCartClick={() => { 
+        console.log('Cart icon clicked');
+        setCartOpen(true); 
+      }} />
+      {isLoggedIn && (
+        <CartDrawer userId={4} open={cartOpen} onClose={() => setCartOpen(false)} />
+      )}
       <Routes>
         <Route
           path="/login"
@@ -38,11 +58,25 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/confirmation" element={<Confirmation />} />
+        <Route path="/myorders" element={<MyOrder />} />
+        <Route path="/review" element={<Review />} />
+        <Route path="/reviews" element={<Navigate to="/review" />} />
+        <Route 
+          path="/staff" 
+          element={
+            <ProtectedRoute allowedRoles={['Staff']}>
+              <StaffDashboard />
+            </ProtectedRoute>
+          } 
+        />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
+      <Footer />
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
