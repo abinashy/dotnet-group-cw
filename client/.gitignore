@@ -22,3 +22,30 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.DS_Store
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.db
+
+# Temporary or cache files
+*.log
+*.tmp
+*.temp
+*.cache
+
+# Ignore node_modules for the React frontend
+/client/node_modules/
+
+# Ignore build folders for the .NET backend
+/server/bin/
+/server/obj/
+
+# Ignore environment files that might contain sensitive information
+/server/appsettings.Development.json
+
+/server/Migrations/
