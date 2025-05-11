@@ -76,12 +76,8 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Name, user.UserName!),
             new Claim(ClaimTypes.Email, user.Email!),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-<<<<<<< HEAD
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim("UserId", user.Id.ToString()),
-=======
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
->>>>>>> origin/books-catalogue
         };
 
         foreach (var userRole in userRoles)
