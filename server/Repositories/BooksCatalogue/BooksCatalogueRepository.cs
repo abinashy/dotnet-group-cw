@@ -18,6 +18,7 @@ namespace BookNook.Repositories.BooksCatalogue
         public async Task<IEnumerable<Book>> GetBooksAsync(
             string? search,
             List<string>? genres,
+            List<string>? authors,
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,
@@ -27,6 +28,7 @@ namespace BookNook.Repositories.BooksCatalogue
                 .Include(b => b.Publisher)
                 .Include(b => b.BookAuthors).ThenInclude(ba => ba.Author)
                 .Include(b => b.BookGenres).ThenInclude(bg => bg.Genre)
+                .Include(b => b.Inventory)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -45,6 +47,12 @@ namespace BookNook.Repositories.BooksCatalogue
             {
                 var lowerGenres = genres.Select(g => g.ToLower()).ToList();
                 query = query.Where(b => b.BookGenres.Any(bg => lowerGenres.Contains(bg.Genre.Name.ToLower())));
+            }
+
+            if (authors != null && authors.Count > 0)
+            {
+                var lowerAuthors = authors.Select(a => a.ToLower()).ToList();
+                query = query.Where(b => b.BookAuthors.Any(ba => lowerAuthors.Contains((ba.Author.FirstName + " " + ba.Author.LastName).ToLower())));
             }
 
             if (languages != null && languages.Count > 0)

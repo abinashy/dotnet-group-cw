@@ -12,74 +12,71 @@ import './App.css';
 import Checkout from './pages/Checkout';
 import CartDrawer from './pages/Cart';
 import Header from './components/Header';
-import React, { useState } from 'react';
+import React from 'react';
 import Confirmation from './pages/Confirmation';
 import MyOrder from './pages/MyOrder';
 import Review from './pages/Review';
 import StaffDashboard from './pages/Staff/StaffDashboard';
 import Footer from './components/Footer';
+import { CartProvider } from './context/CartContext';
 
 function App() {
-  const [cartOpen, setCartOpen] = useState(false);
   const token = localStorage.getItem('token');
   const isLoggedIn = !!token;
 
   return (
-    <Router>
-      <Header onCartClick={() => { 
-        console.log('Cart icon clicked');
-        setCartOpen(true); 
-      }} />
-      {isLoggedIn && (
-        <CartDrawer userId={4} open={cartOpen} onClose={() => setCartOpen(false)} />
-      )}
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            <AuthLayout>
-              <LoginForm />
-            </AuthLayout>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <AuthLayout>
-              <RegisterForm />
-            </AuthLayout>
-          }
-        />
-        <Route path="/home" element={<Home />} />
-        <Route path="/books" element={<BooksCatalogue />} />
-        <Route path="/books/:id" element={<BookDetails />} />
-        <Route path="/logout" element={<LogoutHandler />} />
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute requiredRole="Admin">
-              <AdminPanel />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/confirmation" element={<Confirmation />} />
-        <Route path="/myorders" element={<MyOrder />} />
-        <Route path="/review" element={<Review />} />
-        <Route path="/reviews" element={<Navigate to="/review" />} />
-        <Route 
-          path="/staff" 
-          element={
-            <ProtectedRoute allowedRoles={['Staff']}>
-              <StaffDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        {/* Redirect root to home */}
-        <Route path="/" element={<Navigate to="/home" />} />
-      </Routes>
-      <Footer />
-    </Router>
+    <CartProvider>
+      <Router>
+        <Header />
+        {isLoggedIn && <CartDrawer />}
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <AuthLayout>
+                <LoginForm />
+              </AuthLayout>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <AuthLayout>
+                <RegisterForm />
+              </AuthLayout>
+            }
+          />
+          <Route path="/home" element={<Home />} />
+          <Route path="/books" element={<BooksCatalogue />} />
+          <Route path="/books/:id" element={<BookDetails />} />
+          <Route path="/logout" element={<LogoutHandler />} />
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute requiredRole="Admin">
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/confirmation" element={<Confirmation />} />
+          <Route path="/myorders" element={<MyOrder />} />
+          <Route path="/review" element={<Review />} />
+          <Route path="/reviews" element={<Navigate to="/review" />} />
+          <Route 
+            path="/staff" 
+            element={
+              <ProtectedRoute allowedRoles={['Staff']}>
+                <StaffDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Redirect root to home */}
+          <Route path="/" element={<Navigate to="/home" />} />
+        </Routes>
+        <Footer />
+      </Router>
+    </CartProvider>
   );
 }
 

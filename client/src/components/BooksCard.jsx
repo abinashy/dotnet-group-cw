@@ -1,10 +1,12 @@
 import React from 'react';
 import AddToCartButton from './Buttons/AddToCartButton';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 
-const BooksCard = ({ book, onAddToCart, onClick }) => {
+const BooksCard = ({ book, onClick }) => {
     const [hover, setHover] = React.useState(false);
     const navigate = useNavigate();
+    const { openCart, refreshCart } = useCart();
 
     const handleAddToCart = async (e) => {
         e.stopPropagation();
@@ -23,7 +25,7 @@ const BooksCard = ({ book, onAddToCart, onClick }) => {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    bookId: book.BookId,
+                    bookId: book.bookId,
                     quantity: 1
                 })
             });
@@ -38,12 +40,16 @@ const BooksCard = ({ book, onAddToCart, onClick }) => {
                 throw new Error('Failed to add to cart');
             }
 
-            alert('Book added to cart!');
+            // Open and refresh the cart
+            await refreshCart();
+            openCart();
         } catch (err) {
             console.error('Error adding to cart:', err);
             alert('Failed to add to cart. Please try again.');
         }
     };
+
+    const isOutOfStock = book.availability === 0;
 
     return (
         <div
@@ -66,34 +72,35 @@ const BooksCard = ({ book, onAddToCart, onClick }) => {
             onClick={onClick}
         >
             <img
-                src={book.CoverImageUrl || 'https://placehold.co/180x260?text=No+Image'}
-                alt={book.Title}
+                src={book.coverImageUrl || 'https://placehold.co/180x260?text=No+Image'}
+                alt={book.title}
                 style={{ width: 180, height: 260, objectFit: 'cover', borderRadius: 6, marginBottom: 16 }}
             />
             <div style={{ fontWeight: 600, fontSize: 16, textAlign: 'center', marginBottom: 4 }}>
-                {book.Title}
+                {book.title}
             </div>
             <div style={{ color: '#555', fontSize: 14, marginBottom: 8, textAlign: 'center' }}>
-                by {book.Authors && book.Authors.length > 0 ? book.Authors.map(a => `${a.FirstName} ${a.LastName}`).join(', ') : 'Unknown Author'}
+                by {book.authors && book.authors.length > 0 ? book.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ') : 'Unknown Author'}
             </div>
             <div style={{ fontWeight: 500, fontSize: 16, marginBottom: 12 }}>
-                Rs. {book.Price}
+                Rs. {book.price}
             </div>
             <AddToCartButton
                 onClick={handleAddToCart}
+                disabled={isOutOfStock}
                 style={{
                     border: '1px solid #1976d2',
-                    background: hover ? '#1976d2' : '#fff',
-                    color: hover ? '#fff' : '#1976d2',
+                    background: isOutOfStock ? '#eee' : (hover ? '#1976d2' : '#fff'),
+                    color: isOutOfStock ? '#888' : (hover ? '#fff' : '#1976d2'),
                     borderRadius: 4,
                     padding: '8px 0',
                     width: '100%',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                     transition: 'background 0.2s, color 0.2s',
                 }}
             >
-                ADD TO CART
+                {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
             </AddToCartButton>
         </div>
     );

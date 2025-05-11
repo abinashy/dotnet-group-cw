@@ -27,7 +27,7 @@ const Footer = () => {
         {/* Brand & Description */}
         <div className="flex-1 mb-8 md:mb-0">
           <div className="flex items-center gap-3 mb-4">
-            <img src="/logo192.png" alt="BookNook Logo" className="w-10 h-10 rounded-full border border-gray-700" />
+            
             <span className="text-2xl font-extrabold text-white tracking-tight">BookNook</span>
           </div>
           <p className="text-gray-300 mb-6 max-w-xs">Your one-stop platform to discover, review, and order your favorite books. Join our community of book lovers today!</p>

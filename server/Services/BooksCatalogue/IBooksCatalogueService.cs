@@ -7,6 +7,7 @@ namespace BookNook.Services.BooksCatalogue
         Task<IEnumerable<BookDto>> GetBooksAsync(
             string? search,
             List<string>? genres,
+            List<string>? authors,
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,

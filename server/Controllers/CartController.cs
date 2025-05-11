@@ -20,8 +20,12 @@ namespace BookNook.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCart([FromQuery] string userId)
         {
+            if (!long.TryParse(userId, out var userIdLong))
+            {
+                return BadRequest("Invalid userId");
+            }
             var cartItems = await _context.ShoppingCarts
-                .Where(c => c.UserId == userId)
+                .Where(c => c.UserId == userIdLong)
                 .Include(c => c.Book)
                     .ThenInclude(b => b.BookAuthors)
                         .ThenInclude(ba => ba.Author)
@@ -51,8 +55,12 @@ namespace BookNook.Controllers
         [HttpGet("checkout")]
         public async Task<IActionResult> GetCheckoutCart([FromQuery] string userId)
         {
+            if (!long.TryParse(userId, out var userIdLong))
+            {
+                return BadRequest("Invalid userId");
+            }
             var checkoutItems = await _context.ShoppingCarts
-                .Where(c => c.UserId == userId)
+                .Where(c => c.UserId == userIdLong)
                 .Include(c => c.Book)
                     .ThenInclude(b => b.BookAuthors)
                         .ThenInclude(ba => ba.Author)
@@ -90,10 +98,38 @@ namespace BookNook.Controllers
         [HttpDelete("clear")]
         public async Task<IActionResult> ClearCart([FromQuery] string userId)
         {
-            var cartItems = _context.ShoppingCarts.Where(c => c.UserId == userId);
+            if (!long.TryParse(userId, out var userIdLong))
+            {
+                return BadRequest("Invalid userId");
+            }
+            var cartItems = _context.ShoppingCarts.Where(c => c.UserId == userIdLong);
             _context.ShoppingCarts.RemoveRange(cartItems);
             await _context.SaveChangesAsync();
             return Ok(new { message = "Cart cleared successfully" });
+        }
+
+        [HttpPatch("item/{cartId}/quantity")]
+        public async Task<IActionResult> UpdateCartItemQuantity(int cartId, [FromBody] int quantity)
+        {
+            var cartItem = await _context.ShoppingCarts.FindAsync(cartId);
+            if (cartItem == null)
+                return NotFound();
+            if (quantity < 1)
+                return BadRequest("Quantity must be at least 1");
+            cartItem.Quantity = quantity;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cart item quantity updated" });
+        }
+
+        [HttpDelete("item/{cartId}")]
+        public async Task<IActionResult> RemoveCartItem(int cartId)
+        {
+            var cartItem = await _context.ShoppingCarts.FindAsync(cartId);
+            if (cartItem == null)
+                return NotFound();
+            _context.ShoppingCarts.Remove(cartItem);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cart item removed" });
         }
     }
 } 

@@ -21,6 +21,7 @@ namespace BookNook.Controllers
         public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks(
             [FromQuery] string? search,
             [FromQuery] List<string>? genres,
+            [FromQuery] List<string>? authors,
             [FromQuery] List<string>? languages,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
@@ -29,10 +30,10 @@ namespace BookNook.Controllers
             try
             {
                 _logger.LogInformation("Received request to fetch books with parameters: " +
-                    "search={Search}, genres={Genres}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}",
-                    search, genres, languages, minPrice, maxPrice, sortPrice);
+                    "search={Search}, genres={Genres}, authors={Authors}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}",
+                    search, genres, authors, languages, minPrice, maxPrice, sortPrice);
 
-                var books = await _service.GetBooksAsync(search, genres, languages, minPrice, maxPrice, sortPrice);
+                var books = await _service.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice);
                 return Ok(books);
             }
             catch (Exception ex)

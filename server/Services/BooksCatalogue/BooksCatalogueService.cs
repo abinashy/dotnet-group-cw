@@ -18,6 +18,7 @@ namespace BookNook.Services.BooksCatalogue
         public async Task<IEnumerable<BookDto>> GetBooksAsync(
             string? search,
             List<string>? genres,
+            List<string>? authors,
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,
@@ -37,7 +38,7 @@ namespace BookNook.Services.BooksCatalogue
                     await _repository.AddSampleDataAsync();
                 }
 
-                var books = await _repository.GetBooksAsync(search, genres, languages, minPrice, maxPrice, sortPrice);
+                var books = await _repository.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice);
                 _logger.LogInformation("Found {Count} books matching the criteria", books.Count());
 
                 return books.Select(b => new BookDto
@@ -68,7 +69,8 @@ namespace BookNook.Services.BooksCatalogue
                         GenreId = bg.Genre.GenreId,
                         Name = bg.Genre.Name,
                         Description = bg.Genre.Description
-                    }).ToList()
+                    }).ToList(),
+                    Availability = b.Inventory != null ? b.Inventory.Quantity : 0
                 });
             }
             catch (Exception ex)

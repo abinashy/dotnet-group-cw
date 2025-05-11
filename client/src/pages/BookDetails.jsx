@@ -36,9 +36,6 @@ const BookDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [reviews, setReviews] = useState([]);
-    const [newReview, setNewReview] = useState('');
-    const [rating, setRating] = useState(0);
-    const [submitting, setSubmitting] = useState(false);
     const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
@@ -49,7 +46,7 @@ const BookDetails = () => {
                 const res = await axios.get(`http://localhost:5124/api/books/${id}`);
                 setBook(res.data);
                 setReviews(res.data.Reviews || []);
-            } catch (err) {
+            } catch {
                 setError('Failed to fetch book details.');
             } finally {
                 setLoading(false);
@@ -57,21 +54,6 @@ const BookDetails = () => {
         };
         fetchBook();
     }, [id]);
-
-    const handleReviewSubmit = async (e) => {
-        e.preventDefault();
-        if (!newReview.trim() || rating === 0) return;
-        setSubmitting(true);
-        setTimeout(() => {
-            setReviews(prev => [
-                { id: Date.now(), text: newReview, rating, user: 'You', date: new Date().toLocaleDateString() },
-                ...prev
-            ]);
-            setNewReview('');
-            setRating(0);
-            setSubmitting(false);
-        }, 600);
-    };
 
     // Quantity handlers
     const handleDecrease = () => {
@@ -86,22 +68,24 @@ const BookDetails = () => {
     if (!book) return null;
 
     // Helper for genres
-    const genres = book.Genres && book.Genres.length > 0
-        ? book.Genres.map(g => g.Name).join(', ')
-        : 'N/A';
-    const authors = book.Authors && book.Authors.length > 0
-        ? book.Authors.map(a => [a.FirstName, a.LastName].filter(Boolean).join(' ')).join(', ')
+    // const genres = book.genres && book.genres.length > 0
+    //     ? book.genres.map(g => g.name).join(', ')
+    //     : 'N/A';
+    const authors = book.authors && book.authors.length > 0
+        ? book.authors.map(a => [a.firstName, a.lastName].filter(Boolean).join(' ')).join(', ')
         : 'Unknown Author';
 
     // Breadcrumbs (simulate)
     const breadcrumbs = [
         { name: 'Home', link: '/' },
-        ...(book.Genres && book.Genres.length > 0 ? book.Genres.map(g => ({ name: g.Name, link: '#' })) : []),
-        { name: book.Title }
+        ...(book.genres && book.genres.length > 0 ? book.genres.map(g => ({ name: g.name, link: '#' })) : []),
+        { name: book.title }
     ];
 
     // Ratings summary
-    const avgRating = reviews.length > 0 ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length) : 0;
+    // const avgRating = reviews.length > 0 ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length) : 0;
+
+    const isOutOfStock = book.availability === 0;
 
     return (
         <div style={{ maxWidth: 1300, margin: '0 auto', padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -119,17 +103,17 @@ const BookDetails = () => {
                 {/* Cover & Genres */}
                 <div style={{ minWidth: 260 }}>
                     <img
-                        src={book.CoverImageUrl || 'https://placehold.co/240x340?text=No+Image'}
-                        alt={book.Title}
+                        src={book.coverImageUrl || 'https://placehold.co/240x340?text=No+Image'}
+                        alt={book.title}
                         style={{ width: 240, height: 340, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
                     />
                     {/* Genres */}
                     <div style={{ marginTop: 18 }}>
                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Genres:</div>
-                        {book.Genres && book.Genres.length > 0 ? (
+                        {book.genres && book.genres.length > 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                {book.Genres.map((g, i) => (
-                                    <a key={g.GenreId} href="#" style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer', fontSize: 15 }}>{g.Name}</a>
+                                {book.genres.map((g) => (
+                                    <a key={g.genreId} href="#" style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer', fontSize: 15 }}>{g.name}</a>
                                 ))}
                             </div>
                         ) : 'N/A'}
@@ -138,9 +122,9 @@ const BookDetails = () => {
                 {/* Main Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <span style={{ fontWeight: 600, fontSize: 16, background: '#f4f6fa', borderRadius: 6, padding: '2px 12px' }}>{book.Format || 'Paper Back'}</span>
+                        <span style={{ fontWeight: 600, fontSize: 16, background: '#f4f6fa', borderRadius: 6, padding: '2px 12px' }}>{book.format || 'Paper Back'}</span>
                     </div>
-                    <h1 style={{ fontWeight: 700, fontSize: 32, margin: 0 }}>{book.Title}</h1>
+                    <h1 style={{ fontWeight: 700, fontSize: 32, margin: 0 }}>{book.title}</h1>
                     <div style={{ fontSize: 18, color: '#444', marginBottom: 8 }}>by {authors}</div>
                     {/* Ratings and Reviews */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
@@ -151,14 +135,14 @@ const BookDetails = () => {
                     {/* Seller */}
                     <div style={{ marginBottom: 8 }}>
                         <span>Sold by <span style={{ color: '#1976d2', fontWeight: 500, cursor: 'pointer' }}>BookNook</span></span>
-                        {book.Stock && book.Stock < 10 && (
-                            <span style={{ color: 'red', marginLeft: 16 }}>Only {book.Stock} item{book.Stock > 1 ? 's' : ''} left in stock!</span>
+                        {book.stock && book.stock < 10 && (
+                            <span style={{ color: 'red', marginLeft: 16 }}>Only {book.stock} item{book.stock > 1 ? 's' : ''} left in stock!</span>
                         )}
                     </div>
                     {/* Description */}
                     <div style={{ margin: '24px 0' }}>
                         <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 8 }}>Description</h2>
-                        <div style={{ color: '#222', fontSize: 17, lineHeight: 1.7, textAlign: 'justify' }}>{book.Description || 'No description available.'}</div>
+                        <div style={{ color: '#222', fontSize: 17, lineHeight: 1.7, textAlign: 'justify' }}>{book.description || 'No description available.'}</div>
                     </div>
                     {/* Other Info */}
                     <div style={{ marginTop: 40, marginLeft: 8 /* adjust as needed to align with description */ }}>
@@ -168,19 +152,19 @@ const BookDetails = () => {
                             <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>Page Count</div>
                                 <FaRegCopy size={28} style={{ marginBottom: 8 }} />
-                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2 }}>{book.PageCount ? `${book.PageCount} Pages` : 'N/A'}</div>
+                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2 }}>{book.pageCount ? `${book.pageCount} Pages` : 'N/A'}</div>
                             </div>
                             {/* ISBN */}
                             <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>ISBN</div>
                                 <BiBarcode size={28} style={{ marginBottom: 8 }} />
-                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2, wordBreak: 'break-all' }}>{book.ISBN || 'N/A'}</div>
+                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2, wordBreak: 'break-all' }}>{book.isbn || 'N/A'}</div>
                             </div>
                             {/* Language */}
                             <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>Language</div>
                                 <FaGlobe size={28} style={{ marginBottom: 8 }} />
-                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2 }}>{book.Language || 'N/A'}</div>
+                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2 }}>{book.language || 'N/A'}</div>
                             </div>
                         </div>
                     </div>
@@ -189,7 +173,7 @@ const BookDetails = () => {
                 <div style={{ minWidth: 300, background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
                     <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
                     <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
-                    <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.Price}</div>
+                    <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
                         <button onClick={handleDecrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>-</button>
                         <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
@@ -198,19 +182,24 @@ const BookDetails = () => {
                     <AddToCartButton
                         onClick={async () => {
                             try {
-                                const token = localStorage.getItem('token');
-                                if (!token) {
-                                    alert('You must be logged in to add to cart.');
+                                if (!quantity || quantity < 1) {
+                                    alert('Please select a valid quantity.');
                                     return;
                                 }
-                                await addToCart({ bookId: book.BookId, quantity });
+                                await addToCart({ bookId: book.bookId, quantity });
                                 alert('Book added to cart!');
-                            } catch (err) {
+                            } catch {
                                 alert('Failed to add to cart.');
                             }
                         }}
+                        disabled={isOutOfStock}
+                        style={{
+                            background: isOutOfStock ? '#eee' : '#1976d2',
+                            color: isOutOfStock ? '#888' : '#fff',
+                            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                        }}
                     >
-                        ADD TO CART
+                        {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
                     </AddToCartButton>
                 </div>
             </div>

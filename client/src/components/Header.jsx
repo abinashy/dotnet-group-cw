@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useCart } from '../context/CartContext';
 
 const parseJwt = (token) => {
   try {
@@ -9,10 +10,11 @@ const parseJwt = (token) => {
   }
 };
 
-const Header = ({ onCartClick }) => {
+const Header = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const isLoggedIn = !!token;
+  const { openCart } = useCart();
   let userRoles = [];
   if (token) {
     const payload = parseJwt(token);
@@ -25,19 +27,15 @@ const Header = ({ onCartClick }) => {
   return (
     <header className="bg-white shadow-lg p-4 flex justify-between items-center sticky top-0 z-50 border-b border-gray-200">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/home')}>
-        <img src="/logo192.png" alt="BookNook Logo" className="w-10 h-10 rounded-full shadow border-2 border-gray-300" />
         <span className="text-3xl font-extrabold text-black tracking-tight drop-shadow">BookNook</span>
       </div>
       <nav className="flex items-center gap-6 text-lg font-medium">
         <Link to="/home" className="hover:text-black transition-colors">Home</Link>
-        <Link to="/explore" className="hover:text-black transition-colors">Books Catalogue</Link>
-        <Link to="/about" className="hover:text-black transition-colors">About Us</Link>
+        <Link to="/books" className="hover:text-black transition-colors">Books</Link>
+        <Link to="/about" className="hover:text-black transition-colors">About</Link>
         {isLoggedIn && (
           <button
-            onClick={() => {
-              console.log('Cart button in header clicked');
-              onCartClick();
-            }}
+            onClick={openCart}
             className="relative ml-2 p-2 rounded-full hover:bg-gray-100 transition shadow-sm border border-gray-200"
             aria-label="Open cart"
           >

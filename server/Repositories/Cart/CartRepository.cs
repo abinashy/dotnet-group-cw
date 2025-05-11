@@ -15,13 +15,13 @@ namespace BookNook.Repositories.Cart
             _logger = logger;
         }
 
-        public async Task<ShoppingCart?> GetCartByUserIdAsync(int userId)
+        public async Task<ShoppingCart?> GetCartByUserIdAsync(long userId)
         {
             return await _context.ShoppingCarts
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 
-        public async Task<ShoppingCart> CreateCartAsync(int userId)
+        public async Task<ShoppingCart> CreateCartAsync(long userId)
         {
             var cart = new ShoppingCart
             {
@@ -33,13 +33,13 @@ namespace BookNook.Repositories.Cart
             return cart;
         }
 
-        public async Task<ShoppingCart?> GetCartItemAsync(int userId, int bookId)
+        public async Task<ShoppingCart?> GetCartItemAsync(long userId, int bookId)
         {
             return await _context.ShoppingCarts
                 .FirstOrDefaultAsync(ci => ci.UserId == userId && ci.BookId == bookId);
         }
 
-        public async Task<ShoppingCart> AddCartItemAsync(int userId, int bookId, int quantity)
+        public async Task<ShoppingCart> AddCartItemAsync(long userId, int bookId, int quantity)
         {
             var cartItem = new ShoppingCart
             {

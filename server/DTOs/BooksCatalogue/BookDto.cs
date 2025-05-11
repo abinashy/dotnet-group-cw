@@ -21,6 +21,7 @@ namespace BookNook.DTOs.BooksCatalogue
         public string PublisherName { get; set; } = string.Empty;
         public List<AuthorDto> Authors { get; set; } = new();
         public List<GenreDto> Genres { get; set; } = new();
+        public int Availability { get; set; } // Stock quantity
     }
 
     public class AuthorDto
