@@ -1,4 +1,4 @@
-using BookNook.DTOs;
+using BookNook.DTOs.BooksCatalogue;
 using BookNook.Repositories.BooksCatalogue;
 using Microsoft.EntityFrameworkCore;
 

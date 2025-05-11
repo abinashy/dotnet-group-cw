@@ -1,6 +1,7 @@
-using System.Text.Json.Serialization;
+using System;
+using System.Collections.Generic;
 
-namespace BookNook.DTOs
+namespace BookNook.DTOs.BooksCatalogue
 {
     public class BookDto
     {
@@ -16,16 +17,10 @@ namespace BookNook.DTOs
         public string? CoverImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-
-        // Publisher information
         public int PublisherId { get; set; }
         public string PublisherName { get; set; } = string.Empty;
-
-        // Authors information
-        public List<AuthorDto> Authors { get; set; } = new List<AuthorDto>();
-
-        // Genres information
-        public List<GenreDto> Genres { get; set; } = new List<GenreDto>();
+        public List<AuthorDto> Authors { get; set; } = new();
+        public List<GenreDto> Genres { get; set; } = new();
     }
 
     public class AuthorDto

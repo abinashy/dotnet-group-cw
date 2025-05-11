@@ -1,4 +1,4 @@
-using BookNook.DTOs;
+using BookNook.DTOs.BooksCatalogue;
 
 namespace BookNook.Services.BooksCatalogue
 {
