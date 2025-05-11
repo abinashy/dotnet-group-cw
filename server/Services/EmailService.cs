@@ -85,17 +85,27 @@ namespace BookNook.Services
                             <tr style='background-color: #f8f9fa;'>
                                 <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Book</th>
                                 <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Quantity</th>
-                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Price</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Original Price</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Discount</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Price Paid</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Savings</th>
                             </tr>";
 
             foreach (var item in order.OrderItems)
             {
                 var book = await _context.Books.FindAsync(item.BookId);
+                var originalPrice = book?.Price ?? item.UnitPrice;
+                var discount = originalPrice > 0 ? (1 - (item.UnitPrice / originalPrice)) * 100 : 0;
+                var isDiscounted = item.UnitPrice < originalPrice;
+                var savings = (originalPrice - item.UnitPrice) * item.Quantity;
                 body += $@"
                     <tr>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>{book?.Title}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>{item.Quantity}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"<span style='text-decoration:line-through;color:#888;'>${originalPrice:F2}</span>" : $"${originalPrice:F2}")}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"{discount:F0}%" : "-")}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>${item.UnitPrice:F2}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"${savings:F2}" : "-")}</td>
                     </tr>";
             }
 
@@ -166,16 +176,26 @@ namespace BookNook.Services
                             <tr style='background-color: #f8f9fa;'>
                                 <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Book</th>
                                 <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Quantity</th>
-                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Price</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Original Price</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Discount</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Price Paid</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Savings</th>
                             </tr>";
             foreach (var item in order.OrderItems)
             {
                 var book = await _context.Books.FindAsync(item.BookId);
+                var originalPrice = book?.Price ?? item.UnitPrice;
+                var discount = originalPrice > 0 ? (1 - (item.UnitPrice / originalPrice)) * 100 : 0;
+                var isDiscounted = item.UnitPrice < originalPrice;
+                var savings = (originalPrice - item.UnitPrice) * item.Quantity;
                 body += $@"
                     <tr>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>{book?.Title}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>{item.Quantity}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"<span style='text-decoration:line-through;color:#888;'>${originalPrice:F2}</span>" : $"${originalPrice:F2}")}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"{discount:F0}%" : "-")}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>${item.UnitPrice:F2}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"${savings:F2}" : "-")}</td>
                     </tr>";
             }
             body += $@"
@@ -239,16 +259,26 @@ namespace BookNook.Services
                             <tr style='background-color: #f8f9fa;'>
                                 <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Book</th>
                                 <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Quantity</th>
-                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Price</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Original Price</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Discount</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Price Paid</th>
+                                <th style='padding: 10px; text-align: left; border: 1px solid #dee2e6;'>Savings</th>
                             </tr>";
             foreach (var item in order.OrderItems)
             {
                 var book = await _context.Books.FindAsync(item.BookId);
+                var originalPrice = book?.Price ?? item.UnitPrice;
+                var discount = originalPrice > 0 ? (1 - (item.UnitPrice / originalPrice)) * 100 : 0;
+                var isDiscounted = item.UnitPrice < originalPrice;
+                var savings = (originalPrice - item.UnitPrice) * item.Quantity;
                 body += $@"
                     <tr>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>{book?.Title}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>{item.Quantity}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"<span style='text-decoration:line-through;color:#888;'>${originalPrice:F2}</span>" : $"${originalPrice:F2}")}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"{discount:F0}%" : "-")}</td>
                         <td style='padding: 10px; border: 1px solid #dee2e6;'>${item.UnitPrice:F2}</td>
+                        <td style='padding: 10px; border: 1px solid #dee2e6;'>{(isDiscounted ? $"${savings:F2}" : "-")}</td>
                     </tr>";
             }
             body += $@"

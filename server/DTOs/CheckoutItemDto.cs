@@ -22,5 +22,8 @@ namespace BookNook.DTOs
         public int PageCount { get; set; }
         public string Language { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public decimal? DiscountPercentage { get; set; }
+        public decimal? DiscountedPrice { get; set; }
+        public bool IsDiscountActive { get; set; }
     }
 } 

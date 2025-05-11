@@ -53,15 +53,27 @@ namespace BookNook.Services
                 if (book.Inventory.Quantity < item.Quantity)
                     throw new Exception($"Insufficient stock for book: {book.Title}");
 
+                // Check for active discount
+                var now = DateTime.UtcNow;
+                var discount = await _context.Discounts
+                    .Where(d => d.BookId == book.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
+                    .OrderByDescending(d => d.DiscountPercentage)
+                    .FirstOrDefaultAsync();
+                decimal unitPrice = book.Price;
+                if (discount != null)
+                {
+                    unitPrice = book.Price * (1 - discount.DiscountPercentage / 100);
+                }
+
                 var orderItem = new OrderItem
                 {
                     BookId = book.BookId,
                     Quantity = item.Quantity,
-                    UnitPrice = book.Price
+                    UnitPrice = unitPrice
                 };
 
                 orderItems.Add(orderItem);
-                totalAmount += book.Price * item.Quantity;
+                totalAmount += unitPrice * item.Quantity;
 
                 // Update book stock
                 book.Inventory.Quantity -= item.Quantity;

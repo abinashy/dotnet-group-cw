@@ -112,20 +112,49 @@ const Confirmation = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Order Items
             </h3>
-            <div className="space-y-4">
-              {orderDetails.orderItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-center border-b pb-4">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{item.bookTitle}</h4>
-                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+            {orderDetails.orderItems.some(item => item.discountPercent > 0) ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">Book</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">Qty</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">Original Price</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">Discount</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">Price Paid</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 border-b">Savings</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderDetails.orderItems.map((item, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="px-4 py-2 font-medium text-gray-900">{item.bookTitle}</td>
+                        <td className="px-4 py-2">{item.quantity}</td>
+                        <td className="px-4 py-2">{item.discountPercent > 0 ? (<span className="line-through text-gray-400">₹{item.originalPrice.toFixed(2)}</span>) : (<>₹{item.originalPrice.toFixed(2)}</>)}</td>
+                        <td className="px-4 py-2">{item.discountPercent > 0 ? `${item.discountPercent.toFixed(0)}%` : '-'}</td>
+                        <td className="px-4 py-2 font-bold text-black">₹{item.unitPrice.toFixed(2)}</td>
+                        <td className="px-4 py-2 text-green-700">{item.discountPercent > 0 ? `₹${item.savings.toFixed(2)}` : '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orderDetails.orderItems.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center border-b pb-4">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">{item.bookTitle}</h4>
+                      <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-gray-900">₹{item.unitPrice.toFixed(2)} each</p>
+                      <p className="font-medium text-gray-900">₹{item.totalPrice.toFixed(2)}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-gray-900">₹{item.unitPrice.toFixed(2)} each</p>
-                    <p className="font-medium text-gray-900">₹{item.totalPrice.toFixed(2)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="mt-8 border-t pt-6">

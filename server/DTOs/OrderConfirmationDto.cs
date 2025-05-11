@@ -21,5 +21,8 @@ namespace BookNook.DTOs
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TotalPrice { get; set; }
+        public decimal OriginalPrice { get; set; }
+        public decimal DiscountPercent { get; set; }
+        public decimal Savings { get; set; }
     }
 } 

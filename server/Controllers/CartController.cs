@@ -4,6 +4,7 @@ using BookNook.Data;
 using BookNook.DTOs;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 
 namespace BookNook.Controllers
 {
@@ -24,6 +25,7 @@ namespace BookNook.Controllers
             {
                 return BadRequest("Invalid userId");
             }
+            var now = DateTime.UtcNow;
             var cartItems = await _context.ShoppingCarts
                 .Where(c => c.UserId == userIdLong)
                 .Include(c => c.Book)
@@ -46,7 +48,17 @@ namespace BookNook.Controllers
                     AuthorName = c.Book.BookAuthors.Select(ba => ba.Author.FirstName + " " + ba.Author.LastName).FirstOrDefault() ?? string.Empty,
                     Genres = c.Book.BookGenres.Select(bg => bg.Genre.Name).ToList(),
                     Format = c.Book.Format,
-                    Availability = c.Book.Inventory != null ? c.Book.Inventory.Quantity : 0
+                    Availability = c.Book.Inventory != null ? c.Book.Inventory.Quantity : 0,
+                    DiscountPercentage = _context.Discounts
+                        .Where(d => d.BookId == c.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
+                        .Select(d => (decimal?)d.DiscountPercentage)
+                        .FirstOrDefault(),
+                    DiscountedPrice = _context.Discounts
+                        .Where(d => d.BookId == c.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
+                        .Select(d => (decimal?)(c.Book.Price * (1 - d.DiscountPercentage / 100)))
+                        .FirstOrDefault(),
+                    IsDiscountActive = _context.Discounts
+                        .Any(d => d.BookId == c.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
                 })
                 .ToListAsync();
             return Ok(cartItems);
@@ -59,6 +71,7 @@ namespace BookNook.Controllers
             {
                 return BadRequest("Invalid userId");
             }
+            var now = DateTime.UtcNow;
             var checkoutItems = await _context.ShoppingCarts
                 .Where(c => c.UserId == userIdLong)
                 .Include(c => c.Book)
@@ -89,7 +102,17 @@ namespace BookNook.Controllers
                     PublicationYear = c.Book.PublicationYear,
                     PageCount = c.Book.PageCount,
                     Language = c.Book.Language,
-                    Description = c.Book.Description
+                    Description = c.Book.Description,
+                    DiscountPercentage = _context.Discounts
+                        .Where(d => d.BookId == c.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
+                        .Select(d => (decimal?)d.DiscountPercentage)
+                        .FirstOrDefault(),
+                    DiscountedPrice = _context.Discounts
+                        .Where(d => d.BookId == c.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
+                        .Select(d => (decimal?)(c.Book.Price * (1 - d.DiscountPercentage / 100)))
+                        .FirstOrDefault(),
+                    IsDiscountActive = _context.Discounts
+                        .Any(d => d.BookId == c.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
                 })
                 .ToListAsync();
             return Ok(checkoutItems);

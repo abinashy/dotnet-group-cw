@@ -79,13 +79,22 @@ namespace BookNook.Controllers
                     DiscountAmount = order.DiscountAmount,
                     OrderDate = order.OrderDate,
                     Status = order.Status,
-                    OrderItems = order.OrderItems.Select(oi => new OrderItemConfirmationDto
-                    {
-                        BookId = oi.BookId,
-                        BookTitle = oi.Book.Title,
-                        Quantity = oi.Quantity,
-                        UnitPrice = oi.UnitPrice,
-                        TotalPrice = oi.UnitPrice * oi.Quantity
+                    OrderItems = order.OrderItems.Select(oi => {
+                        var originalPrice = oi.Book.Price;
+                        var discountPercent = originalPrice > 0 ? (1 - (oi.UnitPrice / originalPrice)) * 100 : 0;
+                        var isDiscounted = oi.UnitPrice < originalPrice;
+                        var savings = (originalPrice - oi.UnitPrice) * oi.Quantity;
+                        return new OrderItemConfirmationDto
+                        {
+                            BookId = oi.BookId,
+                            BookTitle = oi.Book.Title,
+                            Quantity = oi.Quantity,
+                            UnitPrice = oi.UnitPrice,
+                            TotalPrice = oi.UnitPrice * oi.Quantity,
+                            OriginalPrice = originalPrice,
+                            DiscountPercent = isDiscounted ? discountPercent : 0,
+                            Savings = isDiscounted ? savings : 0
+                        };
                     }).ToList()
                 };
 

@@ -16,5 +16,8 @@ namespace BookNook.DTOs
         public List<string> Genres { get; set; } = new List<string>();
         public string Format { get; set; } = string.Empty;
         public int Availability { get; set; } // Inventory quantity
+        public decimal? DiscountPercentage { get; set; }
+        public decimal? DiscountedPrice { get; set; }
+        public bool IsDiscountActive { get; set; }
     }
 } 

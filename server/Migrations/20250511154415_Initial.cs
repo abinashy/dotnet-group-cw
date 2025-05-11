@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookNook.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -585,15 +585,15 @@ namespace BookNook.Migrations
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "IsActive", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1L, 0, "2730160b-a3a7-49c3-aadd-d45086a02fa7", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAENdMPgVJGBnpldl2/sbhm4LUlXHwI4JmUM4ouHL4H/zr3Pdrin2Q4I5kBC5NKLsNVA==", null, false, "2b62c209-7a70-4614-9c0f-f8f7efca2fd7", false, "admin" },
-                    { 2L, 0, "10fa109e-66f7-465f-85bd-ce07434351c0", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEGNJDse40bPCfeHWFhQ3oUlWAqt1iCrXrl38vQBHkYCCko1P5MdFEx/AsI3b3TFU4g==", null, false, "6aff93ba-9a7c-4820-9154-2293634ce11d", false, "staff1" },
-                    { 3L, 0, "58397d0f-eb49-4b4e-ba85-d2a5b51d3d64", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEJXYXS+kddgavQ0jUBv01m1r9rBI097eDE/Wf6hIffI4xnCEVYBDyd0VtFOsYrT/Kw==", null, false, "0c15a6b7-028c-4aaa-8b6d-bb292fc49a35", false, "staff2" }
+                    { 1L, 0, "1f0091b0-e2a5-4652-98a0-184f8363e04c", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@booknook.com", true, "Admin", true, "User", false, null, "ADMIN@BOOKNOOK.COM", "ADMIN", "AQAAAAIAAYagAAAAEDNl4I04ju2yZb4S5XN7IC+6/2w8KIcJlqznrkffEijX1B0+V5/EFx3JsF1BVd0CTQ==", null, false, "a0b8dbb1-c0ea-478b-a5fe-9ce8d8b0cba5", false, "admin" },
+                    { 2L, 0, "06094033-9b82-4782-9287-7f8ba3583cb5", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff1@booknook.com", true, "Staff", true, "One", false, null, "STAFF1@BOOKNOOK.COM", "STAFF1", "AQAAAAIAAYagAAAAEO90CWJGmQ+Twkyf8nedyLkiGa+PnyA+zkzLjnOTCWyMzRr2juStTcLagfOa9tfEFQ==", null, false, "9d785770-6bd6-4797-9226-b61fae04fd7b", false, "staff1" },
+                    { 3L, 0, "b61b54ba-a0f4-4aa9-b503-0a014ea27990", new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff2@booknook.com", true, "Staff", true, "Two", false, null, "STAFF2@BOOKNOOK.COM", "STAFF2", "AQAAAAIAAYagAAAAEMiaopY8ty4InqxxTb8v5dugNMEcTzzYF1Kd1oHG4r8MT8zKqwtkvBpVWgEK3o794g==", null, false, "11230910-f376-4b19-8d6e-8a0f9ad01d79", false, "staff2" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Authors",
                 columns: new[] { "AuthorId", "Biography", "CreatedAt", "FirstName", "LastName" },
-                values: new object[] { 1, "Seed author for testing.", new DateTime(2025, 5, 11, 14, 1, 6, 220, DateTimeKind.Utc).AddTicks(500), "John", "Doe" });
+                values: new object[] { 1, "Seed author for testing.", new DateTime(2025, 5, 11, 15, 44, 15, 79, DateTimeKind.Utc).AddTicks(130), "John", "Doe" });
 
             migrationBuilder.InsertData(
                 table: "Genres",
