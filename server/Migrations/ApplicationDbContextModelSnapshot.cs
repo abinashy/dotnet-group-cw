@@ -95,6 +95,7 @@ namespace BookNook.Migrations
                             AuthorId = 1,
                             Biography = "Seed author for testing.",
                             CreatedAt = new DateTime(2025, 5, 11, 15, 44, 15, 79, DateTimeKind.Utc).AddTicks(130),
+                            CreatedAt = new DateTime(2025, 5, 11, 15, 36, 38, 430, DateTimeKind.Utc).AddTicks(7629),
                             FirstName = "John",
                             LastName = "Doe"
                         });
@@ -830,7 +831,7 @@ namespace BookNook.Migrations
                         {
                             Id = 1L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "1f0091b0-e2a5-4652-98a0-184f8363e04c",
+                            ConcurrencyStamp = "cc8771fc-de51-4b44-9c35-d9d5e93618e2",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@booknook.com",
                             EmailConfirmed = true,
@@ -840,9 +841,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@BOOKNOOK.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDNl4I04ju2yZb4S5XN7IC+6/2w8KIcJlqznrkffEijX1B0+V5/EFx3JsF1BVd0CTQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOPaIiSk5fiXZ6sp0Fj18PopaLOFhwrjr5rY5+YQvR7lS4vvFz0xu58owg8YfzhLrw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "a0b8dbb1-c0ea-478b-a5fe-9ce8d8b0cba5",
+                            SecurityStamp = "2ce3b065-7fac-40f1-bc0b-cfa0d095a143",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -850,7 +851,7 @@ namespace BookNook.Migrations
                         {
                             Id = 2L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "06094033-9b82-4782-9287-7f8ba3583cb5",
+                            ConcurrencyStamp = "05631fa1-89a3-45ac-8237-0ca00d57707c",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff1@booknook.com",
                             EmailConfirmed = true,
@@ -860,9 +861,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF1@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF1",
-                            PasswordHash = "AQAAAAIAAYagAAAAEO90CWJGmQ+Twkyf8nedyLkiGa+PnyA+zkzLjnOTCWyMzRr2juStTcLagfOa9tfEFQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEE4asCxyRfqsd6QMJcbcSm1DA+VgbRrrZZfrxNCMahikDXbe/4tVzcoPdERnYZ28nA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "9d785770-6bd6-4797-9226-b61fae04fd7b",
+                            SecurityStamp = "1b3ebdbd-f869-4326-8183-d67d8baf5368",
                             TwoFactorEnabled = false,
                             UserName = "staff1"
                         },
@@ -870,7 +871,7 @@ namespace BookNook.Migrations
                         {
                             Id = 3L,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "b61b54ba-a0f4-4aa9-b503-0a014ea27990",
+                            ConcurrencyStamp = "0d3ab341-54cd-4349-80b6-b87dc26444c8",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff2@booknook.com",
                             EmailConfirmed = true,
@@ -880,9 +881,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF2@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF2",
-                            PasswordHash = "AQAAAAIAAYagAAAAEMiaopY8ty4InqxxTb8v5dugNMEcTzzYF1Kd1oHG4r8MT8zKqwtkvBpVWgEK3o794g==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELh2w0yBrnl3ydufYPKK3L8I8aYqGwSMK+jcVNT70AkxykDiBNkQfoswXCxevZotiQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "11230910-f376-4b19-8d6e-8a0f9ad01d79",
+                            SecurityStamp = "c3a831f5-6363-4f66-a32e-4097c56b02b1",
                             TwoFactorEnabled = false,
                             UserName = "staff2"
                         });
