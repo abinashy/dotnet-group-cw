@@ -5,10 +5,9 @@ const navItems = [
   { to: '/admin/books', label: 'Books', icon: '📚' },
   { to: '/admin/inventory', label: 'Inventory', icon: '📦' },
   { to: '/admin/discounts', label: 'Discounts', icon: '🏷️' },
+  { to: '/admin/announcements', label: 'Announcements', icon: '📢' },
   { to: '/admin/users', label: 'Users', icon: '👥' },
-  { to: '/admin/product', label: 'Product', icon: '📦' },
   { to: '/admin/orders', label: 'Orders', icon: '📝' },
-  { to: '/admin/stats', label: 'Stats', icon: '📈' },
   { to: '/logout', label: 'Logout', icon: '🚪', className: 'mt-auto' },
 ];
 

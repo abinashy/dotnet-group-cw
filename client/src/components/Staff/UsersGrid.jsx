@@ -9,16 +9,18 @@ export default function UsersGrid() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('member'); // 'member' or 'staff'
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5124/api/users?search=${searchTerm}`, {
+      const response = await axios.get(`http://localhost:5124/api/users`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       setUsers(response.data);
+      console.log('Fetched users:', response.data);
     } catch (err) {
       setError('Error fetching users. Please try again.');
       console.error('Error:', err);
@@ -28,12 +30,36 @@ export default function UsersGrid() {
   };
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchUsers();
-    }, 300);
+    fetchUsers();
+  }, []);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  useEffect(() => {
+    if (users.length > 0) {
+      console.log('Sample user object:', users[0]);
+    }
+  }, [users]);
+
+  // Robust role extraction
+  const getRoles = (user) => {
+    if (Array.isArray(user.roles)) return user.roles.map(r => r.toLowerCase());
+    if (typeof user.role === 'string') return [user.role.toLowerCase()];
+    if (user.userRole) return [user.userRole.toLowerCase()];
+    if (user.type) return [user.type.toLowerCase()];
+    return [];
+  };
+
+  const filteredUsers = users.filter(user => {
+    // Fallback: if no role property, show all users
+    if (user.role === undefined && user.userRole === undefined && user.type === undefined) return true;
+    // Numeric role logic
+    const role = user.role ?? user.userRole ?? user.type;
+    if (role === 3) return false;
+    if (activeTab === 'member' && role !== 1) return false;
+    if (activeTab === 'staff' && role !== 2) return false;
+    const idMatch = String(user.id || user.userId).toLowerCase().includes(searchTerm.toLowerCase());
+    const nameMatch = (`${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()));
+    return idMatch || nameMatch;
+  });
 
   const handleViewDetails = async (userId) => {
     try {
@@ -52,35 +78,20 @@ export default function UsersGrid() {
   return (
     <div className="card">
       <div className="card-body">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h5 className="card-title mb-0">Users</h5>
-          <div className="col-md-4">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
+        <h5 className="card-title mb-0">All Users (Raw Data)</h5>
         <div className="table-responsive">
           <table className="table table-hover">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Total Orders</th>
-                <th>Member Since</th>
-                <th>Status</th>
-                <th>Actions</th>
+                {users[0] && Object.keys(users[0]).map(key => (
+                  <th key={key}>{key}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center">
+                  <td colSpan={users[0] ? Object.keys(users[0]).length : 1} className="text-center">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Loading...</span>
                     </div>
@@ -88,32 +99,18 @@ export default function UsersGrid() {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="6" className="text-center text-danger">{error}</td>
+                  <td colSpan={users[0] ? Object.keys(users[0]).length : 1} className="text-center text-danger">{error}</td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center">No users found</td>
+                  <td colSpan={users[0] ? Object.keys(users[0]).length : 1} className="text-center">No users found</td>
                 </tr>
               ) : (
-                users.map(user => (
-                  <tr key={user.id}>
-                    <td>{`${user.firstName} ${user.lastName}`}</td>
-                    <td>{user.email}</td>
-                    <td>{user.totalOrders}</td>
-                    <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`badge ${user.isActive ? 'bg-success' : 'bg-danger'}`}>
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => handleViewDetails(user.id)}
-                      >
-                        View Details
-                      </button>
-                    </td>
+                users.map((user, idx) => (
+                  <tr key={user.id || user.userId || idx}>
+                    {Object.keys(user).map(key => (
+                      <td key={key}>{String(user[key])}</td>
+                    ))}
                   </tr>
                 ))
               )}
