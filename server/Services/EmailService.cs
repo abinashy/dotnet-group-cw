@@ -64,6 +64,21 @@ namespace BookNook.Services
             message.To.Add(user.Email);
 
             // Build email body
+            var perBookDiscount = order.OrderItems.Sum(item => {
+                var book = _context.Books.Find(item.BookId);
+                var originalPrice = book?.Price ?? item.UnitPrice;
+                return (originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0);
+            });
+            var member5PercentDiscount = 0m;
+            var member10PercentDiscount = 0m;
+            if (order.OrderItems.Sum(i => i.Quantity) >= 5)
+            {
+                member5PercentDiscount = order.TotalAmount * 0.05m;
+            }
+            if (order.DiscountAmount - perBookDiscount - member5PercentDiscount > 0)
+            {
+                member10PercentDiscount = order.TotalAmount * 0.10m;
+            }
             var body = $@"
                 <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
@@ -76,7 +91,10 @@ namespace BookNook.Services
                             <p><strong>Membership ID:</strong> {user.Id}</p>
                             <p><strong>Claim Code:</strong> {order.ClaimCode}</p>
                             <p><strong>Total Amount:</strong> ${order.TotalAmount:F2}</p>
-                            <p><strong>Discount Amount:</strong> ${order.DiscountAmount:F2}</p>
+                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount:</strong> -${perBookDiscount:F2}</p>" : "")}
+                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount:</strong> -${member5PercentDiscount:F2}</p>" : "")}
+                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount:</strong> -${member10PercentDiscount:F2}</p>" : "")}
+                            <p><strong>Total Discount:</strong> -${order.DiscountAmount:F2}</p>
                             <p><strong>Final Amount:</strong> ${order.FinalAmount:F2}</p>
                         </div>
 
@@ -159,6 +177,21 @@ namespace BookNook.Services
             }
 
             var user = await _context.Users.FindAsync(order.UserId);
+            var perBookDiscount = order.OrderItems.Sum(item => {
+                var book = _context.Books.Find(item.BookId);
+                var originalPrice = book?.Price ?? item.UnitPrice;
+                return (originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0);
+            });
+            var member5PercentDiscount = 0m;
+            var member10PercentDiscount = 0m;
+            if (order.OrderItems.Sum(i => i.Quantity) >= 5)
+            {
+                member5PercentDiscount = order.TotalAmount * 0.05m;
+            }
+            if (order.DiscountAmount - perBookDiscount - member5PercentDiscount > 0)
+            {
+                member10PercentDiscount = order.TotalAmount * 0.10m;
+            }
             var body = $@"
                 <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
@@ -168,7 +201,10 @@ namespace BookNook.Services
                             <p><strong>Order Number:</strong> #{order.OrderId}</p>
                             <p><strong>Claim Code:</strong> {order.ClaimCode}</p>
                             <p><strong>Total Amount:</strong> ${order.TotalAmount:F2}</p>
-                            <p><strong>Discount Amount:</strong> ${order.DiscountAmount:F2}</p>
+                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount:</strong> -${perBookDiscount:F2}</p>" : "")}
+                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount:</strong> -${member5PercentDiscount:F2}</p>" : "")}
+                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount:</strong> -${member10PercentDiscount:F2}</p>" : "")}
+                            <p><strong>Total Discount:</strong> -${order.DiscountAmount:F2}</p>
                             <p><strong>Final Amount:</strong> ${order.FinalAmount:F2}</p>
                         </div>
                         <h3>Order Items:</h3>
@@ -242,6 +278,21 @@ namespace BookNook.Services
             }
 
             var user = await _context.Users.FindAsync(order.UserId);
+            var perBookDiscount = order.OrderItems.Sum(item => {
+                var book = _context.Books.Find(item.BookId);
+                var originalPrice = book?.Price ?? item.UnitPrice;
+                return (originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0);
+            });
+            var member5PercentDiscount = 0m;
+            var member10PercentDiscount = 0m;
+            if (order.OrderItems.Sum(i => i.Quantity) >= 5)
+            {
+                member5PercentDiscount = order.TotalAmount * 0.05m;
+            }
+            if (order.DiscountAmount - perBookDiscount - member5PercentDiscount > 0)
+            {
+                member10PercentDiscount = order.TotalAmount * 0.10m;
+            }
             var body = $@"
                 <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
@@ -251,7 +302,10 @@ namespace BookNook.Services
                             <p><strong>Order Number:</strong> #{order.OrderId}</p>
                             <p><strong>Claim Code:</strong> {order.ClaimCode}</p>
                             <p><strong>Total Amount:</strong> ${order.TotalAmount:F2}</p>
-                            <p><strong>Discount Amount:</strong> ${order.DiscountAmount:F2}</p>
+                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount:</strong> -${perBookDiscount:F2}</p>" : "")}
+                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount:</strong> -${member5PercentDiscount:F2}</p>" : "")}
+                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount:</strong> -${member10PercentDiscount:F2}</p>" : "")}
+                            <p><strong>Total Discount:</strong> -${order.DiscountAmount:F2}</p>
                             <p><strong>Final Amount:</strong> ${order.FinalAmount:F2}</p>
                         </div>
                         <h3>Order Items:</h3>

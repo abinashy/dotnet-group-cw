@@ -7,6 +7,12 @@ const Checkout = () => {
   const [checkoutItems, setCheckoutItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [subtotal, setSubtotal] = useState(0);
+  const [member5PercentDiscountAmount, setMember5PercentDiscountAmount] = useState(0);
+  const [member10PercentDiscountAmount, setMember10PercentDiscountAmount] = useState(0);
+  const [memberDiscountAmount, setMemberDiscountAmount] = useState(0);
+  const [finalTotal, setFinalTotal] = useState(0);
+  const [totalQuantity, setTotalQuantity] = useState(0);
 
   // Get the auth token from localStorage
   const getAuthToken = () => {
@@ -39,7 +45,13 @@ const Checkout = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        setCheckoutItems(data);
+        setCheckoutItems(Array.isArray(data.items) ? data.items : []);
+        setSubtotal(typeof data.subtotal === 'number' ? data.subtotal : 0);
+        setMember5PercentDiscountAmount(typeof data.member5PercentDiscountAmount === 'number' ? data.member5PercentDiscountAmount : 0);
+        setMember10PercentDiscountAmount(typeof data.member10PercentDiscountAmount === 'number' ? data.member10PercentDiscountAmount : 0);
+        setMemberDiscountAmount(typeof data.memberDiscountAmount === 'number' ? data.memberDiscountAmount : 0);
+        setFinalTotal(typeof data.finalTotal === 'number' ? data.finalTotal : 0);
+        setTotalQuantity(typeof data.totalQuantity === 'number' ? data.totalQuantity : 0);
         setLoading(false);
       })
       .catch((error) => {
@@ -47,18 +59,6 @@ const Checkout = () => {
         setLoading(false);
       });
   }, [navigate]);
-
-  // Calculate totals using discounted prices if available
-  const subtotal = checkoutItems.reduce(
-    (sum, item) => sum + ((item.isDiscountActive && item.discountedPrice != null ? item.discountedPrice : item.price) || 0) * item.quantity,
-    0
-  );
-  const originalSubtotal = checkoutItems.reduce(
-    (sum, item) => sum + (item.price || 0) * item.quantity,
-    0
-  );
-  const totalSavings = originalSubtotal - subtotal;
-  const totalQuantity = checkoutItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
   const handlePlaceOrder = async () => {
     try {
@@ -124,7 +124,7 @@ const Checkout = () => {
         {/* Checkout Items */}
         <section className="flex-1 bg-white rounded-xl shadow-lg p-6 border border-gray-200">
           <h2 className="text-2xl font-bold mb-6 text-black">Review Your Order</h2>
-          {checkoutItems.length === 0 ? (
+          {!Array.isArray(checkoutItems) || checkoutItems.length === 0 ? (
             <div className="text-gray-500 text-center py-12">Your cart is empty.</div>
           ) : (
             <ul className="space-y-6">
@@ -184,7 +184,7 @@ const Checkout = () => {
         <aside className="w-full md:w-[28rem] bg-white rounded-xl shadow-lg p-8 h-fit border border-gray-200">
           <h2 className="text-xl font-semibold mb-4 text-black">Order Summary</h2>
           <ul className="mb-4 divide-y divide-gray-200">
-            {checkoutItems.map((item, idx) => (
+            {Array.isArray(checkoutItems) && checkoutItems.map((item, idx) => (
               <li key={item.cartId ?? `${item.bookId}-${idx}`} className="flex items-center py-2 gap-2">
                 <span className="flex-1 text-black break-words whitespace-normal truncate">{item.title}</span>
                 <span className="text-gray-600 min-w-[2.5rem] text-center">x{item.quantity}</span>
@@ -196,20 +196,20 @@ const Checkout = () => {
               </li>
             ))}
           </ul>
-          {totalSavings > 0 && (
-            <div className="flex justify-between mb-2 text-green-700 font-semibold">
-              <span>You Save</span>
-              <span>-₹{totalSavings.toFixed(2)}</span>
-            </div>
-          )}
           <div className="flex justify-between mb-2 text-gray-700">
             <span>Subtotal</span>
-            <span className={totalSavings > 0 ? "line-through text-gray-400" : "font-bold text-black"}>₹{originalSubtotal.toFixed(2)}</span>
+            <span className="font-bold text-black">₹{subtotal.toFixed(2)}</span>
           </div>
-          {totalSavings > 0 && (
-            <div className="flex justify-between mb-2 text-black font-bold">
-              <span>Discounted Subtotal</span>
-              <span>₹{subtotal.toFixed(2)}</span>
+          {member5PercentDiscountAmount > 0 && (
+            <div className="flex justify-between mb-2 text-green-700 font-semibold">
+              <span>Member 5% Discount</span>
+              <span>-₹{member5PercentDiscountAmount.toFixed(2)}</span>
+            </div>
+          )}
+          {member10PercentDiscountAmount > 0 && (
+            <div className="flex justify-between mb-2 text-green-700 font-semibold">
+              <span>Member 10% Discount</span>
+              <span>-₹{member10PercentDiscountAmount.toFixed(2)}</span>
             </div>
           )}
           <div className="flex justify-between mb-2 text-gray-700">
@@ -218,7 +218,7 @@ const Checkout = () => {
           </div>
           <div className="flex justify-between font-bold text-lg mb-6 text-black">
             <span>Total</span>
-            <span>₹{subtotal.toFixed(2)}</span>
+            <span>₹{finalTotal.toFixed(2)}</span>
           </div>
           <button 
             onClick={handlePlaceOrder}

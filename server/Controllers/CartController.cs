@@ -115,7 +115,41 @@ namespace BookNook.Controllers
                         .Any(d => d.BookId == c.BookId && d.IsActive && d.StartDate <= now && d.EndDate >= now)
                 })
                 .ToListAsync();
-            return Ok(checkoutItems);
+
+            // Calculate subtotal and member discounts
+            decimal subtotal = checkoutItems.Sum(i => (i.DiscountedPrice ?? i.Price) * i.Quantity);
+            int totalQuantity = checkoutItems.Sum(i => i.Quantity);
+            decimal member5PercentDiscountAmount = 0;
+            decimal member10PercentDiscountAmount = 0;
+
+            // 5% discount for 5+ books
+            if (totalQuantity >= 5)
+            {
+                member5PercentDiscountAmount = subtotal * 0.05m;
+            }
+
+            // 10% stackable member discount (from MemberDiscount table)
+            var memberDiscount = await _context.MemberDiscounts
+                .Where(md => md.UserId == userIdLong && !md.IsUsed && md.ExpiryDate > DateTime.UtcNow && md.DiscountPercentage == 10)
+                .OrderBy(md => md.ExpiryDate)
+                .FirstOrDefaultAsync();
+            if (memberDiscount != null)
+            {
+                member10PercentDiscountAmount = subtotal * 0.10m;
+            }
+
+            decimal memberDiscountAmount = member5PercentDiscountAmount + member10PercentDiscountAmount;
+            decimal finalTotal = subtotal - memberDiscountAmount;
+
+            return Ok(new {
+                items = checkoutItems,
+                subtotal,
+                member5PercentDiscountAmount,
+                member10PercentDiscountAmount,
+                memberDiscountAmount,
+                finalTotal,
+                totalQuantity
+            });
         }
 
         [HttpDelete("clear")]

@@ -70,6 +70,26 @@ namespace BookNook.Controllers
                 if (order == null)
                     return NotFound();
 
+                // Calculate per-book discount
+                var perBookDiscount = order.OrderItems.Sum(oi => {
+                    var originalPrice = oi.Book.Price;
+                    return (originalPrice > oi.UnitPrice ? (originalPrice - oi.UnitPrice) * oi.Quantity : 0);
+                });
+                // 5% member discount if 5+ books
+                var member5PercentDiscount = 0m;
+                if (order.OrderItems.Sum(oi => oi.Quantity) >= 5)
+                {
+                    member5PercentDiscount = order.TotalAmount * 0.05m;
+                }
+                // 10% member discount if it was actually applied to this order
+                var member10PercentDiscount = 0m;
+                // Try to reconstruct the actual 10% discount applied
+                var expected10Percent = order.TotalAmount * 0.10m;
+                // The 10% discount is only applied if the discount amount is at least the sum of 5% and 10% (or just 10% if 5% doesn't apply)
+                if (order.DiscountAmount >= member5PercentDiscount + expected10Percent - 0.01m) // allow for rounding
+                {
+                    member10PercentDiscount = expected10Percent;
+                }
                 var dto = new OrderConfirmationDto
                 {
                     OrderId = order.OrderId,
@@ -77,6 +97,9 @@ namespace BookNook.Controllers
                     TotalAmount = order.TotalAmount,
                     FinalAmount = order.FinalAmount,
                     DiscountAmount = order.DiscountAmount,
+                    PerBookDiscount = perBookDiscount,
+                    Member5PercentDiscount = member5PercentDiscount,
+                    Member10PercentDiscount = member10PercentDiscount,
                     OrderDate = order.OrderDate,
                     Status = order.Status,
                     OrderItems = order.OrderItems.Select(oi => {
@@ -219,6 +242,36 @@ namespace BookNook.Controllers
                 return BadRequest(new { message = "Order is already completed" });
             if (!string.Equals(order.ClaimCode?.Trim(), dto.ClaimCode?.Trim(), StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new { message = $"Invalid claim code. (DEBUG: order='{order.ClaimCode}', input='{dto.ClaimCode}')" });
+            // Grant 10% member discount after every 10th completed order
+            var completedOrdersBefore = await _context.Orders
+                .CountAsync(o => o.UserId == order.UserId && o.Status == "Completed");
+            if (completedOrdersBefore % 10 == 9) // This is the 10th, 20th, etc. order (9 completed before, this is the 10th)
+            {
+                // Clean up expired discounts first
+                var expiredDiscounts = await _context.MemberDiscounts
+                    .Where(md => md.UserId == order.UserId && md.ExpiryDate <= DateTime.UtcNow)
+                    .ToListAsync();
+                if (expiredDiscounts.Any())
+                {
+                    _context.MemberDiscounts.RemoveRange(expiredDiscounts);
+                    await _context.SaveChangesAsync();
+                }
+
+                var hasUnused = await _context.MemberDiscounts
+                    .AnyAsync(md => md.UserId == order.UserId && !md.IsUsed && md.DiscountPercentage == 10 && md.ExpiryDate > DateTime.UtcNow);
+                if (!hasUnused)
+                {
+                    _context.MemberDiscounts.Add(new Entities.MemberDiscount
+                    {
+                        UserId = order.UserId,
+                        DiscountPercentage = 10,
+                        IsUsed = false,
+                        ExpiryDate = DateTime.UtcNow.AddMonths(3),
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    await _context.SaveChangesAsync();
+                }
+            }
             order.Status = "Completed";
             order.OrderHistory.Status = "Completed";
             order.OrderHistory.StatusDate = DateTime.UtcNow;

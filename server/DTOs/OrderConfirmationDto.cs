@@ -9,6 +9,9 @@ namespace BookNook.DTOs
         public decimal TotalAmount { get; set; }
         public decimal FinalAmount { get; set; }
         public decimal DiscountAmount { get; set; }
+        public decimal PerBookDiscount { get; set; }
+        public decimal Member5PercentDiscount { get; set; }
+        public decimal Member10PercentDiscount { get; set; }
         public DateTime OrderDate { get; set; }
         public string Status { get; set; }
         public List<OrderItemConfirmationDto> OrderItems { get; set; }

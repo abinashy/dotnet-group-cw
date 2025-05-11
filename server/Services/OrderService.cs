@@ -38,6 +38,8 @@ namespace BookNook.Services
             // Calculate total amount and apply discounts
             decimal totalAmount = 0; // sum of original prices
             decimal perBookDiscountAmount = 0; // sum of all per-book discounts
+            decimal member5PercentDiscount = 0;
+            decimal member10PercentDiscount = 0;
             var orderItems = new List<OrderItem>();
 
             foreach (var item in orderDto.Items)
@@ -85,20 +87,24 @@ namespace BookNook.Services
 
             decimal discountAmount = perBookDiscountAmount;
 
-            // Apply 5% discount for 5+ books (on original total)
+            // 5% discount for 5+ books
             if (orderItems.Sum(i => i.Quantity) >= 5)
             {
-                var globalDiscount = totalAmount * 0.05m;
-                discountAmount += globalDiscount;
+                member5PercentDiscount = totalAmount * 0.05m;
+                discountAmount += member5PercentDiscount;
             }
 
-            // Apply 10% stackable discount if eligible (10+ successful orders)
-            var successfulOrders = await _context.Orders
-                .CountAsync(o => o.UserId == userId && o.Status == "Completed");
-            if (successfulOrders >= 10)
+            // 10% stackable member discount (from MemberDiscount table)
+            var memberDiscount = await _context.MemberDiscounts
+                .Where(md => md.UserId == userId && !md.IsUsed && md.ExpiryDate > DateTime.UtcNow && md.DiscountPercentage == 10)
+                .OrderBy(md => md.ExpiryDate)
+                .FirstOrDefaultAsync();
+            if (memberDiscount != null)
             {
-                var globalDiscount = totalAmount * 0.10m;
-                discountAmount += globalDiscount;
+                member10PercentDiscount = totalAmount * 0.10m;
+                discountAmount += member10PercentDiscount;
+                memberDiscount.IsUsed = true;
+                await _context.SaveChangesAsync();
             }
 
             // Before creating the Order, add:

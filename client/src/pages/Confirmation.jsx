@@ -163,8 +163,26 @@ const Confirmation = () => {
                 <span>Subtotal:</span>
                 <span className="font-bold text-black">₹{orderDetails.totalAmount.toFixed(2)}</span>
               </div>
+              {orderDetails.perBookDiscount > 0 && (
+                <div className="flex justify-between text-green-700 font-semibold">
+                  <span>Per-Book Discount</span>
+                  <span>-₹{orderDetails.perBookDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              {orderDetails.member5PercentDiscount > 0 && (
+                <div className="flex justify-between text-green-700 font-semibold">
+                  <span>Member 5% Discount</span>
+                  <span>-₹{orderDetails.member5PercentDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              {orderDetails.member10PercentDiscount > 0 && (
+                <div className="flex justify-between text-green-700 font-semibold">
+                  <span>Member 10% Discount</span>
+                  <span>-₹{orderDetails.member10PercentDiscount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-gray-700 font-semibold">
-                <span>Discount:</span>
+                <span>Total Discount:</span>
                 <span className="font-bold text-black">-₹{orderDetails.discountAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-black">
