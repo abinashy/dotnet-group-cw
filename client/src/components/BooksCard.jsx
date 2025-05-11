@@ -1,9 +1,50 @@
 import React from 'react';
 import AddToCartButton from './Buttons/AddToCartButton';
-import { addToCart } from '../utils/cart';
+import { useNavigate } from 'react-router-dom';
 
 const BooksCard = ({ book, onAddToCart, onClick }) => {
     const [hover, setHover] = React.useState(false);
+    const navigate = useNavigate();
+
+    const handleAddToCart = async (e) => {
+        e.stopPropagation();
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Redirect to login page if not authenticated
+                navigate('/login', { state: { from: window.location.pathname } });
+                return;
+            }
+
+            const response = await fetch('http://localhost:5124/api/AddToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    bookId: book.BookId,
+                    quantity: 1
+                })
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Token expired or invalid
+                    localStorage.removeItem('token');
+                    navigate('/login', { state: { from: window.location.pathname } });
+                    return;
+                }
+                throw new Error('Failed to add to cart');
+            }
+
+            alert('Book added to cart!');
+        } catch (err) {
+            console.error('Error adding to cart:', err);
+            alert('Failed to add to cart. Please try again.');
+        }
+    };
+
     return (
         <div
             style={{
@@ -39,20 +80,7 @@ const BooksCard = ({ book, onAddToCart, onClick }) => {
                 Rs. {book.Price}
             </div>
             <AddToCartButton
-                onClick={async e => {
-                    e.stopPropagation();
-                    try {
-                        const token = localStorage.getItem('token');
-                        if (!token) {
-                            alert('You must be logged in to add to cart.');
-                            return;
-                        }
-                        await addToCart({ bookId: book.BookId, quantity: 1 });
-                        alert('Book added to cart!');
-                    } catch (err) {
-                        alert('Failed to add to cart.');
-                    }
-                }}
+                onClick={handleAddToCart}
                 style={{
                     border: '1px solid #1976d2',
                     background: hover ? '#1976d2' : '#fff',

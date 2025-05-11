@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using BookNook.Entities;
-using BookNook.DTOs.Cart;
-using BookNook.Data;
 using Microsoft.AspNetCore.Authorization;
+using BookNook.Services.Cart;
+using BookNook.DTOs;
 using System.Security.Claims;
 
 namespace BookNook.Controllers
@@ -12,58 +11,38 @@ namespace BookNook.Controllers
     [Authorize]
     public class AddToCartController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        public AddToCartController(ApplicationDbContext context)
+        private readonly ICartService _cartService;
+        private readonly ILogger<AddToCartController> _logger;
+
+        public AddToCartController(ICartService cartService, ILogger<AddToCartController> logger)
         {
-            _context = context;
+            _cartService = cartService;
+            _logger = logger;
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto)
+        public async Task<IActionResult> AddToCart([FromBody] AddToCartDto request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
-                var claimsString = string.Join(", ", allClaims);
-                return Unauthorized($"User ID claim is missing. Claims: {claimsString}");
-            }
-            if (!long.TryParse(userIdClaim, out var userId))
-            {
-                var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
-                var claimsString = string.Join(", ", allClaims);
-                return Unauthorized($"User ID claim is not a valid long. Value: {userIdClaim}. Claims: {claimsString}");
-            }
             try
             {
-                // Defensive check: ensure user exists
-                var cartItem = _context.ShoppingCarts.FirstOrDefault(c => c.UserId == userId && c.BookId == dto.BookId);
-                if (cartItem != null)
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
                 {
-                    cartItem.Quantity += dto.Quantity;
-                    cartItem.AddedAt = DateTime.UtcNow;
+                    return Unauthorized("User ID not found in token");
                 }
-                else
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
                 {
-                    cartItem = new ShoppingCart
-                    {
-                        UserId = userId,
-                        BookId = dto.BookId,
-                        Quantity = dto.Quantity,
-                        AddedAt = DateTime.UtcNow
-                    };
-                    _context.ShoppingCarts.Add(cartItem);
+                    return BadRequest("Invalid user ID format");
                 }
-                await _context.SaveChangesAsync();
-                return Ok(cartItem);
+
+                await _cartService.AddToCartAsync(userId, request.BookId, request.Quantity);
+                return Ok(new { message = "Item added to cart successfully" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                _logger.LogError(ex, "Error adding item to cart");
+                return StatusCode(500, "An error occurred while adding the item to cart");
             }
         }
     }

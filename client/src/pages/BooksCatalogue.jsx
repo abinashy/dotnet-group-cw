@@ -97,7 +97,7 @@ const BooksCatalogue = () => {
     const fetchBooks = async () => {
         try {
             const query = buildQuery();
-            const response = await axios.get(`http://localhost:5124/api/book?${query}`);
+            const response = await axios.get(`http://localhost:5124/api/BooksCatalogue?${query}`);
             setBooks(response.data);
         } catch (err) {
             setBooks([]);
