@@ -23,20 +23,20 @@ namespace BookNook.Controllers
         {
             Console.WriteLine("=== SubmitBatchReviews endpoint HIT ===");
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdStr))
+            if (string.IsNullOrEmpty(userIdStr) || !long.TryParse(userIdStr, out var userId))
             {
-                Console.WriteLine("[ReviewController] User ID not found in token");
+                Console.WriteLine("[ReviewController] User ID not found in token or not a valid long");
                 return Unauthorized(new { message = "User ID not found in token" });
             }
 
-            Console.WriteLine($"[ReviewController] Received batch review for order {dto.OrderId} by user {userIdStr} with {dto.Reviews?.Count ?? 0} reviews");
+            Console.WriteLine($"[ReviewController] Received batch review for order {dto.OrderId} by user {userId} with {dto.Reviews?.Count ?? 0} reviews");
             if (dto.Reviews != null)
             {
                 foreach (var review in dto.Reviews)
                 {
                     Console.WriteLine($"[ReviewController] Processing review: BookId={review.BookId}, OrderId={review.OrderId}, Rating={review.Rating}, Review='{review.Review}'");
                     // Prevent duplicate reviews for the same book/order/user
-                    var exists = _context.Reviews.Any(r => r.UserId == userIdStr && r.BookId == review.BookId && r.OrderId == review.OrderId);
+                    var exists = _context.Reviews.Any(r => r.UserId == userId && r.BookId == review.BookId && r.OrderId == review.OrderId);
                     if (exists)
                     {
                         Console.WriteLine($"[ReviewController] Duplicate review found for BookId={review.BookId}, OrderId={review.OrderId}, skipping.");
@@ -45,7 +45,7 @@ namespace BookNook.Controllers
 
                     var entity = new Review
                     {
-                        UserId = userIdStr,
+                        UserId = userId,
                         BookId = review.BookId,
                         OrderId = review.OrderId,
                         Rating = review.Rating,
@@ -64,12 +64,12 @@ namespace BookNook.Controllers
         public IActionResult GetUserReviews()
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdStr))
+            if (string.IsNullOrEmpty(userIdStr) || !long.TryParse(userIdStr, out var userId))
             {
                 return Unauthorized(new { message = "User ID not found in token" });
             }
             var reviews = _context.Reviews
-                .Where(r => r.UserId == userIdStr)
+                .Where(r => r.UserId == userId)
                 .Select(r => new { r.BookId, r.OrderId, r.Rating, r.Comment, r.ReviewDate })
                 .ToList();
             return Ok(reviews);

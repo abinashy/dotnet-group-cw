@@ -1,9 +1,9 @@
 using BookNook.Data;
-using BookNook.Services;
 using BookNook.Services.Auth;
 using BookNook.Services.Books;
 using BookNook.Services.Cloudinary;
 using BookNook.Services.Inventory;
+using BookNook.Services;
 using BookNook.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -71,7 +71,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = builder.Configuration["JWT:ValidAudience"],
         ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!)),
+        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
     };
 });
 
@@ -86,7 +87,7 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Add Controllers
+// Add Controllers with JSON options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

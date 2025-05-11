@@ -16,6 +16,18 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, long, Identity
     {
         base.OnModelCreating(builder);
         
+        // Configure Book entity
+        builder.Entity<Book>(entity =>
+        {
+            entity.Property(e => e.Status)
+                .HasDefaultValue("Published")
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.IsAwardWinning)
+                .HasDefaultValue(false);
+        });
+
         // Customize the ASP.NET Identity model and override the defaults if needed
         builder.Entity<User>(entity =>
         {
@@ -133,6 +145,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, long, Identity
                 PageCount = 250,
                 Language = "English",
                 Format = "Paperback",
+                IsAwardWinning = false,
+                Status = "Published",
                 CreatedAt = DateTime.SpecifyKind(new DateTime(2024, 1, 1, 0, 0, 0), DateTimeKind.Utc)
             },
             new Book
@@ -146,6 +160,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, long, Identity
                 PageCount = 180,
                 Language = "English",
                 Format = "Hardcover",
+                IsAwardWinning = true,
+                Status = "Published",
                 CreatedAt = DateTime.SpecifyKind(new DateTime(2024, 1, 1, 0, 0, 0), DateTimeKind.Utc)
             },
             new Book
@@ -159,6 +175,8 @@ public class ApplicationDbContext : IdentityDbContext<User, Role, long, Identity
                 PageCount = 320,
                 Language = "English",
                 Format = "eBook",
+                IsAwardWinning = false,
+                Status = "Upcoming",
                 CreatedAt = DateTime.SpecifyKind(new DateTime(2024, 1, 1, 0, 0, 0), DateTimeKind.Utc)
             }
         );

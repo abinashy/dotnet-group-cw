@@ -9,7 +9,7 @@ namespace BookNook.Entities
         public int ReviewId { get; set; }
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public long UserId { get; set; }
 
         [Required]
         public int BookId { get; set; }

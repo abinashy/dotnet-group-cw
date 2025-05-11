@@ -12,11 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookNook.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-    [Migration("20250506115749_InitialCreate")]
-========
     [Migration("20250506080339_InitialCreate")]
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -101,11 +97,7 @@ namespace BookNook.Migrations
                         {
                             AuthorId = 1,
                             Biography = "Seed author for testing.",
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-                            CreatedAt = new DateTime(2025, 5, 6, 11, 57, 47, 953, DateTimeKind.Utc).AddTicks(8619),
-========
                             CreatedAt = new DateTime(2025, 5, 6, 8, 3, 38, 987, DateTimeKind.Utc).AddTicks(720),
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
                             FirstName = "John",
                             LastName = "Doe"
                         });
@@ -833,11 +825,7 @@ namespace BookNook.Migrations
                         {
                             Id = 1L,
                             AccessFailedCount = 0,
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-                            ConcurrencyStamp = "bf8f4c3a-6354-4fc6-8ded-9dcb3c65a334",
-========
                             ConcurrencyStamp = "d90f094d-5256-4ed8-ad96-06d17b5f3584",
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@booknook.com",
                             EmailConfirmed = true,
@@ -847,15 +835,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@BOOKNOOK.COM",
                             NormalizedUserName = "ADMIN",
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-                            PasswordHash = "AQAAAAIAAYagAAAAEPeI5afzavW/zknQbjAbbcpiYZqya1u/2M0mOYq1GjudyHiTL76RmWK94cLJMu90Xg==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "b530b4fc-f098-4329-828e-038de11b36e5",
-========
                             PasswordHash = "AQAAAAIAAYagAAAAEPjpuZz8dVwl3snjpdDZKuOXA51BYRJy2rR7gCOWLjrD2SLZNFSWUmVXW3N+zmwl7g==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "76c9dfa6-2ab5-4782-aa0c-2d4484bdcdad",
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -863,11 +845,7 @@ namespace BookNook.Migrations
                         {
                             Id = 2L,
                             AccessFailedCount = 0,
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-                            ConcurrencyStamp = "5573f197-7558-4595-9666-f997b11b54d7",
-========
                             ConcurrencyStamp = "d8740f2b-cb0f-49f8-9bf5-4fb134738cb7",
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff1@booknook.com",
                             EmailConfirmed = true,
@@ -877,15 +855,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF1@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF1",
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-                            PasswordHash = "AQAAAAIAAYagAAAAEAowum0i0qZ3gX/7G+8uJdH5ixiTe9Pff24Wba9ZlOkOxByu21Se/4VR7hH9u9nGXg==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "74861e88-f3a9-410a-a7e6-215b9945ffc1",
-========
                             PasswordHash = "AQAAAAIAAYagAAAAEOj6PRykuMDe7KZ/icbMw1djg7rQNPnpx8+gqHMHe5GCONdc+h/IBNM5GlWzdnR1oQ==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "498cd674-6319-4fb6-b884-7d27f9593da1",
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
                             TwoFactorEnabled = false,
                             UserName = "staff1"
                         },
@@ -893,11 +865,7 @@ namespace BookNook.Migrations
                         {
                             Id = 3L,
                             AccessFailedCount = 0,
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-                            ConcurrencyStamp = "954a986f-a827-4e94-b243-ae85ed3fe321",
-========
                             ConcurrencyStamp = "609b0876-26f2-477e-9770-dea583a288b0",
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff2@booknook.com",
                             EmailConfirmed = true,
@@ -907,15 +875,9 @@ namespace BookNook.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF2@BOOKNOOK.COM",
                             NormalizedUserName = "STAFF2",
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-                            PasswordHash = "AQAAAAIAAYagAAAAENSqRH2x5radEfec6I6ovAwD0QTjUqP2eaSJWRuoEy3I/9CAGFfFuLbJPxV6c02x8g==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "66c1b6e7-b058-4534-8a1f-ccdb169e177e",
-========
                             PasswordHash = "AQAAAAIAAYagAAAAEF9tgN2QW+QZZ/zpGBJ0qB5K6W9QW2/AHeo2nz4ZQU7SvXdwyB0YwhZDe6W/GszMfg==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "92b3ff72-b878-40a0-b024-4b712a6ad320",
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
                             TwoFactorEnabled = false,
                             UserName = "staff2"
                         });
@@ -1267,38 +1229,6 @@ namespace BookNook.Migrations
                         .IsRequired();
                 });
 
-<<<<<<<< HEAD:server/Migrations/20250506115749_InitialCreate.Designer.cs
-            modelBuilder.Entity("BookNook.Entities.Author", b =>
-                {
-                    b.Navigation("BookAuthors");
-                });
-
-            modelBuilder.Entity("BookNook.Entities.Book", b =>
-                {
-                    b.Navigation("BookAuthors");
-
-                    b.Navigation("BookGenres");
-
-                    b.Navigation("Bookmarks");
-
-                    b.Navigation("DiscountHistory");
-
-                    b.Navigation("Inventory");
-
-                    b.Navigation("OrderItems");
-
-                    b.Navigation("Reviews");
-
-                    b.Navigation("ShoppingCarts");
-                });
-
-            modelBuilder.Entity("BookNook.Entities.Genre", b =>
-                {
-                    b.Navigation("BookGenres");
-                });
-
-========
->>>>>>>> origin/order-branch:server/Migrations/20250506080339_InitialCreate.Designer.cs
             modelBuilder.Entity("BookNook.Entities.Order", b =>
                 {
                     b.Navigation("OrderHistory")
