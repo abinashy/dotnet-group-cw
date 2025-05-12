@@ -12,7 +12,8 @@ namespace BookNook.Repositories.BooksCatalogue
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,
-            string? sortPrice);
+            string? sortPrice,
+            string? tab);
         Task<bool> AddSampleDataAsync();
         Task<bool> CanConnectToDatabaseAsync();
         Task<bool> HasAnyBooksAsync();

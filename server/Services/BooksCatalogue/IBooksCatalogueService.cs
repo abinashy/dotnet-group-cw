@@ -11,6 +11,7 @@ namespace BookNook.Services.BooksCatalogue
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,
-            string? sortPrice);
+            string? sortPrice,
+            string? tab);
     }
 } 

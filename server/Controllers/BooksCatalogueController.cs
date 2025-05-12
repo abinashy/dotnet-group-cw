@@ -25,15 +25,16 @@ namespace BookNook.Controllers
             [FromQuery] List<string>? languages,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
-            [FromQuery] string? sortPrice)
+            [FromQuery] string? sortPrice,
+            [FromQuery] string? tab)
         {
             try
             {
                 _logger.LogInformation("Received request to fetch books with parameters: " +
-                    "search={Search}, genres={Genres}, authors={Authors}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}",
-                    search, genres, authors, languages, minPrice, maxPrice, sortPrice);
+                    "search={Search}, genres={Genres}, authors={Authors}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}, tab={Tab}",
+                    search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab);
 
-                var books = await _service.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice);
+                var books = await _service.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab);
                 return Ok(books);
             }
             catch (Exception ex)

@@ -50,6 +50,7 @@ const BooksCard = ({ book, onClick }) => {
     };
 
     const isOutOfStock = book.availability === 0;
+    const isUpcoming = book.status === 'Upcoming';
 
     return (
         <div
@@ -87,20 +88,20 @@ const BooksCard = ({ book, onClick }) => {
             </div>
             <AddToCartButton
                 onClick={handleAddToCart}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || isUpcoming}
                 style={{
                     border: '1px solid #1976d2',
-                    background: isOutOfStock ? '#eee' : (hover ? '#1976d2' : '#fff'),
-                    color: isOutOfStock ? '#888' : (hover ? '#fff' : '#1976d2'),
+                    background: (isOutOfStock || isUpcoming) ? '#eee' : (hover ? '#1976d2' : '#fff'),
+                    color: (isOutOfStock || isUpcoming) ? '#888' : (hover ? '#fff' : '#1976d2'),
                     borderRadius: 4,
                     padding: '8px 0',
                     width: '100%',
                     fontWeight: 600,
-                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                    cursor: (isOutOfStock || isUpcoming) ? 'not-allowed' : 'pointer',
                     transition: 'background 0.2s, color 0.2s',
                 }}
             >
-                {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+                {isUpcoming ? 'COMING SOON' : isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
             </AddToCartButton>
         </div>
     );

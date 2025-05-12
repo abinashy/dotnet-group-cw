@@ -371,7 +371,7 @@ const BooksCatalogue = () => {
                             ? selectedGenres[0]
                             : selectedGenres.length > 1
                                 ? `${selectedGenres.length} Genres`
-                                : 'All Genres'}
+                                : 'All Books'}
                     </h2>
                     <div style={{ flex: 1 }} />
                     <div style={{ position: 'relative', width: 340 }}>
@@ -379,7 +379,7 @@ const BooksCatalogue = () => {
                             type="text"
                             value={searchQuery}
                             onChange={e => setFilter('search', e.target.value)}
-                            placeholder={`Search on ${selectedGenres.length === 1 ? selectedGenres[0] : 'All Genres'}`}
+                            placeholder={`Search ${selectedGenres.length === 1 ? selectedGenres[0] : 'Books'}`}
                             style={{
                                 width: '100%',
                                 padding: '10px 44px 10px 18px',

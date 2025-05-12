@@ -6,7 +6,7 @@ import { BiBarcode } from 'react-icons/bi';
 import { FiBox } from 'react-icons/fi';
 import { FaRegCopy } from 'react-icons/fa';
 import AddToCartButton from '../components/Buttons/AddToCartButton';
-import { addToCart } from '../utils/cart';
+import { useCart } from '../context/CartContext';
 
 // Helper to get initials from name
 function getInitials(name) {
@@ -38,6 +38,7 @@ const BookDetails = () => {
     const [reviews, setReviews] = useState([]);
     const [quantity, setQuantity] = useState(1);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
+    const { openCart, refreshCart } = useCart();
 
     useEffect(() => {
         const fetchBook = async () => {
@@ -95,6 +96,41 @@ const BookDetails = () => {
     // const avgRating = reviews.length > 0 ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length) : 0;
 
     const isOutOfStock = book.availability === 0;
+    const isUpcoming = book.status === 'Upcoming';
+
+    // Consistent add to cart logic as BooksCard
+    const handleAddToCart = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            const response = await fetch('http://localhost:5124/api/AddToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    bookId: book.bookId,
+                    quantity: quantity
+                })
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
+                throw new Error('Failed to add to cart');
+            }
+            await refreshCart();
+            openCart();
+        } catch (err) {
+            alert('Failed to add to cart. Please try again.');
+        }
+    };
 
     return (
         <div style={{ maxWidth: 1300, margin: '0 auto', padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -185,7 +221,7 @@ const BookDetails = () => {
                             borderRadius: 12,
                             padding: 24,
                             boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-                            zIndex: 100,
+                            zIndex: 1,
                         }}
                     >
                         <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
@@ -223,27 +259,15 @@ const BookDetails = () => {
                             >+</button>
                         </div>
                         <AddToCartButton
-                            onClick={async () => {
-                                if (isOutOfStock) return; // Prevent action if out of stock
-                                try {
-                                    if (!quantity || quantity < 1) {
-                                        alert('Please select a valid quantity.');
-                                        return;
-                                    }
-                                    await addToCart({ bookId: book.bookId, quantity });
-                                    alert('Book added to cart!');
-                                } catch {
-                                    alert('Failed to add to cart.');
-                                }
-                            }}
-                            disabled={isOutOfStock}
+                            onClick={handleAddToCart}
+                            disabled={isOutOfStock || isUpcoming}
                             style={{
-                                background: isOutOfStock ? '#eee' : '#1976d2',
-                                color: isOutOfStock ? '#888' : '#fff',
-                                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                background: (isOutOfStock || isUpcoming) ? '#eee' : '#1976d2',
+                                color: (isOutOfStock || isUpcoming) ? '#888' : '#fff',
+                                cursor: (isOutOfStock || isUpcoming) ? 'not-allowed' : 'pointer',
                             }}
                         >
-                            {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+                            {isUpcoming ? 'Coming soon' : isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
                         </AddToCartButton>
                     </div>
                 ) : (
@@ -291,27 +315,15 @@ const BookDetails = () => {
                             >+</button>
                         </div>
                         <AddToCartButton
-                            onClick={async () => {
-                                if (isOutOfStock) return; // Prevent action if out of stock
-                                try {
-                                    if (!quantity || quantity < 1) {
-                                        alert('Please select a valid quantity.');
-                                        return;
-                                    }
-                                    await addToCart({ bookId: book.bookId, quantity });
-                                    alert('Book added to cart!');
-                                } catch {
-                                    alert('Failed to add to cart.');
-                                }
-                            }}
-                            disabled={isOutOfStock}
+                            onClick={handleAddToCart}
+                            disabled={isOutOfStock || isUpcoming}
                             style={{
-                                background: isOutOfStock ? '#eee' : '#1976d2',
-                                color: isOutOfStock ? '#888' : '#fff',
-                                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                background: (isOutOfStock || isUpcoming) ? '#eee' : '#1976d2',
+                                color: (isOutOfStock || isUpcoming) ? '#888' : '#fff',
+                                cursor: (isOutOfStock || isUpcoming) ? 'not-allowed' : 'pointer',
                             }}
                         >
-                            {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+                            {isUpcoming ? 'Coming soon' : isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
                         </AddToCartButton>
                     </div>
                 )}

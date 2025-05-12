@@ -22,7 +22,8 @@ namespace BookNook.Services.BooksCatalogue
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,
-            string? sortPrice)
+            string? sortPrice,
+            string? tab)
         {
             try
             {
@@ -38,7 +39,7 @@ namespace BookNook.Services.BooksCatalogue
                     await _repository.AddSampleDataAsync();
                 }
 
-                var books = await _repository.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice);
+                var books = await _repository.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab);
                 _logger.LogInformation("Found {Count} books matching the criteria", books.Count());
 
                 return books.Select(b => new BookDto
@@ -70,7 +71,8 @@ namespace BookNook.Services.BooksCatalogue
                         Name = bg.Genre.Name,
                         Description = bg.Genre.Description
                     }).ToList(),
-                    Availability = b.Inventory != null ? b.Inventory.Quantity : 0
+                    Availability = b.Inventory != null ? b.Inventory.Quantity : 0,
+                    Status = b.Status
                 });
             }
             catch (Exception ex)

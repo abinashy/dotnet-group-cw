@@ -22,7 +22,8 @@ namespace BookNook.Repositories.BooksCatalogue
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,
-            string? sortPrice)
+            string? sortPrice,
+            string? tab)
         {
             var query = _context.Books
                 .Include(b => b.Publisher)
@@ -30,6 +31,27 @@ namespace BookNook.Repositories.BooksCatalogue
                 .Include(b => b.BookGenres).ThenInclude(bg => bg.Genre)
                 .Include(b => b.Inventory)
                 .AsQueryable();
+
+            if (!string.IsNullOrEmpty(tab))
+            {
+                if (tab == "all")
+                {
+                    query = query.Where(b => b.Status.ToLower() == "published");
+                }
+                else if (tab == "coming")
+                {
+                    query = query.Where(b => b.Status.ToLower() == "upcoming");
+                }
+                else if (tab == "award")
+                {
+                    query = query.Where(b => b.IsAwardWinning == true);
+                }
+                else if (tab == "new")
+                {
+                    var oneMonthAgo = DateTime.UtcNow.AddMonths(-1);
+                    query = query.Where(b => b.CreatedAt >= oneMonthAgo);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
