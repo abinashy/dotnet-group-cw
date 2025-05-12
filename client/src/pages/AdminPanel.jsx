@@ -28,25 +28,34 @@ function AdminDashboard() {
   const [statusData, setStatusData] = useState({ labels: [], datasets: [] });
   const [topBooksData, setTopBooksData] = useState({ labels: [], datasets: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
+        setError(null);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+
         const [booksRes, usersRes, ordersRes] = await Promise.all([
-          axios.get('http://localhost:5124/api/books'),
-          axios.get('http://localhost:5124/api/user'),
-          axios.get('http://localhost:5124/api/order', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          })
+          axios.get('http://localhost:5124/api/Books', { headers }),
+          axios.get('http://localhost:5124/api/User/member', { headers }),
+          axios.get('http://localhost:5124/api/Order', { headers })
         ]);
+
         setStats({
           books: booksRes.data.length,
           users: usersRes.data.length,
           orders: ordersRes.data.length
         });
+
         // Orders per month
         const orders = ordersRes.data;
         const months = Array.from({ length: 12 }, (_, i) => new Date(0, i).toLocaleString('default', { month: 'short' }));
@@ -55,6 +64,7 @@ function AdminDashboard() {
           const d = new Date(order.orderDate);
           orderCounts[d.getMonth()]++;
         });
+
         setOrderData({
           labels: months,
           datasets: [
@@ -67,6 +77,7 @@ function AdminDashboard() {
             }
           ]
         });
+
         // Order status distribution
         const statusCounts = { Completed: 0, Pending: 0, Cancelled: 0 };
         orders.forEach(order => {
@@ -75,6 +86,7 @@ function AdminDashboard() {
           else if (status === 'pending') statusCounts.Pending++;
           else if (status === 'cancelled') statusCounts.Cancelled++;
         });
+
         setStatusData({
           labels: ['Completed', 'Pending', 'Cancelled'],
           datasets: [
@@ -90,15 +102,20 @@ function AdminDashboard() {
             }
           ]
         });
+
         // Top 5 books by order count
         const bookCounts = {};
         orders.forEach(order => {
           (order.orderItems || []).forEach(item => {
-            const title = item.BookTitle || item.bookTitle || (item.Book && item.Book.Title) || 'Unknown';
-            bookCounts[title] = (bookCounts[title] || 0) + item.quantity || item.Quantity || 1;
+            const title = item.bookTitle || (item.book && item.book.title) || 'Unknown';
+            bookCounts[title] = (bookCounts[title] || 0) + (item.quantity || 1);
           });
         });
-        const sortedBooks = Object.entries(bookCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+        const sortedBooks = Object.entries(bookCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+
         setTopBooksData({
           labels: sortedBooks.map(([title]) => title),
           datasets: [
@@ -118,6 +135,8 @@ function AdminDashboard() {
           ]
         });
       } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
         setStats({ books: 0, users: 0, orders: 0 });
         setOrderData({ labels: [], datasets: [] });
         setStatusData({ labels: [], datasets: [] });
@@ -126,6 +145,7 @@ function AdminDashboard() {
         setLoading(false);
       }
     };
+
     fetchStats();
   }, []);
 
@@ -133,6 +153,14 @@ function AdminDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">{error}</div>
       </div>
     );
   }
