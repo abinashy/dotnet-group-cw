@@ -32,9 +32,11 @@ const DiscountSchema = Yup.object().shape({
     .max(100, 'Discount cannot exceed 100%')
     .required('Discount percentage is required'),
   startDate: Yup.date().required('Start date is required'),
+  startTime: Yup.string().required('Start time is required'),
   endDate: Yup.date()
     .min(Yup.ref('startDate'), 'End date must be after start date')
     .required('End date is required'),
+  endTime: Yup.string().required('End time is required'),
   isOnSale: Yup.boolean(),
 });
 
@@ -74,12 +76,22 @@ export default function AdminDiscounts() {
     try {
       setFormError(null);
       setFormSuccess(null);
+      
+      // Create full datetime by combining date and time inputs
+      const startDateTime = new Date(`${values.startDate}T${values.startTime}`);
+      const endDateTime = new Date(`${values.endDate}T${values.endTime}`);
+      
       // Convert dates to UTC
       const discountData = {
         ...values,
-        startDate: new Date(values.startDate).toISOString(),
-        endDate: new Date(values.endDate).toISOString()
+        startDate: startDateTime.toISOString(),
+        endDate: endDateTime.toISOString()
       };
+      
+      // Remove the separate time fields before sending to API
+      delete discountData.startTime;
+      delete discountData.endTime;
+      
       await api.post('/Discounts', discountData);
       setIsAddModalOpen(false);
       resetForm();
@@ -108,6 +120,12 @@ export default function AdminDiscounts() {
       alert(errorMessage);
       console.error('Error deleting discount:', error);
     }
+  };
+
+  // Format datetime with both date and time
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
 
   if (loading) {
@@ -187,7 +205,7 @@ export default function AdminDiscounts() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {new Date(discount.startDate).toLocaleDateString()} - {new Date(discount.endDate).toLocaleDateString()}
+                      {formatDateTime(discount.startDate)} - {formatDateTime(discount.endDate)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -252,7 +270,9 @@ export default function AdminDiscounts() {
                 bookId: '',
                 discountPercentage: '',
                 startDate: '',
+                startTime: '00:00',
                 endDate: '',
+                endTime: '23:59',
                 isOnSale: false,
               }}
               validationSchema={DiscountSchema}
@@ -290,24 +310,46 @@ export default function AdminDiscounts() {
                     <ErrorMessage name="discountPercentage" component="div" className="mt-1 text-sm text-red-600" />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                    <Field
-                      name="startDate"
-                      type="date"
-                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
-                    />
-                    <ErrorMessage name="startDate" component="div" className="mt-1 text-sm text-red-600" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                      <Field
+                        name="startDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Time</label>
+                      <Field
+                        name="startTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">End Date</label>
-                    <Field
-                      name="endDate"
-                      type="date"
-                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
-                    />
-                    <ErrorMessage name="endDate" component="div" className="mt-1 text-sm text-red-600" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Date</label>
+                      <Field
+                        name="endDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Time</label>
+                      <Field
+                        name="endTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
                   </div>
 
                   <div className="flex items-center">
