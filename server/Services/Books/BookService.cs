@@ -150,6 +150,19 @@ namespace BookNook.Services.Books
                 UpdatedAt = book.UpdatedAt,
                 AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList(),
                 GenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList(),
+                Authors = book.BookAuthors.Select(ba => new BookNook.DTOs.Books.AuthorDTO
+                {
+                    AuthorId = ba.Author.AuthorId,
+                    FirstName = ba.Author.FirstName,
+                    LastName = ba.Author.LastName,
+                    Biography = ba.Author.Biography
+                }).ToList(),
+                Genres = book.BookGenres.Select(bg => new BookNook.DTOs.Books.GenreDTO
+                {
+                    GenreId = bg.Genre.GenreId,
+                    Name = bg.Genre.Name,
+                    Description = bg.Genre.Description
+                }).ToList(),
                 Availability = book.Inventory != null ? book.Inventory.Quantity : 0
             };
         }

@@ -29,6 +29,8 @@ namespace BookNook.DTOs.Books
     {
         public List<int> AuthorIds { get; set; } = new();
         public List<int> GenreIds { get; set; } = new();
+        public List<AuthorDTO> Authors { get; set; } = new();
+        public List<GenreDTO> Genres { get; set; } = new();
     }
 
     public class CreateBookDTO
