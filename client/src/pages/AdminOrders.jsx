@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import OrderList from '../components/Staff/OrderList';
+import OrderList from '../components/Admin/OrderList';
 import axios from 'axios';
 
 export default function AdminOrders() {
