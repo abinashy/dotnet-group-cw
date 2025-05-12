@@ -1,8 +1,10 @@
 using BookNook.DTOs;
 using BookNook.Services;
+using BookNook.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
 
 namespace BookNook.Controllers
 {
@@ -12,9 +14,12 @@ namespace BookNook.Controllers
     public class AnnouncementController : ControllerBase
     {
         private readonly IAnnouncementService _service;
-        public AnnouncementController(IAnnouncementService service)
+        private readonly IHubContext<AnnouncementHub> _hubContext;
+
+        public AnnouncementController(IAnnouncementService service, IHubContext<AnnouncementHub> hubContext)
         {
             _service = service;
+            _hubContext = hubContext;
         }
 
         [HttpPost]
@@ -30,6 +35,14 @@ namespace BookNook.Controllers
         public async Task<IActionResult> GetAll()
         {
             var result = await _service.GetAllAsync();
+            return Ok(result);
+        }
+
+        [HttpGet("active")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActive()
+        {
+            var result = await _service.GetActiveAnnouncementsAsync();
             return Ok(result);
         }
 

@@ -16,6 +16,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BookNook.Entities;
 using Microsoft.OpenApi.Models;
+using BookNook.Hubs;
+using System.Net.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,6 +84,28 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!)),
         RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
     };
+    
+    // Configure for SignalR WebSocket connections
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                return Task.CompletedTask;
+            }
+            
+            // Read token from the query string for SignalR hub connections
+            var path = context.HttpContext.Request.Path;
+            if (path.StartsWithSegments("/announcementHub") || path.StartsWithSegments("/orderNotificationHub"))
+            {
+                context.Token = accessToken;
+            }
+            
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // Add Application Services
@@ -101,6 +125,17 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddHostedService<AnnouncementPublisherService>();
 
+// Add SignalR services
+builder.Services.AddSignalR(options =>
+{
+    // Reduce amount of metadata for better performance
+    options.EnableDetailedErrors = false;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(5);
+    options.MaximumReceiveMessageSize = 4 * 1024; // 4KB
+});
+
 // Add Controllers with JSON options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -112,12 +147,12 @@ builder.Services.AddControllers()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
+    {
+        builder.WithOrigins("http://localhost:5173") // Client URL
+               .AllowAnyMethod()
                .AllowAnyHeader()
-               .WithExposedHeaders("Content-Disposition"); // Allow access to Content-Disposition header
-        });
+               .AllowCredentials(); // Required for SignalR
+    });
 });
 
 var app = builder.Build();
@@ -133,6 +168,12 @@ app.UseHttpsRedirection();
 
 // Apply CORS before routing so OPTIONS requests are handled correctly
 app.UseCors("AllowAll");
+
+// Enable WebSockets with optimized settings
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(30)
+});
 
 // Add middleware to handle OPTIONS requests explicitly
 app.Use(async (context, next) =>
@@ -154,6 +195,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<AnnouncementHub>("/announcementHub");
+app.MapHub<OrderNotificationHub>("/orderNotificationHub");
 
 // Create default roles
 using (var scope = app.Services.CreateScope())

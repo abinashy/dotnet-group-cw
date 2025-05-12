@@ -4,6 +4,8 @@ using BookNook.Services;
 using BookNook.DTOs;
 using System.Security.Claims;
 using BookNook.Data;
+using BookNook.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookNook.Controllers
@@ -100,19 +102,24 @@ namespace BookNook.Controllers
         [HttpPost("{orderId}/cancel")]
         public async Task<IActionResult> CancelOrder(int orderId)
         {
+            Console.WriteLine($"[OrderController] CancelOrder called for orderId: {orderId}");
             try
             {
                 var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!long.TryParse(userIdStr, out var userId))
                 {
+                    Console.WriteLine("[OrderController] User ID not found in token");
                     return Unauthorized(new { message = "User ID not found in token" });
                 }
-
+                
+                Console.WriteLine($"[OrderController] Cancelling order {orderId} for user {userId}");
                 await _orderService.CancelOrderAsync(orderId, userId);
+                Console.WriteLine($"[OrderController] Order {orderId} cancelled successfully");
                 return Ok(new { message = "Order cancelled successfully" });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[OrderController] Error cancelling order: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -173,15 +180,16 @@ namespace BookNook.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Staff,Admin")]
-        public async Task<IActionResult> GetAllOrders()
+        public async Task<IActionResult> GetAllOrders([FromQuery] string search = null)
         {
-            var orders = await _orderService.GetAllOrdersAsync();
+            var orders = await _orderService.GetAllOrdersAsync(search);
             var orderDtos = (from order in orders
                              join user in _context.Users on order.UserId equals user.Id
                              select new {
                                  order.OrderId,
                                  order.UserId,
                                  CustomerName = user.FirstName + " " + user.LastName,
+                                 UserEmail = user.Email,
                                  order.OrderDate,
                                  order.Status,
                                  order.ClaimCode,
@@ -203,19 +211,15 @@ namespace BookNook.Controllers
         [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> CompleteOrder(int orderId, [FromBody] CompleteOrderDto dto)
         {
-            var order = await _orderService.GetOrderByIdAsync(orderId, null, true); // allow staff to fetch any order
-            if (order == null)
-                return NotFound(new { message = "Order not found" });
-            if (order.Status == "Completed")
-                return BadRequest(new { message = "Order is already completed" });
-            if (!string.Equals(order.ClaimCode?.Trim(), dto.ClaimCode?.Trim(), StringComparison.OrdinalIgnoreCase))
-                return BadRequest(new { message = $"Invalid claim code. (DEBUG: order='{order.ClaimCode}', input='{dto.ClaimCode}')" });
-            order.Status = "Completed";
-            order.OrderHistory.Status = "Completed";
-            order.OrderHistory.StatusDate = DateTime.UtcNow;
-            order.OrderHistory.Notes = "Order marked as completed by staff";
-            await _orderService.SaveChangesAsync();
-            return Ok(new { message = "Order marked as completed" });
+            try
+            {
+                await _orderService.CompleteOrderAsync(orderId, dto.ClaimCode);
+                return Ok(new { message = "Order marked as completed" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{orderId}/resend-confirmation")]

@@ -6,7 +6,7 @@ const initialForm = {
   startDate: '',
   endDate: '',
   isActive: true,
-  announceNow: false,
+  announceNow: false
 };
 
 export default function AdminAnnouncements() {
@@ -69,6 +69,7 @@ export default function AdminAnnouncements() {
     } else if (form.announceNow && new Date(form.endDate) < new Date()) {
       errors.endDate = 'End date cannot be in the past';
     }
+    
     return errors;
   };
 
@@ -116,6 +117,10 @@ export default function AdminAnnouncements() {
         const errorData = await res.text();
         throw new Error(`Failed to create announcement: ${res.status} ${errorData}`);
       }
+      
+      // Successfully created announcement
+      await res.json();
+      
       setSuccess('Announcement created successfully!');
       setForm(initialForm);
       setIsAddModalOpen(false);
@@ -269,7 +274,17 @@ export default function AdminAnnouncements() {
     // Format dates for datetime-local input
     const formatDate = (dateString) => {
       const date = new Date(dateString);
-      return date.toISOString().slice(0, 16); // Format as YYYY-MM-DDTHH:MM
+      
+      // Format to local timezone YYYY-MM-DDTHH:MM format
+      // Get year, month, day, hours, minutes with proper padding
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      
+      // Return the formatted string
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
     console.log('Opening edit modal for announcement:', announcement);
@@ -282,7 +297,7 @@ export default function AdminAnnouncements() {
       startDate: formatDate(announcement.startDate),
       endDate: formatDate(announcement.endDate),
       isActive: announcement.isActive,
-      announceNow: false // Set to false for editing
+      announceNow: false, // Set to false for editing
     });
     setFormErrors({});
     setError('');
@@ -435,26 +450,14 @@ export default function AdminAnnouncements() {
                 <input type="datetime-local" name="endDate" value={form.endDate} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
                 {formErrors.endDate && <div className="mt-1 text-sm text-red-600">{formErrors.endDate}</div>}
               </div>
-              {!form.announceNow && (
-                <div className="flex items-center">
-                  {/* Removed Active checkbox */}
-                </div>
-              )}
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                  disabled={isLoading}
-                >
-                  Cancel
-                </button>
+              
+              <div className="text-right">
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Adding...' : 'Add Announcement'}
+                  {isLoading ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>
@@ -496,31 +499,30 @@ export default function AdminAnnouncements() {
                 <label className="block text-sm font-medium text-gray-700">Content</label>
                 <textarea name="content" value={form.content} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                <input type="datetime-local" name="startDate" value={form.startDate} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
-                {formErrors.startDate && <div className="mt-1 text-sm text-red-600">{formErrors.startDate}</div>}
+              <div className="flex items-center">
+                <input type="checkbox" name="announceNow" checked={form.announceNow} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-black focus:ring-gray-500" id="editAnnounceNow" />
+                <label htmlFor="editAnnounceNow" className="ml-2 block text-sm text-gray-700">Update and Announce Now</label>
               </div>
+              {!form.announceNow && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                  <input type="datetime-local" name="startDate" value={form.startDate} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
+                  {formErrors.startDate && <div className="mt-1 text-sm text-red-600">{formErrors.startDate}</div>}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700">End Date</label>
                 <input type="datetime-local" name="endDate" value={form.endDate} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
                 {formErrors.endDate && <div className="mt-1 text-sm text-red-600">{formErrors.endDate}</div>}
               </div>
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                  disabled={isLoading}
-                >
-                  Cancel
-                </button>
+              
+              <div className="text-right">
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Updating...' : 'Update Announcement'}
+                  {isLoading ? 'Updating...' : 'Update'}
                 </button>
               </div>
             </form>
@@ -529,4 +531,4 @@ export default function AdminAnnouncements() {
       )}
     </div>
   );
-} 
+}
