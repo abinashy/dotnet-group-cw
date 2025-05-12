@@ -21,6 +21,8 @@ import Review from './pages/Review';
 import StaffDashboard from './pages/Staff/StaffDashboard';
 import Footer from './components/Footer';
 import { CartProvider } from './context/CartContext';
+import Wishlist from './pages/Wishlist';
+import { WishlistProvider } from './context/WishlistContext';
 
 function AppContent() {
   const location = useLocation();
@@ -145,6 +147,14 @@ function AppContent() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/wishlist" 
+          element={
+            <AuthenticatedRoute>
+              <Wishlist />
+            </AuthenticatedRoute>
+          } 
+        />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
@@ -156,9 +166,11 @@ function AppContent() {
 function App() {
   return (
     <CartProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <WishlistProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </WishlistProvider>
     </CartProvider>
   );
 }
