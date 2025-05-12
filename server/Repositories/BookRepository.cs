@@ -31,7 +31,8 @@ namespace BookNook.Repositories
                     .Include(b => b.BookAuthors)
                         .ThenInclude(ba => ba.Author)
                     .Include(b => b.BookGenres)
-                        .ThenInclude(bg => bg.Genre);
+                        .ThenInclude(bg => bg.Genre)
+                    .Include(b => b.Inventory);
             }
 
             return await query.FirstOrDefaultAsync(b => b.BookId == id);

@@ -22,12 +22,15 @@ namespace BookNook.DTOs.Books
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public int Availability { get; set; } // Stock quantity
     }
 
     public class BookResponseDTO : BookDTO
     {
         public List<int> AuthorIds { get; set; } = new();
         public List<int> GenreIds { get; set; } = new();
+        public List<AuthorDTO> Authors { get; set; } = new();
+        public List<GenreDTO> Genres { get; set; } = new();
     }
 
     public class CreateBookDTO

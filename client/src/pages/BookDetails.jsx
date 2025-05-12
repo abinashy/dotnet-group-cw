@@ -37,6 +37,7 @@ const BookDetails = () => {
     const [error, setError] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [quantity, setQuantity] = useState(1);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
 
     useEffect(() => {
         const fetchBook = async () => {
@@ -55,6 +56,12 @@ const BookDetails = () => {
         fetchBook();
     }, [id]);
 
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth > 900);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Quantity handlers
     const handleDecrease = () => {
         setQuantity(q => (q > 1 ? q - 1 : 1));
@@ -67,18 +74,20 @@ const BookDetails = () => {
     if (error) return <div style={{ padding: 40, color: 'red' }}>{error}</div>;
     if (!book) return null;
 
-    // Helper for genres
-    // const genres = book.genres && book.genres.length > 0
-    //     ? book.genres.map(g => g.name).join(', ')
-    //     : 'N/A';
-    const authors = book.authors && book.authors.length > 0
-        ? book.authors.map(a => [a.firstName, a.lastName].filter(Boolean).join(' ')).join(', ')
+    // Authors: robust handling
+    const authors = Array.isArray(book.authors) && book.authors.length > 0
+        ? book.authors.map(a => [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean).join(', ')
         : 'Unknown Author';
+
+    // Genres: robust handling
+    const genres = Array.isArray(book.genres) && book.genres.length > 0
+        ? book.genres.map(g => g.name).filter(Boolean).join(', ')
+        : 'N/A';
 
     // Breadcrumbs (simulate)
     const breadcrumbs = [
         { name: 'Home', link: '/' },
-        ...(book.genres && book.genres.length > 0 ? book.genres.map(g => ({ name: g.name, link: '#' })) : []),
+        { name: 'Books', link: '/books' },
         { name: book.title }
     ];
 
@@ -99,7 +108,7 @@ const BookDetails = () => {
                 ))}
             </div>
             {/* Main Section */}
-            <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start', position: 'relative' }}>
                 {/* Cover & Genres */}
                 <div style={{ minWidth: 260 }}>
                     <img
@@ -110,13 +119,7 @@ const BookDetails = () => {
                     {/* Genres */}
                     <div style={{ marginTop: 18 }}>
                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Genres:</div>
-                        {book.genres && book.genres.length > 0 ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                {book.genres.map((g) => (
-                                    <a key={g.genreId} href="#" style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer', fontSize: 15 }}>{g.name}</a>
-                                ))}
-                            </div>
-                        ) : 'N/A'}
+                        {genres}
                     </div>
                 </div>
                 {/* Main Info */}
@@ -170,38 +173,148 @@ const BookDetails = () => {
                     </div>
                 </div>
                 {/* Right Side Card */}
-                <div style={{ minWidth: 300, background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
-                    <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
-                    <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-                        <button onClick={handleDecrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>-</button>
-                        <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
-                        <button onClick={handleIncrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>+</button>
-                    </div>
-                    <AddToCartButton
-                        onClick={async () => {
-                            try {
-                                if (!quantity || quantity < 1) {
-                                    alert('Please select a valid quantity.');
-                                    return;
-                                }
-                                await addToCart({ bookId: book.bookId, quantity });
-                                alert('Book added to cart!');
-                            } catch {
-                                alert('Failed to add to cart.');
-                            }
-                        }}
-                        disabled={isOutOfStock}
+                {isDesktop ? (
+                    <div
                         style={{
-                            background: isOutOfStock ? '#eee' : '#1976d2',
-                            color: isOutOfStock ? '#888' : '#fff',
-                            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                            position: 'fixed',
+                            top: 100,
+                            right: 40,
+                            width: 340,
+                            background: '#fff',
+                            border: '1px solid #eee',
+                            borderRadius: 12,
+                            padding: 24,
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                            zIndex: 100,
                         }}
                     >
-                        {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
-                    </AddToCartButton>
-                </div>
+                        <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
+                        <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
+                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+                            <button
+                                onClick={handleDecrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >-</button>
+                            <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
+                            <button
+                                onClick={handleIncrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >+</button>
+                        </div>
+                        <AddToCartButton
+                            onClick={async () => {
+                                if (isOutOfStock) return; // Prevent action if out of stock
+                                try {
+                                    if (!quantity || quantity < 1) {
+                                        alert('Please select a valid quantity.');
+                                        return;
+                                    }
+                                    await addToCart({ bookId: book.bookId, quantity });
+                                    alert('Book added to cart!');
+                                } catch {
+                                    alert('Failed to add to cart.');
+                                }
+                            }}
+                            disabled={isOutOfStock}
+                            style={{
+                                background: isOutOfStock ? '#eee' : '#1976d2',
+                                color: isOutOfStock ? '#888' : '#fff',
+                                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                            }}
+                        >
+                            {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+                        </AddToCartButton>
+                    </div>
+                ) : (
+                    <div style={{
+                        minWidth: 300,
+                        background: '#fff',
+                        border: '1px solid #eee',
+                        borderRadius: 12,
+                        padding: 24,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                        alignSelf: 'flex-start'
+                    }}>
+                        <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
+                        <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
+                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+                            <button
+                                onClick={handleDecrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >-</button>
+                            <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
+                            <button
+                                onClick={handleIncrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >+</button>
+                        </div>
+                        <AddToCartButton
+                            onClick={async () => {
+                                if (isOutOfStock) return; // Prevent action if out of stock
+                                try {
+                                    if (!quantity || quantity < 1) {
+                                        alert('Please select a valid quantity.');
+                                        return;
+                                    }
+                                    await addToCart({ bookId: book.bookId, quantity });
+                                    alert('Book added to cart!');
+                                } catch {
+                                    alert('Failed to add to cart.');
+                                }
+                            }}
+                            disabled={isOutOfStock}
+                            style={{
+                                background: isOutOfStock ? '#eee' : '#1976d2',
+                                color: isOutOfStock ? '#888' : '#fff',
+                                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                            }}
+                        >
+                            {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+                        </AddToCartButton>
+                    </div>
+                )}
             </div>
             {/* Ratings & Reviews */}
             <div style={{ marginTop: 48, maxWidth: 1000 }}>
