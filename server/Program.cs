@@ -112,12 +112,12 @@ builder.Services.AddControllers()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
                .AllowAnyHeader()
                .WithExposedHeaders("Content-Disposition"); // Allow access to Content-Disposition header
-    });
+        });
 });
 
 var app = builder.Build();

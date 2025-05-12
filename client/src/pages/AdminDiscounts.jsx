@@ -248,12 +248,12 @@ export default function AdminDiscounts() {
                       >
                         Edit
                       </button>
-                      <button
-                        onClick={() => handleDeleteDiscount(discount.discountId)}
+                    <button
+                      onClick={() => handleDeleteDiscount(discount.discountId)}
                         className="text-red-600 hover:text-red-900 transition"
-                      >
-                        Delete
-                      </button>
+                    >
+                      Delete
+                    </button>
                     </div>
                   </td>
                 </tr>
