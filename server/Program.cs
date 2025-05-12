@@ -111,13 +111,13 @@ builder.Services.AddControllers()
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
-        });
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .WithExposedHeaders("Content-Disposition"); // Allow access to Content-Disposition header
+    });
 });
 
 var app = builder.Build();
@@ -130,7 +130,26 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Apply CORS before routing so OPTIONS requests are handled correctly
 app.UseCors("AllowAll");
+
+// Add middleware to handle OPTIONS requests explicitly
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 200;
+        context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        await context.Response.CompleteAsync();
+        return;
+    }
+    
+    await next.Invoke();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 

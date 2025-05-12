@@ -48,5 +48,42 @@ namespace BookNook.Controllers
             if (!ann) return NotFound();
             return NoContent();
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] CreateAnnouncementDto dto)
+        {
+            try
+            {
+                Console.WriteLine($"Controller: PUT update request for announcement ID {id}");
+                var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var result = await _service.UpdateAnnouncementAsync(id, dto, userId);
+                if (result == null) return NotFound($"Announcement with ID {id} not found");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Controller: Error updating announcement: {ex.Message}");
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // Workaround endpoint using POST instead of PUT
+        [HttpPost("{id}/update")]
+        public async Task<IActionResult> UpdateViaPost(int id, [FromBody] CreateAnnouncementDto dto)
+        {
+            try
+            {
+                Console.WriteLine($"Controller: POST update request for announcement ID {id}");
+                var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var result = await _service.UpdateAnnouncementAsync(id, dto, userId);
+                if (result == null) return NotFound($"Announcement with ID {id} not found");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Controller: Error in POST update: {ex.Message}");
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 } 

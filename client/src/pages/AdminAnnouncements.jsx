@@ -12,28 +12,35 @@ const initialForm = {
 export default function AdminAnnouncements() {
   const [form, setForm] = useState(initialForm);
   const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentAnnouncementId, setCurrentAnnouncementId] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
   const token = localStorage.getItem('token');
 
   const fetchAnnouncements = async () => {
-    setLoading(true);
+    setIsLoading(true);
     try {
       const res = await fetch('http://localhost:5124/api/announcements', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch announcements: ${res.status}`);
+      }
       const data = await res.json();
       setAnnouncements(data);
-    } catch (e) {
-      setError('Failed to load announcements');
+    } catch (err) {
+      console.error('Error loading announcements:', err);
+      setError('Failed to load announcements: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -73,6 +80,7 @@ export default function AdminAnnouncements() {
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) return;
     try {
+      setIsLoading(true);
       let payload;
       const now = new Date();
       if (form.announceNow) {
@@ -104,13 +112,105 @@ export default function AdminAnnouncements() {
         },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Failed to create announcement');
-      setSuccess('Announcement created!');
+      if (!res.ok) {
+        const errorData = await res.text();
+        throw new Error(`Failed to create announcement: ${res.status} ${errorData}`);
+      }
+      setSuccess('Announcement created successfully!');
       setForm(initialForm);
       setIsAddModalOpen(false);
-      fetchAnnouncements();
+      await fetchAnnouncements();
+    } catch (err) {
+      console.error('Create error:', err);
+      setError(err.message || 'Failed to create announcement');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    
+    console.log('Submitting update form for announcement ID:', currentAnnouncementId);
+    
+    const errors = validateForm();
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+    try {
+      let payload;
+      const now = new Date();
+      if (form.announceNow) {
+        const startDate = new Date();
+        const endDate = new Date(form.endDate);
+        payload = {
+          title: form.title,
+          content: form.content,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          isActive: startDate <= endDate && startDate <= now && now < endDate,
+        };
+      } else {
+        const startDate = new Date(form.startDate);
+        const endDate = new Date(form.endDate);
+        payload = {
+          title: form.title,
+          content: form.content,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          isActive: startDate <= endDate && startDate <= now && now < endDate,
+        };
+      }
+
+      // Display loading feedback
+      setIsLoading(true);
+      
+      // Log the request details
+      console.log('Update request details:', {
+        id: currentAnnouncementId,
+        payload: payload,
+        tokenPresent: !!token
+      });
+
+      // Use the proper RESTful PUT method for updates
+      const updateUrl = `http://localhost:5124/api/announcements/${currentAnnouncementId}`;
+      console.log('Using standard PUT endpoint:', updateUrl);
+      
+      const res = await fetch(updateUrl, {
+        method: 'PUT',  // Using proper RESTful PUT method
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error response:', {
+          status: res.status,
+          statusText: res.statusText,
+          headers: Object.fromEntries([...res.headers.entries()]),
+          body: errorText
+        });
+        
+        if (res.status === 404) {
+          throw new Error(`Announcement with ID ${currentAnnouncementId} not found. This may be due to the announcement being deleted by another user or a data mismatch.`);
+        }
+        
+        throw new Error(`Failed to update announcement: ${res.status} ${res.statusText}\nDetails: ${errorText}`);
+      }
+      
+      setSuccess('Announcement updated successfully!');
+      setForm(initialForm);
+      setIsEditModalOpen(false);
+      await fetchAnnouncements();
     } catch (e) {
-      setError(e.message);
+      console.error('Update error:', e);
+      setError(e.message || 'Failed to update announcement');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -118,17 +218,24 @@ export default function AdminAnnouncements() {
     setError('');
     setSuccess('');
     try {
+      setIsLoading(true);
       const res = await fetch(`http://localhost:5124/api/announcements/${id}/publish`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (!res.ok) throw new Error('Failed to publish announcement');
-      setSuccess('Announcement published!');
-      fetchAnnouncements();
-    } catch (e) {
-      setError(e.message);
+      if (!res.ok) {
+        const errorData = await res.text();
+        throw new Error(`Failed to publish announcement: ${res.status} ${errorData}`);
+      }
+      setSuccess('Announcement published successfully!');
+      await fetchAnnouncements();
+    } catch (err) {
+      console.error('Publish error:', err);
+      setError(err.message || 'Failed to publish announcement');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -137,18 +244,50 @@ export default function AdminAnnouncements() {
     setSuccess('');
     if (!window.confirm('Are you sure you want to delete this announcement?')) return;
     try {
+      setIsLoading(true);
       const res = await fetch(`http://localhost:5124/api/announcements/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (!res.ok) throw new Error('Failed to delete announcement');
-      setSuccess('Announcement deleted!');
-      fetchAnnouncements();
-    } catch (e) {
-      setError(e.message);
+      if (!res.ok) {
+        const errorData = await res.text();
+        throw new Error(`Failed to delete announcement: ${res.status} ${errorData}`);
+      }
+      setSuccess('Announcement deleted successfully!');
+      await fetchAnnouncements();
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError(err.message || 'Failed to delete announcement');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const openEditModal = (announcement) => {
+    // Format dates for datetime-local input
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toISOString().slice(0, 16); // Format as YYYY-MM-DDTHH:MM
+    };
+
+    console.log('Opening edit modal for announcement:', announcement);
+    console.log('Announcement ID:', announcement.announcementId);
+    
+    setCurrentAnnouncementId(announcement.announcementId);
+    setForm({
+      title: announcement.title,
+      content: announcement.content,
+      startDate: formatDate(announcement.startDate),
+      endDate: formatDate(announcement.endDate),
+      isActive: announcement.isActive,
+      announceNow: false // Set to false for editing
+    });
+    setFormErrors({});
+    setError('');
+    setSuccess('');
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -173,10 +312,17 @@ export default function AdminAnnouncements() {
             setForm(initialForm);
           }}
           className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+          disabled={isLoading}
         >
           Add New Announcement
         </button>
       </div>
+
+      {isLoading && (
+        <div className="flex justify-center my-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
@@ -202,10 +348,29 @@ export default function AdminAnnouncements() {
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(a.endDate).toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{isActive ? 'Yes' : 'No'}</td>
                     <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                      <button 
+                        onClick={() => openEditModal(a)} 
+                        className="bg-indigo-600 text-white px-2 py-1 rounded"
+                        disabled={isLoading}
+                      >
+                        Edit
+                      </button>
                       {!isActive && new Date(a.startDate) > new Date() && (
-                        <button onClick={() => handlePublish(a.announcementId)} className="bg-green-600 text-white px-2 py-1 rounded">Publish Now</button>
+                        <button 
+                          onClick={() => handlePublish(a.announcementId)} 
+                          className="bg-green-600 text-white px-2 py-1 rounded"
+                          disabled={isLoading}
+                        >
+                          Publish Now
+                        </button>
                       )}
-                      <button onClick={() => handleDelete(a.announcementId)} className="bg-red-600 text-white px-2 py-1 rounded">Delete</button>
+                      <button 
+                        onClick={() => handleDelete(a.announcementId)} 
+                        className="bg-red-600 text-white px-2 py-1 rounded"
+                        disabled={isLoading}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 );
@@ -213,13 +378,14 @@ export default function AdminAnnouncements() {
             </tbody>
           </table>
         </div>
-        {announcements.length === 0 && (
+        {!isLoading && announcements.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No announcements found. Add your first announcement to get started.
           </div>
         )}
       </div>
 
+      {/* Add Announcement Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -232,6 +398,7 @@ export default function AdminAnnouncements() {
                   setSuccess('');
                 }}
                 className="text-gray-500 hover:text-gray-700"
+                disabled={isLoading}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -278,14 +445,82 @@ export default function AdminAnnouncements() {
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={isLoading}
                 >
-                  Add Announcement
+                  {isLoading ? 'Adding...' : 'Add Announcement'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Announcement Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Edit Announcement</h2>
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setError('');
+                  setSuccess('');
+                }}
+                className="text-gray-500 hover:text-gray-700"
+                disabled={isLoading}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {error && (
+              <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Title</label>
+                <input name="title" value={form.title} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required maxLength={200} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Content</label>
+                <textarea name="content" value={form.content} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                <input type="datetime-local" name="startDate" value={form.startDate} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
+                {formErrors.startDate && <div className="mt-1 text-sm text-red-600">{formErrors.startDate}</div>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">End Date</label>
+                <input type="datetime-local" name="endDate" value={form.endDate} onChange={handleChange} className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500" required />
+                {formErrors.endDate && <div className="mt-1 text-sm text-red-600">{formErrors.endDate}</div>}
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Updating...' : 'Update Announcement'}
                 </button>
               </div>
             </form>
