@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import OrderDetailsModal from './OrderDetailsModal';
+import axios from 'axios';
 
 const OrderList = ({ orders, onOrderCompleted }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [searchOrderId, setSearchOrderId] = useState('');
+  const [resendStatus, setResendStatus] = useState({});
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -22,6 +24,24 @@ const OrderList = ({ orders, onOrderCompleted }) => {
   const filteredOrders = orders.filter(order =>
     searchOrderId.trim() === '' || String(order.orderId).includes(searchOrderId.trim())
   );
+
+  const handleResendEmail = async (orderId) => {
+    setResendStatus((prev) => ({ ...prev, [orderId]: 'loading' }));
+    try {
+      await axios.post(`http://localhost:5124/api/order/${orderId}/resend-confirmation`, {}, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setResendStatus((prev) => ({ ...prev, [orderId]: 'success' }));
+      setTimeout(() => setResendStatus((prev) => ({ ...prev, [orderId]: undefined })), 2000);
+    } catch (error) {
+      console.error('Error resending email:', error);
+      setResendStatus((prev) => ({ ...prev, [orderId]: 'error' }));
+      setTimeout(() => setResendStatus((prev) => ({ ...prev, [orderId]: undefined })), 2000);
+    }
+  };
 
   return (
     <>
@@ -93,6 +113,21 @@ const OrderList = ({ orders, onOrderCompleted }) => {
                   >
                     View Details
                   </button>
+                  {order.status.toLowerCase() === 'pending' && (
+                    <button
+                      onClick={() => handleResendEmail(order.orderId)}
+                      className="text-yellow-600 hover:text-yellow-900 border border-yellow-400 rounded px-2 py-1 ml-1"
+                      disabled={resendStatus[order.orderId] === 'loading'}
+                    >
+                      {resendStatus[order.orderId] === 'loading' ? 'Sending...' : 'Resend Email'}
+                    </button>
+                  )}
+                  {resendStatus[order.orderId] === 'success' && (
+                    <span className="ml-2 text-green-600">Sent!</span>
+                  )}
+                  {resendStatus[order.orderId] === 'error' && (
+                    <span className="ml-2 text-red-600">Failed!</span>
+                  )}
                 </td>
               </tr>
             ))}
