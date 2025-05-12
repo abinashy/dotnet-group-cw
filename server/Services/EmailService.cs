@@ -4,6 +4,7 @@ using System.Net.Mail;
 using System.Net;
 using BookNook.Data;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookNook.Services
 {
@@ -75,10 +76,41 @@ namespace BookNook.Services
             {
                 member5PercentDiscount = order.TotalAmount * 0.05m;
             }
-            if (order.DiscountAmount - perBookDiscount - member5PercentDiscount > 0)
+            
+            // Check for 10% discount by looking for a used MemberDiscount record
+            var orderDate = order.OrderDate;
+            var oneDayAfter = orderDate.AddDays(1);
+            var memberDiscount = await _context.MemberDiscounts
+                .FirstOrDefaultAsync(md => md.UserId == order.UserId 
+                    && md.IsUsed 
+                    && md.DiscountPercentage == 10
+                    && md.CreatedAt <= oneDayAfter);
+            
+            if (memberDiscount != null)
             {
                 member10PercentDiscount = order.TotalAmount * 0.10m;
             }
+            var discountExplanation = "";
+            
+            if (perBookDiscount > 0)
+                discountExplanation += $"<p>• Per-book discounts are applied directly to individual book prices</p>";
+                
+            if (member5PercentDiscount > 0)
+                discountExplanation += $"<p>• 5% Member Discount applied on orders with 5 or more items</p>";
+                
+            if (member10PercentDiscount > 0)
+                discountExplanation += $"<p>• 10% Member Discount applied on milestone orders (11th, 21st, 31st, etc.)</p>";
+                
+            if (discountExplanation.Length > 0)
+                discountExplanation = $@"<div style='background-color: #e6f7e6; padding: 10px; border-radius: 5px; margin-top: 10px;'>
+                    <p><strong>Your Savings Breakdown:</strong></p>
+                    {discountExplanation}
+                    <p style='font-size: 11px; color: #666; margin-top: 8px;'>
+                        Note: The 10% milestone discount is earned after completing your 10th, 20th, 30th order (and so on), 
+                        and automatically applied to your next order.
+                    </p>
+                </div>";
+
             var body = $@"
                 <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
@@ -91,9 +123,9 @@ namespace BookNook.Services
                             <p><strong>Membership ID:</strong> {user.Id}</p>
                             <p><strong>Claim Code:</strong> {order.ClaimCode}</p>
                             <p><strong>Total Amount:</strong> ${order.TotalAmount:F2}</p>
-                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount:</strong> -${perBookDiscount:F2}</p>" : "")}
-                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount:</strong> -${member5PercentDiscount:F2}</p>" : "")}
-                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount:</strong> -${member10PercentDiscount:F2}</p>" : "")}
+                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount (Special Offers):</strong> -${perBookDiscount:F2}</p>" : "")}
+                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount (5+ books):</strong> -${member5PercentDiscount:F2}</p>" : "")}
+                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount (Milestone):</strong> -${member10PercentDiscount:F2}</p>" : "")}
                             <p><strong>Total Discount:</strong> -${order.DiscountAmount:F2}</p>
                             <p><strong>Final Amount:</strong> ${order.FinalAmount:F2}</p>
                         </div>
@@ -131,7 +163,7 @@ namespace BookNook.Services
                         </table>
 
                         <p><strong>Important:</strong> Please bring your <strong>membership ID ({user.Id})</strong> and the claim code above when picking up your order at the store.</p>
-                        
+                        {discountExplanation}
                         <p>If you have any questions, please don't hesitate to contact us.</p>
                         
                         <p>Best regards,<br>BookNook Store Team</p>
@@ -188,7 +220,17 @@ namespace BookNook.Services
             {
                 member5PercentDiscount = order.TotalAmount * 0.05m;
             }
-            if (order.DiscountAmount - perBookDiscount - member5PercentDiscount > 0)
+            
+            // Check for 10% discount by looking for a used MemberDiscount record
+            var orderDate = order.OrderDate;
+            var oneDayAfter = orderDate.AddDays(1);
+            var memberDiscount = await _context.MemberDiscounts
+                .FirstOrDefaultAsync(md => md.UserId == order.UserId 
+                    && md.IsUsed 
+                    && md.DiscountPercentage == 10
+                    && md.CreatedAt <= oneDayAfter);
+            
+            if (memberDiscount != null)
             {
                 member10PercentDiscount = order.TotalAmount * 0.10m;
             }
@@ -201,9 +243,9 @@ namespace BookNook.Services
                             <p><strong>Order Number:</strong> #{order.OrderId}</p>
                             <p><strong>Claim Code:</strong> {order.ClaimCode}</p>
                             <p><strong>Total Amount:</strong> ${order.TotalAmount:F2}</p>
-                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount:</strong> -${perBookDiscount:F2}</p>" : "")}
-                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount:</strong> -${member5PercentDiscount:F2}</p>" : "")}
-                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount:</strong> -${member10PercentDiscount:F2}</p>" : "")}
+                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount (Special Offers):</strong> -${perBookDiscount:F2}</p>" : "")}
+                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount (5+ books):</strong> -${member5PercentDiscount:F2}</p>" : "")}
+                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount (Milestone):</strong> -${member10PercentDiscount:F2}</p>" : "")}
                             <p><strong>Total Discount:</strong> -${order.DiscountAmount:F2}</p>
                             <p><strong>Final Amount:</strong> ${order.FinalAmount:F2}</p>
                         </div>
@@ -289,7 +331,17 @@ namespace BookNook.Services
             {
                 member5PercentDiscount = order.TotalAmount * 0.05m;
             }
-            if (order.DiscountAmount - perBookDiscount - member5PercentDiscount > 0)
+            
+            // Check for 10% discount by looking for a used MemberDiscount record
+            var orderDate = order.OrderDate;
+            var oneDayAfter = orderDate.AddDays(1);
+            var memberDiscount = await _context.MemberDiscounts
+                .FirstOrDefaultAsync(md => md.UserId == order.UserId 
+                    && md.IsUsed 
+                    && md.DiscountPercentage == 10
+                    && md.CreatedAt <= oneDayAfter);
+            
+            if (memberDiscount != null)
             {
                 member10PercentDiscount = order.TotalAmount * 0.10m;
             }
@@ -302,9 +354,9 @@ namespace BookNook.Services
                             <p><strong>Order Number:</strong> #{order.OrderId}</p>
                             <p><strong>Claim Code:</strong> {order.ClaimCode}</p>
                             <p><strong>Total Amount:</strong> ${order.TotalAmount:F2}</p>
-                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount:</strong> -${perBookDiscount:F2}</p>" : "")}
-                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount:</strong> -${member5PercentDiscount:F2}</p>" : "")}
-                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount:</strong> -${member10PercentDiscount:F2}</p>" : "")}
+                            {(perBookDiscount > 0 ? $"<p><strong>Per-Book Discount (Special Offers):</strong> -${perBookDiscount:F2}</p>" : "")}
+                            {(member5PercentDiscount > 0 ? $"<p><strong>Member 5% Discount (5+ books):</strong> -${member5PercentDiscount:F2}</p>" : "")}
+                            {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount (Milestone):</strong> -${member10PercentDiscount:F2}</p>" : "")}
                             <p><strong>Total Discount:</strong> -${order.DiscountAmount:F2}</p>
                             <p><strong>Final Amount:</strong> ${order.FinalAmount:F2}</p>
                         </div>

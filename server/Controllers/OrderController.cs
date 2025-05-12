@@ -83,13 +83,24 @@ namespace BookNook.Controllers
                 }
                 // 10% member discount if it was actually applied to this order
                 var member10PercentDiscount = 0m;
-                // Try to reconstruct the actual 10% discount applied
-                var expected10Percent = order.TotalAmount * 0.10m;
-                // The 10% discount is only applied if the discount amount is at least the sum of 5% and 10% (or just 10% if 5% doesn't apply)
-                if (order.DiscountAmount >= member5PercentDiscount + expected10Percent - 0.01m) // allow for rounding
+                
+                // Check if a 10% member discount was actually used for this order
+                // This requires adding an OrderDiscounts table or tracking in OrderHistory
+                var orderDate = order.OrderDate;
+                var oneDayAfter = orderDate.AddDays(1);
+                
+                // Check if there was a 10% member discount record that was marked as used around the time this order was placed
+                var memberDiscount = await _context.MemberDiscounts
+                    .FirstOrDefaultAsync(md => md.UserId == userId 
+                        && md.IsUsed 
+                        && md.DiscountPercentage == 10
+                        && md.CreatedAt <= oneDayAfter);
+                
+                if (memberDiscount != null)
                 {
-                    member10PercentDiscount = expected10Percent;
+                    member10PercentDiscount = order.TotalAmount * 0.10m;
                 }
+                
                 var dto = new OrderConfirmationDto
                 {
                     OrderId = order.OrderId,
