@@ -47,16 +47,16 @@ namespace BookNook.Services
                 throw new Exception("SMTP configuration is missing required values. Please check your appsettings.json.");
             }
 
-            var smtpClient = new SmtpClient(host)
+            var smtpClient = new SmtpClient(host!)
             {
-                Port = int.Parse(port),
-                Credentials = new NetworkCredential(username, password),
+                Port = int.Parse(port!),
+                Credentials = new NetworkCredential(username!, password!),
                 EnableSsl = true,
             };
 
             var message = new MailMessage
             {
-                From = new MailAddress(fromEmail, "BookNook Store"),
+                From = new MailAddress(fromEmail!, "BookNook Store"),
                 Subject = $"Order Confirmation - Order #{order.OrderId}",
                 IsBodyHtml = true
             };
@@ -128,16 +128,16 @@ namespace BookNook.Services
             var password = smtpSettings["Password"];
             var fromEmail = smtpSettings["FromEmail"];
 
-            var smtpClient = new SmtpClient(host)
+            var smtpClient = new SmtpClient(host!)
             {
-                Port = int.Parse(port),
-                Credentials = new NetworkCredential(username, password),
+                Port = int.Parse(port!),
+                Credentials = new NetworkCredential(username!, password!),
                 EnableSsl = true,
             };
 
             var message = new MailMessage
             {
-                From = new MailAddress(fromEmail, "BookNook Store"),
+                From = new MailAddress(fromEmail!, "BookNook Store"),
                 Subject = $"New Order Placed - Order #{order.OrderId}",
                 IsBodyHtml = true
             };
@@ -201,16 +201,16 @@ namespace BookNook.Services
             var password = smtpSettings["Password"];
             var fromEmail = smtpSettings["FromEmail"];
 
-            var smtpClient = new SmtpClient(host)
+            var smtpClient = new SmtpClient(host!)
             {
-                Port = int.Parse(port),
-                Credentials = new NetworkCredential(username, password),
+                Port = int.Parse(port!),
+                Credentials = new NetworkCredential(username!, password!),
                 EnableSsl = true,
             };
 
             var message = new MailMessage
             {
-                From = new MailAddress(fromEmail, "BookNook Store"),
+                From = new MailAddress(fromEmail!, "BookNook Store"),
                 Subject = $"Order Cancelled - Order #{order.OrderId}",
                 IsBodyHtml = true
             };

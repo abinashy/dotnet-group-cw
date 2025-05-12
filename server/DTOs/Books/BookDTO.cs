@@ -22,6 +22,7 @@ namespace BookNook.DTOs.Books
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public int Availability { get; set; } // Stock quantity
     }
 
     public class BookResponseDTO : BookDTO

@@ -149,7 +149,8 @@ namespace BookNook.Services.Books
                 CreatedAt = book.CreatedAt,
                 UpdatedAt = book.UpdatedAt,
                 AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList(),
-                GenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList()
+                GenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList(),
+                Availability = book.Inventory != null ? book.Inventory.Quantity : 0
             };
         }
     }

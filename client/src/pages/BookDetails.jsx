@@ -175,12 +175,39 @@ const BookDetails = () => {
                     <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
                     <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-                        <button onClick={handleDecrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>-</button>
+                        <button
+                            onClick={handleDecrease}
+                            style={{
+                                background: '#eee',
+                                border: 'none',
+                                borderRadius: 6,
+                                width: 32,
+                                height: 32,
+                                fontSize: 20,
+                                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                opacity: isOutOfStock ? 0.5 : 1
+                            }}
+                            disabled={isOutOfStock}
+                        >-</button>
                         <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
-                        <button onClick={handleIncrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>+</button>
+                        <button
+                            onClick={handleIncrease}
+                            style={{
+                                background: '#eee',
+                                border: 'none',
+                                borderRadius: 6,
+                                width: 32,
+                                height: 32,
+                                fontSize: 20,
+                                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                opacity: isOutOfStock ? 0.5 : 1
+                            }}
+                            disabled={isOutOfStock}
+                        >+</button>
                     </div>
                     <AddToCartButton
                         onClick={async () => {
+                            if (isOutOfStock) return; // Prevent action if out of stock
                             try {
                                 if (!quantity || quantity < 1) {
                                     alert('Please select a valid quantity.');

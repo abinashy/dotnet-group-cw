@@ -5,6 +5,7 @@ using BookNook.DTOs;
 using System.Security.Claims;
 using BookNook.Data;
 using Microsoft.EntityFrameworkCore;
+using BookNook.Entities;
 
 namespace BookNook.Controllers
 {
@@ -36,11 +37,11 @@ namespace BookNook.Controllers
                 }
 
                 var order = await _orderService.CreateOrderAsync(userId, orderDto);
-                
-                // Generate claim code and send confirmation email
+
                 await _emailService.SendOrderConfirmationEmailAsync(order);
-                
-                return Ok(new { 
+
+                return Ok(new
+                {
                     orderId = order.OrderId,
                     claimCode = order.ClaimCode,
                     totalAmount = order.TotalAmount,
@@ -66,7 +67,7 @@ namespace BookNook.Controllers
                 }
 
                 var order = await _orderService.GetOrderByIdAsync(orderId, userId);
-                
+
                 if (order == null)
                     return NotFound();
 
@@ -82,7 +83,7 @@ namespace BookNook.Controllers
                     OrderItems = order.OrderItems.Select(oi => new OrderItemConfirmationDto
                     {
                         BookId = oi.BookId,
-                        BookTitle = oi.Book.Title,
+                        BookTitle = oi.Book != null ? oi.Book.Title : "Unknown Book",
                         Quantity = oi.Quantity,
                         UnitPrice = oi.UnitPrice,
                         TotalPrice = oi.UnitPrice * oi.Quantity
@@ -135,7 +136,6 @@ namespace BookNook.Controllers
                 var orders = await _orderService.GetOrderHistoryAsync(userId);
                 Console.WriteLine($"[OrderController] Orders fetched: {orders.Count}");
 
-                // Map to DTOs to avoid cycles
                 var orderDtos = orders.Select(order => new DTOs.OrderHistoryDto
                 {
                     OrderId = order.OrderId,
@@ -151,14 +151,14 @@ namespace BookNook.Controllers
                         Book = oi.Book == null ? null : new DTOs.BookDto
                         {
                             BookId = oi.Book.BookId,
-                            Title = oi.Book.Title
+                            Title = oi.Book != null ? oi.Book.Title : "Unknown Book"
                         }
                     }).ToList(),
                     OrderHistory = order.OrderHistory == null ? null : new DTOs.OrderHistoryDetailsDto
                     {
-                        Status = order.OrderHistory.Status,
-                        StatusDate = order.OrderHistory.StatusDate,
-                        Notes = order.OrderHistory.Notes
+                        Status = order.OrderHistory?.Status ?? "Unknown",
+                        StatusDate = order.OrderHistory?.StatusDate ?? DateTime.UtcNow,
+                        Notes = order.OrderHistory?.Notes ?? "No notes available"
                     }
                 }).ToList();
 
@@ -178,19 +178,21 @@ namespace BookNook.Controllers
             var orders = await _orderService.GetAllOrdersAsync();
             var orderDtos = (from order in orders
                              join user in _context.Users on order.UserId equals user.Id
-                             select new {
+                             select new
+                             {
                                  order.OrderId,
                                  order.UserId,
-                                 CustomerName = user.FirstName + " " + user.LastName,
+                                 CustomerName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown Customer",
                                  order.OrderDate,
                                  order.Status,
                                  order.ClaimCode,
                                  order.TotalAmount,
                                  order.FinalAmount,
                                  order.DiscountAmount,
-                                 OrderItems = order.OrderItems.Select(oi => new {
+                                 OrderItems = order.OrderItems.Select(oi => new
+                                 {
                                      oi.BookId,
-                                     BookTitle = oi.Book.Title,
+                                     BookTitle = oi.Book != null ? oi.Book.Title : "Unknown Book",
                                      oi.Quantity,
                                      oi.UnitPrice,
                                      TotalPrice = oi.UnitPrice * oi.Quantity
@@ -203,18 +205,36 @@ namespace BookNook.Controllers
         [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> CompleteOrder(int orderId, [FromBody] CompleteOrderDto dto)
         {
-            var order = await _orderService.GetOrderByIdAsync(orderId, null, true); // allow staff to fetch any order
+            var order = await _orderService.GetOrderByIdAsync(orderId, null, true);
             if (order == null)
                 return NotFound(new { message = "Order not found" });
+
             if (order.Status == "Completed")
                 return BadRequest(new { message = "Order is already completed" });
+
             if (!string.Equals(order.ClaimCode?.Trim(), dto.ClaimCode?.Trim(), StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new { message = $"Invalid claim code. (DEBUG: order='{order.ClaimCode}', input='{dto.ClaimCode}')" });
+
             order.Status = "Completed";
-            order.OrderHistory.Status = "Completed";
-            order.OrderHistory.StatusDate = DateTime.UtcNow;
-            order.OrderHistory.Notes = "Order marked as completed by staff";
+
+            if (order.OrderHistory == null)
+            {
+                order.OrderHistory = new OrderHistory
+                {
+                    Status = "Completed",
+                    StatusDate = DateTime.UtcNow,
+                    Notes = "Order marked as completed by staff"
+                };
+            }
+            else
+            {
+                order.OrderHistory.Status = "Completed";
+                order.OrderHistory.StatusDate = DateTime.UtcNow;
+                order.OrderHistory.Notes = "Order marked as completed by staff";
+            }
+
             await _orderService.SaveChangesAsync();
+
             return Ok(new { message = "Order marked as completed" });
         }
 
@@ -243,4 +263,4 @@ namespace BookNook.Controllers
             return Ok(new { message = "Order confirmation email resent to user." });
         }
     }
-} 
+}
