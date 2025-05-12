@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import OrderDetailsModal from './OrderDetailsModal';
-import axios from 'axios';
 
 const OrderList = ({ orders, onOrderCompleted }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [searchMemberId, setSearchMemberId] = useState('');
-  const [resendStatus, setResendStatus] = useState({});
+  const [searchOrderId, setSearchOrderId] = useState('');
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -22,29 +20,17 @@ const OrderList = ({ orders, onOrderCompleted }) => {
   };
 
   const filteredOrders = orders.filter(order =>
-    searchMemberId.trim() === '' || String(order.userId).includes(searchMemberId.trim())
+    searchOrderId.trim() === '' || String(order.orderId).includes(searchOrderId.trim())
   );
-
-  const handleResendEmail = async (orderId) => {
-    setResendStatus((prev) => ({ ...prev, [orderId]: 'loading' }));
-    try {
-      await axios.post(`http://localhost:5124/api/order/${orderId}/resend-confirmation`);
-      setResendStatus((prev) => ({ ...prev, [orderId]: 'success' }));
-      setTimeout(() => setResendStatus((prev) => ({ ...prev, [orderId]: undefined })), 2000);
-    } catch (error) {
-      setResendStatus((prev) => ({ ...prev, [orderId]: 'error' }));
-      setTimeout(() => setResendStatus((prev) => ({ ...prev, [orderId]: undefined })), 2000);
-    }
-  };
 
   return (
     <>
       <div className="mb-4 flex items-center">
         <input
           type="text"
-          placeholder="Search by Member ID"
-          value={searchMemberId}
-          onChange={e => setSearchMemberId(e.target.value)}
+          placeholder="Search by Order ID"
+          value={searchOrderId}
+          onChange={e => setSearchOrderId(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <span className="text-gray-500 text-sm">Showing {filteredOrders.length} of {orders.length} orders</span>
@@ -107,21 +93,6 @@ const OrderList = ({ orders, onOrderCompleted }) => {
                   >
                     View Details
                   </button>
-                  {order.status.toLowerCase() === 'pending' && (
-                    <button
-                      onClick={() => handleResendEmail(order.orderId)}
-                      className="text-yellow-600 hover:text-yellow-900 border border-yellow-400 rounded px-2 py-1 ml-1"
-                      disabled={resendStatus[order.orderId] === 'loading'}
-                    >
-                      {resendStatus[order.orderId] === 'loading' ? 'Sending...' : 'Resend Email'}
-                    </button>
-                  )}
-                  {resendStatus[order.orderId] === 'success' && (
-                    <span className="ml-2 text-green-600">Sent!</span>
-                  )}
-                  {resendStatus[order.orderId] === 'error' && (
-                    <span className="ml-2 text-red-600">Failed!</span>
-                  )}
                 </td>
               </tr>
             ))}

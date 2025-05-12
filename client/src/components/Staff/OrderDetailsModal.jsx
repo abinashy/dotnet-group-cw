@@ -1,50 +1,7 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 
-const OrderDetailsModal = ({ order, show, onClose, onOrderCompleted }) => {
-  const [showClaimInput, setShowClaimInput] = useState(false);
-  const [claimInput, setClaimInput] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
-
+const OrderDetailsModal = ({ order, show, onClose }) => {
   if (!show || !order) return null;
-
-  const handleShowClaimInput = () => {
-    setShowClaimInput(true);
-    setClaimInput('');
-    setError('');
-  };
-
-  const handleMarkAsCompleted = async () => {
-    setError('');
-    setSuccess('');
-    if (claimInput.trim().toUpperCase() !== order.claimCode) {
-      setError('Invalid claim code. Please enter the correct code to complete the order.');
-      return;
-    }
-    setLoading(true);
-    try {
-      await axios.put(`http://localhost:5124/api/order/${order.orderId}/complete`, { claimCode: claimInput.trim().toUpperCase() }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      setSuccess('Order marked as completed!');
-      setTimeout(() => {
-        setSuccess('');
-        onOrderCompleted?.({ ...order, status: 'Completed' });
-        onClose();
-      }, 1200);
-    } catch (error) {
-      setError(
-        error.response?.data?.message || 'Failed to mark order as completed. Please try again.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -108,46 +65,11 @@ const OrderDetailsModal = ({ order, show, onClose, onOrderCompleted }) => {
                       <p className="text-gray-900">₹{order.finalAmount.toFixed(2)}</p>
                     </div>
                   </div>
-                  {showClaimInput && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Enter Claim Code</label>
-                      <input
-                        type="text"
-                        value={claimInput}
-                        onChange={e => setClaimInput(e.target.value.toUpperCase())}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Enter claim code"
-                        maxLength={8}
-                        disabled={loading}
-                      />
-                      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-                    </div>
-                  )}
-                  {success && <p className="mt-2 text-sm text-green-600">{success}</p>}
                 </div>
               </div>
             </div>
           </div>
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            {order.status !== 'Completed' && order.status !== 'Cancelled' && !showClaimInput && (
-              <button
-                type="button"
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                onClick={handleShowClaimInput}
-              >
-                Mark as Completed
-              </button>
-            )}
-            {order.status !== 'Completed' && order.status !== 'Cancelled' && showClaimInput && (
-              <button
-                type="button"
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
-                onClick={handleMarkAsCompleted}
-                disabled={loading || claimInput.length !== 8}
-              >
-                {loading ? 'Completing...' : 'Confirm Completion'}
-              </button>
-            )}
             <button
               type="button"
               className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
