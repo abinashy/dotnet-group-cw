@@ -7,6 +7,7 @@ import { FiBox } from 'react-icons/fi';
 import { FaRegCopy } from 'react-icons/fa';
 import AddToCartButton from '../components/Buttons/AddToCartButton';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 // Helper to get initials from name
 function getInitials(name) {
@@ -39,6 +40,7 @@ const BookDetails = () => {
     const [quantity, setQuantity] = useState(1);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
     const { openCart, refreshCart } = useCart();
+    const { isInWishlist, toggleWishlist } = useWishlist();
 
     useEffect(() => {
         const fetchBook = async () => {
@@ -181,7 +183,59 @@ const BookDetails = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                         <span style={{ fontWeight: 600, fontSize: 16, background: '#f4f6fa', borderRadius: 6, padding: '2px 12px' }}>{book.format || 'Paper Back'}</span>
                     </div>
-                    <h1 style={{ fontWeight: 700, fontSize: 32, margin: 0 }}>{book.title}</h1>
+                    <h1 style={{ fontWeight: 700, fontSize: 32, margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {book.title}
+                        <button
+                            onClick={(e) => toggleWishlist(book, e)}
+                            style={{ 
+                                background: 'none', 
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                padding: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'transform 0.2s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                            aria-label={isInWishlist(book.bookId) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                            {isInWishlist(book.bookId) ? (
+                                <svg width="34" height="34" viewBox="0 0 24 24">
+                                    <defs>
+                                        <linearGradient id="detailHeartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#F472B6" />
+                                            <stop offset="100%" stopColor="#E11D48" />
+                                        </linearGradient>
+                                        <filter id="heartShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#E11D48" floodOpacity="0.5"/>
+                                        </filter>
+                                    </defs>
+                                    <path 
+                                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
+                                        fill="url(#detailHeartGradient)" 
+                                        filter="url(#heartShadow)"
+                                    />
+                                </svg>
+                            ) : (
+                                <svg width="34" height="34" viewBox="0 0 24 24">
+                                    <defs>
+                                        <linearGradient id="detailHeartStrokeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#F472B6" />
+                                            <stop offset="100%" stopColor="#E11D48" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path 
+                                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
+                                        fill="none" 
+                                        stroke="url(#detailHeartStrokeGradient)" 
+                                        strokeWidth="2" 
+                                    />
+                                </svg>
+                            )}
+                        </button>
+                    </h1>
                     <div style={{ fontSize: 18, color: '#444', marginBottom: 8 }}>by {authors}</div>
                     {/* Discounted Price Display */}
                     <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0', color: book.isOnSale ? '#ff5252' : '#222', textAlign: 'left' }}>
