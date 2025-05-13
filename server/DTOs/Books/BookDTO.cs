@@ -12,7 +12,7 @@ namespace BookNook.DTOs.Books
         public string PublisherName { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public string ISBN { get; set; } = string.Empty;
-        public int PublicationYear { get; set; }
+        public DateTime PublicationDate { get; set; }
         public int PageCount { get; set; }
         public string Language { get; set; } = string.Empty;
         public string Format { get; set; } = string.Empty;
@@ -27,6 +27,8 @@ namespace BookNook.DTOs.Books
         public decimal? DiscountedPrice { get; set; }
         public decimal? DiscountPercentage { get; set; }
         public decimal? OriginalPrice { get; set; }
+        public decimal? AverageRating { get; set; }
+        public int ReviewCount { get; set; }
     }
 
     public class BookResponseDTO : BookDTO
@@ -54,7 +56,7 @@ namespace BookNook.DTOs.Books
         public string ISBN { get; set; } = string.Empty;
 
         [Required]
-        public int PublicationYear { get; set; }
+        public DateTime PublicationDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         public int PageCount { get; set; }
@@ -72,7 +74,7 @@ namespace BookNook.DTOs.Books
         [MaxLength(500)]
         public string? CoverImageUrl { get; set; }
 
-        public bool IsAwardWinning { get; set; } = false;
+        public bool IsAwardWinning { get; set; }
 
         [Required]
         [MaxLength(50)]

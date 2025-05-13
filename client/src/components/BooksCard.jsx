@@ -152,7 +152,18 @@ const BooksCard = ({ book, onClick }) => {
                 {book.title}
             </div>
             <div style={{ color: '#555', fontSize: 14, marginBottom: 8, textAlign: 'center' }}>
-                by {book.authors && book.authors.length > 0 ? book.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ') : 'Unknown Author'}
+                by {book.authors && book.authors.length > 0 
+                    ? [...new Set(book.authors.map(a => `${a.firstName} ${a.lastName}`))].join(', ') 
+                    : 'Unknown Author'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <span style={{ color: '#f7b500', fontSize: 16, marginRight: 4 }}>★</span>
+                <span style={{ fontWeight: 500, fontSize: 14 }}>
+                    {book.averageRating ? book.averageRating.toFixed(1) : 'N/A'}
+                </span>
+                <span style={{ color: '#888', fontSize: 12, marginLeft: 4 }}>
+                    ({book.reviewCount || 0})
+                </span>
             </div>
             <div style={{ fontWeight: 500, fontSize: 16, marginBottom: 12, textAlign: 'center' }}>
                 {book.isOnSale && book.discountedPrice ? (

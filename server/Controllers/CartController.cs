@@ -99,7 +99,7 @@ namespace BookNook.Controllers
                     Availability = c.Book.Inventory != null ? c.Book.Inventory.Quantity : 0,
                     Publisher = c.Book.Publisher != null ? c.Book.Publisher.Name : string.Empty,
                     ISBN = c.Book.ISBN,
-                    PublicationYear = c.Book.PublicationYear,
+                    PublicationDate = c.Book.PublicationDate,
                     PageCount = c.Book.PageCount,
                     Language = c.Book.Language,
                     Description = c.Book.Description,

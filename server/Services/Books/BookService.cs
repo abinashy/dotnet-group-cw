@@ -31,7 +31,7 @@ namespace BookNook.Services.Books
                 PublisherId = createBookDTO.PublisherId,
                 Price = createBookDTO.Price,
                 ISBN = createBookDTO.ISBN,
-                PublicationYear = createBookDTO.PublicationYear,
+                PublicationDate = createBookDTO.PublicationDate,
                 PageCount = createBookDTO.PageCount,
                 Language = createBookDTO.Language,
                 Format = createBookDTO.Format,
@@ -97,7 +97,7 @@ namespace BookNook.Services.Books
             existingBook.PublisherId = updateBookDTO.PublisherId;
             existingBook.Price = updateBookDTO.Price;
             existingBook.ISBN = updateBookDTO.ISBN;
-            existingBook.PublicationYear = updateBookDTO.PublicationYear;
+            existingBook.PublicationDate = updateBookDTO.PublicationDate;
             existingBook.PageCount = updateBookDTO.PageCount;
             existingBook.Language = updateBookDTO.Language;
             existingBook.Format = updateBookDTO.Format;
@@ -143,6 +143,51 @@ namespace BookNook.Services.Books
                 originalPrice = book.Price;
                 discountedPrice = Math.Round(book.Price * (1 - (discount.DiscountPercentage / 100)), 2);
             }
+            
+            // Calculate average rating and review count
+            decimal? averageRating = null;
+            int reviewCount = 0;
+            
+            if (book.Reviews != null && book.Reviews.Any())
+            {
+                reviewCount = book.Reviews.Count;
+                averageRating = (decimal)book.Reviews.Average(r => r.Rating);
+            }
+            
+            // Ensure unique author and genre IDs by using distinct
+            var uniqueAuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).Distinct().ToList();
+            var uniqueGenreIds = book.BookGenres.Select(bg => bg.GenreId).Distinct().ToList();
+            
+            // Create unique author and genre DTOs
+            var authorsDict = new Dictionary<int, DTOs.Books.AuthorDTO>();
+            foreach (var ba in book.BookAuthors)
+            {
+                if (!authorsDict.ContainsKey(ba.Author.AuthorId))
+                {
+                    authorsDict[ba.Author.AuthorId] = new DTOs.Books.AuthorDTO
+                    {
+                        AuthorId = ba.Author.AuthorId,
+                        FirstName = ba.Author.FirstName,
+                        LastName = ba.Author.LastName,
+                        Biography = ba.Author.Biography
+                    };
+                }
+            }
+            
+            var genresDict = new Dictionary<int, DTOs.Books.GenreDTO>();
+            foreach (var bg in book.BookGenres)
+            {
+                if (!genresDict.ContainsKey(bg.Genre.GenreId))
+                {
+                    genresDict[bg.Genre.GenreId] = new DTOs.Books.GenreDTO
+                    {
+                        GenreId = bg.Genre.GenreId,
+                        Name = bg.Genre.Name,
+                        Description = bg.Genre.Description
+                    };
+                }
+            }
+            
             return new BookResponseDTO
             {
                 BookId = book.BookId,
@@ -151,7 +196,7 @@ namespace BookNook.Services.Books
                 PublisherName = book.Publisher?.Name ?? string.Empty,
                 Price = book.Price,
                 ISBN = book.ISBN,
-                PublicationYear = book.PublicationYear,
+                PublicationDate = book.PublicationDate,
                 PageCount = book.PageCount,
                 Language = book.Language,
                 Format = book.Format,
@@ -161,26 +206,17 @@ namespace BookNook.Services.Books
                 Status = book.Status,
                 CreatedAt = book.CreatedAt,
                 UpdatedAt = book.UpdatedAt,
-                AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList(),
-                GenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList(),
-                Authors = book.BookAuthors.Select(ba => new BookNook.DTOs.Books.AuthorDTO
-                {
-                    AuthorId = ba.Author.AuthorId,
-                    FirstName = ba.Author.FirstName,
-                    LastName = ba.Author.LastName,
-                    Biography = ba.Author.Biography
-                }).ToList(),
-                Genres = book.BookGenres.Select(bg => new BookNook.DTOs.Books.GenreDTO
-                {
-                    GenreId = bg.Genre.GenreId,
-                    Name = bg.Genre.Name,
-                    Description = bg.Genre.Description
-                }).ToList(),
+                AuthorIds = uniqueAuthorIds,
+                GenreIds = uniqueGenreIds,
+                Authors = authorsDict.Values.ToList(),
+                Genres = genresDict.Values.ToList(),
                 Availability = book.Inventory != null ? book.Inventory.Quantity : 0,
                 IsOnSale = isOnSale,
                 DiscountedPrice = discountedPrice,
                 DiscountPercentage = discountPercentage,
-                OriginalPrice = originalPrice
+                OriginalPrice = originalPrice,
+                AverageRating = averageRating,
+                ReviewCount = reviewCount
             };
         }
     }

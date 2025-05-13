@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using BookNook.DTOs.Books;
 using BookNook.Services.Books;
+using BookNook.Data;
+using BookNook.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookNook.Controllers
 {
@@ -9,10 +12,12 @@ namespace BookNook.Controllers
     public class BooksController : ControllerBase
     {
         private readonly IBookService _bookService;
+        private readonly ApplicationDbContext _context;
 
-        public BooksController(IBookService bookService)
+        public BooksController(IBookService bookService, ApplicationDbContext context)
         {
             _bookService = bookService;
+            _context = context;
         }
 
         [HttpPost]
@@ -39,6 +44,32 @@ namespace BookNook.Controllers
                 return NotFound();
 
             return Ok(book);
+        }
+
+        [HttpGet("{id}/reviews")]
+        public async Task<ActionResult> GetBookReviews(int id)
+        {
+            var reviews = await _context.Reviews
+                .Where(r => r.BookId == id)
+                .Join(
+                    _context.Users,
+                    review => review.UserId,
+                    user => user.Id,
+                    (review, user) => new
+                    {
+                        review.ReviewId,
+                        review.Rating,
+                        review.Comment,
+                        review.ReviewDate,
+                        UserId = review.UserId,
+                        UserName = $"{user.FirstName} {user.LastName}"
+                    })
+                .ToListAsync();
+
+            if (!reviews.Any())
+                return NotFound(new { message = "No reviews found for this book" });
+
+            return Ok(reviews);
         }
 
         [HttpGet]

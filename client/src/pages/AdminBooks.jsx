@@ -153,37 +153,64 @@ export default function AdminBooks() {
         Promise.all(genrePromises)
       ]);
 
-      // Collect all IDs
+      // Collect all IDs and remove duplicates
       const finalAuthorIds = [
         ...(values.authorIds || []),
         ...authorResponses.map(response => response.data.authorId.toString())
-      ];
+      ].filter((id, index, self) => self.indexOf(id) === index); // Remove duplicates
 
       const finalGenreIds = [
         ...(values.genreIds || []),
         ...genreResponses.map(response => response.data.genreId.toString())
-      ];
+      ].filter((id, index, self) => self.indexOf(id) === index); // Remove duplicates
 
-      // Prepare the book data
-      const bookData = {
-        title: values.title,
-        isbn: values.isbn,
+      // Process the form data
+      const processedValues = {
+        ...values,
         price: parseFloat(values.price),
-        publicationYear: parseInt(values.publicationYear),
         pageCount: parseInt(values.pageCount),
-        language: values.language,
-        format: values.format,
-        description: values.description,
         coverImageUrl: coverImageUrl,
         publisherId: finalPublisherId ? parseInt(finalPublisherId) : null,
         authorIds: finalAuthorIds.map(id => parseInt(id)),
         genreIds: finalGenreIds.map(id => parseInt(id)),
-        isAwardWinning: values.isAwardWinning || false,
+        isAwardWinning: !!values.isAwardWinning,
         status: values.status || 'Published'
       };
 
-      console.log('Book data being sent to API:', bookData);
+      // Ensure date is formatted correctly for .NET Web API
+      try {
+        // Parse the date and ensure it's valid
+        const dateValue = values.publicationDate;
+        if (dateValue) {
+          const parsedDate = new Date(dateValue);
+          
+          // Check if the date is valid
+          if (!isNaN(parsedDate.getTime()) && parsedDate.getFullYear() >= 1000) {
+            // Format date for .NET - use ISO string but remove milliseconds part
+            // .NET DateTime works best with this format: "2023-10-31T00:00:00Z"
+            processedValues.publicationDate = parsedDate.toISOString().split('.')[0] + 'Z';
+            console.log('Formatted publication date:', processedValues.publicationDate);
+          } else {
+            // Fallback to current date if invalid
+            const currentDate = new Date();
+            processedValues.publicationDate = currentDate.toISOString().split('.')[0] + 'Z';
+            console.log('Using fallback date due to invalid input:', dateValue);
+          }
+        } else {
+          // No date provided, use current date
+          const currentDate = new Date();
+          processedValues.publicationDate = currentDate.toISOString().split('.')[0] + 'Z';
+          console.log('No date provided, using current date');
+        }
+      } catch (err) {
+        console.error('Error formatting date:', err);
+        // Fallback to current date if any error occurs
+        const currentDate = new Date();
+        processedValues.publicationDate = currentDate.toISOString().split('.')[0] + 'Z';
+      }
 
+      console.log('Book data being sent to API:', processedValues);
+      
       // Create or update the book
       const isEditing = !!values.bookId;
       const url = isEditing 
@@ -193,11 +220,21 @@ export default function AdminBooks() {
       const method = isEditing ? 'put' : 'post';
       
       console.log(isEditing ? 'Updating existing book...' : 'Creating new book...');
+      console.log('Request URL:', url);
+      console.log('Request method:', method);
+      console.log('Request headers:', { Authorization: `Bearer ${token}` });
+      console.log('Book ID:', values.bookId);
+      console.log('Request data as JSON:', JSON.stringify(processedValues, null, 2));
       
-      await axios[method](url, bookData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await axios[method](url, processedValues, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
-
+      
+      console.log('Successful response:', response.data);
+      
       // Refresh the books list
       const [booksRes, publishersRes, authorsRes, genresRes] = await Promise.all([
         axios.get('http://localhost:5124/api/Books'),
@@ -239,13 +276,25 @@ export default function AdminBooks() {
       alert(isEditing ? 'Book updated successfully!' : 'Book added successfully!');
     } catch (error) {
       console.error('Error saving book:', error);
-      alert(`Failed to ${values.bookId ? 'update' : 'add'} book: ${error.message}`);
+      // Extract more detailed error information
+      if (error.response) {
+        console.error('Server response error data:', error.response.data);
+        console.error('Server response status:', error.response.status);
+        console.error('Server response headers:', error.response.headers);
+        alert(`Failed to ${values.bookId ? 'update' : 'add'} book: ${error.response.data.message || error.message}`);
+      } else {
+        alert(`Failed to ${values.bookId ? 'update' : 'add'} book: ${error.message}`);
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleEditBook = (book) => {
+    console.log('Editing book object:', book);
+    console.log('Publication date from book:', book.publicationDate);
+    console.log('Publication date type:', typeof book.publicationDate);
+    
     setEditingBook(book);
     setIsAddModalOpen(true);
   };
@@ -359,7 +408,7 @@ export default function AdminBooks() {
                     <div className="text-sm text-gray-500">ISBN: {book.isbn}</div>
                     <div className="text-sm text-gray-500">Price: ${book.price.toFixed(2)}</div>
                     <div className="text-sm text-gray-500">
-                      {book.publicationYear} · {book.pageCount} pages · {book.language}
+                      {new Date(book.publicationDate).toLocaleDateString()} · {book.pageCount} pages · {book.language}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -369,14 +418,14 @@ export default function AdminBooks() {
                     <div className="text-sm text-gray-900">
                       <span className="font-medium">Authors:</span> {
                         book.authors && book.authors.length > 0 
-                          ? book.authors
+                          ? [...new Set(book.authors
                               .map(a => {
                                 if (!a) return '';
                                 const firstName = a.firstName || '';
                                 const lastName = a.lastName || '';
                                 return `${firstName} ${lastName}`.trim();
                               })
-                              .filter(name => name)
+                              .filter(name => name))]
                               .join(', ') || 'None'
                           : 'None'
                       }
@@ -384,9 +433,9 @@ export default function AdminBooks() {
                     <div className="text-sm text-gray-900 mt-1">
                       <span className="font-medium">Genres:</span> {
                         book.genres && book.genres.length > 0 
-                          ? book.genres
+                          ? [...new Set(book.genres
                               .map(g => g && g.name ? g.name : '')
-                              .filter(name => name)
+                              .filter(name => name))]
                               .join(', ') || 'None'
                           : 'None'
                       }

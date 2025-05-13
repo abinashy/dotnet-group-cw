@@ -53,14 +53,77 @@ const BookDetails = () => {
             try {
                 // Use the BookContext to get book details
                 const bookData = await getBookDetails(id);
+                console.log("Book data:", bookData);
                 if (bookData) {
                     setBook(bookData);
-                    setReviews(bookData.reviews || []);
+                    // Check if there are reviews in the book data
+                    if (bookData.reviews && bookData.reviews.length > 0) {
+                        console.log("Reviews in book data:", bookData.reviews);
+                        // Format reviews for display
+                        const formattedReviews = bookData.reviews.map(r => ({
+                            id: r.reviewId || r.id || Math.random().toString(),
+                            rating: r.rating,
+                            text: r.comment || r.text || "",
+                            user: r.userName || r.user || "User",
+                            date: r.reviewDate || r.date
+                        }));
+                        setReviews(formattedReviews);
+                    } else {
+                        // If no reviews in book data but we have review count, try to fetch reviews separately
+                        if (bookData.reviewCount > 0) {
+                            try {
+                                console.log("Fetching reviews separately for book ID:", id);
+                                const reviewsRes = await axios.get(`http://localhost:5124/api/books/${id}/reviews`);
+                                console.log("Reviews from API:", reviewsRes.data);
+                                if (reviewsRes.data && reviewsRes.data.length > 0) {
+                                    const formattedReviews = reviewsRes.data.map(r => ({
+                                        id: r.reviewId || r.id || Math.random().toString(),
+                                        rating: r.rating,
+                                        text: r.comment || r.text || "",
+                                        user: r.userName || r.user || "User",
+                                        date: r.reviewDate || r.date
+                                    }));
+                                    setReviews(formattedReviews);
+                                }
+                            } catch (reviewErr) {
+                                console.error('Error fetching reviews:', reviewErr);
+                                // Continue showing book without reviews
+                            }
+                        } else {
+                            setReviews([]);
+                        }
+                    }
                 } else {
                     // Fallback to direct API call if not in cache
                     const res = await axios.get(`http://localhost:5124/api/books/${id}`);
+                    console.log("Book data from direct API:", res.data);
                     setBook(res.data);
-                    setReviews(res.data.reviews || []);
+                    
+                    // Try to fetch reviews separately if available
+                    if (res.data.reviewCount > 0) {
+                        try {
+                            console.log("Fetching reviews separately for book ID:", id);
+                            const reviewsRes = await axios.get(`http://localhost:5124/api/books/${id}/reviews`);
+                            console.log("Reviews from API:", reviewsRes.data);
+                            if (reviewsRes.data && reviewsRes.data.length > 0) {
+                                const formattedReviews = reviewsRes.data.map(r => ({
+                                    id: r.reviewId || r.id || Math.random().toString(),
+                                    rating: r.rating,
+                                    text: r.comment || r.text || "",
+                                    user: r.userName || r.user || "User",
+                                    date: r.reviewDate || r.date
+                                }));
+                                setReviews(formattedReviews);
+                            } else {
+                                setReviews([]);
+                            }
+                        } catch (reviewErr) {
+                            console.error('Error fetching reviews:', reviewErr);
+                            setReviews([]);
+                        }
+                    } else {
+                        setReviews([]);
+                    }
                 }
             } catch (err) {
                 setError('Failed to fetch book details.');
@@ -109,12 +172,12 @@ const BookDetails = () => {
 
     // Authors: robust handling
     const authors = Array.isArray(book.authors) && book.authors.length > 0
-        ? book.authors.map(a => [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean).join(', ')
+        ? [...new Set(book.authors.map(a => [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean))].join(', ')
         : 'Unknown Author';
 
     // Genres: robust handling
     const genres = Array.isArray(book.genres) && book.genres.length > 0
-        ? book.genres.map(g => g.name).filter(Boolean).join(', ')
+        ? [...new Set(book.genres.map(g => g.name).filter(Boolean))].join(', ')
         : 'N/A';
 
     // Breadcrumbs (simulate)
@@ -160,7 +223,7 @@ const BookDetails = () => {
             await refreshCart();
             openCart();
         } catch (err) {
-            alert('Failed to add to cart. Please try again.');
+            alert(`Failed to add to cart: ${err.message || 'Please try again'}`);
         }
     };
 
@@ -281,8 +344,8 @@ const BookDetails = () => {
                     {/* Ratings and Reviews */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
                         <span style={{ color: '#f7b500', fontSize: 20 }}>★</span>
-                        <span style={{ fontWeight: 600 }}>{reviews.length > 0 ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length).toFixed(1) : 'N/A'}</span>
-                        <span style={{ color: '#888' }}>| {reviews.length} Book Review{reviews.length !== 1 ? 's' : ''}</span>
+                        <span style={{ fontWeight: 600 }}>{book.averageRating ? book.averageRating.toFixed(1) : 'N/A'}</span>
+                        <span style={{ color: '#888' }}>| {book.reviewCount} Book Review{book.reviewCount !== 1 ? 's' : ''}</span>
                     </div>
                     {/* Seller */}
                     <div style={{ marginBottom: 8 }}>
@@ -300,6 +363,12 @@ const BookDetails = () => {
                     <div style={{ marginTop: 40, marginLeft: 8 /* adjust as needed to align with description */ }}>
                         <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Other info</h2>
                         <div style={{ display: 'flex', gap: 24, flexWrap: 'nowrap', justifyContent: 'flex-start' }}>
+                            {/* Publication Date */}
+                            <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>Publication Date</div>
+                                <FaBook size={28} style={{ marginBottom: 8 }} />
+                                <div style={{ fontWeight: 700, fontSize: 14, marginTop: 2 }}>{book.publicationDate ? new Date(book.publicationDate).toLocaleDateString() : 'N/A'}</div>
+                            </div>
                             {/* Page Count */}
                             <div style={{ background: '#fafbfc', border: '1px solid #e5e7eb', borderRadius: 12, padding: '28px 32px', minWidth: 140, textAlign: 'center', flex: 1, maxWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <div style={{ color: '#888', fontWeight: 500, fontSize: 16, marginBottom: 6 }}>Page Count</div>
@@ -461,7 +530,7 @@ const BookDetails = () => {
             </div>
             {/* Ratings & Reviews */}
             <div style={{ marginTop: 48, maxWidth: 1000 }}>
-                <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Ratings & Reviews ({reviews.length})</h2>
+                <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Ratings & Reviews ({book.reviewCount})</h2>
                 {/* Summary and Input Row */}
                 <div style={{ display: 'flex', gap: 32, marginBottom: 36, alignItems: 'stretch' }}>
 

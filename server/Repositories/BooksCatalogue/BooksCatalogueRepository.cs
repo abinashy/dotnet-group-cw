@@ -35,6 +35,7 @@ namespace BookNook.Repositories.BooksCatalogue
                 .Include(b => b.Inventory)
                 .Include(b => b.DiscountHistory)
                 .Include(b => b.Discounts)
+                .Include(b => b.Reviews)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(tab))
@@ -55,6 +56,12 @@ namespace BookNook.Repositories.BooksCatalogue
                 {
                     var oneMonthAgo = DateTime.UtcNow.AddMonths(-1);
                     query = query.Where(b => b.CreatedAt >= oneMonthAgo);
+                }
+                else if (tab == "release")
+                {
+                    // New releases are books published in the last 3 months
+                    var threeMonthsAgo = DateTime.UtcNow.AddMonths(-3);
+                    query = query.Where(b => b.PublicationDate >= threeMonthsAgo);
                 }
                 else if (tab == "discount")
                 {
@@ -175,7 +182,7 @@ namespace BookNook.Repositories.BooksCatalogue
                         Title = "The Great Adventure",
                         ISBN = "978-1234567890",
                         Price = 19.99m,
-                        PublicationYear = 2023,
+                        PublicationDate = DateTime.UtcNow.AddDays(-30), // Published 1 month ago
                         PageCount = 300,
                         Language = "English",
                         Format = "Hardcover",
@@ -195,7 +202,7 @@ namespace BookNook.Repositories.BooksCatalogue
                         Title = "Mystery Manor",
                         ISBN = "978-0987654321",
                         Price = 15.99m,
-                        PublicationYear = 2023,
+                        PublicationDate = DateTime.UtcNow.AddDays(-60), // Published 2 months ago
                         PageCount = 250,
                         Language = "English",
                         Format = "Paperback",
@@ -214,18 +221,36 @@ namespace BookNook.Repositories.BooksCatalogue
 
                 _context.Books.AddRange(books);
                 await _context.SaveChangesAsync();
+
+                foreach (var book in books)
+                {
+                    _context.Inventories.Add(new Inventory
+                    {
+                        BookId = book.BookId,
+                        Quantity = 10
+                    });
+                }
+
+                await _context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while adding sample data");
+                _logger.LogError(ex, "Error adding sample data");
                 return false;
             }
         }
 
         public async Task<bool> CanConnectToDatabaseAsync()
         {
-            return await _context.Database.CanConnectAsync();
+            try
+            {
+                return await _context.Database.CanConnectAsync();
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public async Task<bool> HasAnyBooksAsync()

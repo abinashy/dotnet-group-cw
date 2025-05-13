@@ -6,7 +6,11 @@ const AddBookSchema = Yup.object().shape({
   title: Yup.string().required('Title is required').max(200, 'Title is too long'),
   isbn: Yup.string().required('ISBN is required').max(13, 'ISBN must be 13 characters'),
   price: Yup.number().required('Price is required').min(0, 'Price must be positive'),
-  publicationYear: Yup.number().required('Publication year is required').min(1800, 'Invalid year'),
+  publicationDate: Yup.date()
+    .required('Publication date is required')
+    .min(new Date('1000-01-01'), 'Date cannot be before 1000')
+    .max(new Date('2100-01-01'), 'Date cannot be after 2100')
+    .typeError('Please enter a valid date'),
   pageCount: Yup.number().required('Page count is required').min(1, 'Must have at least 1 page'),
   language: Yup.string().required('Language is required').max(20, 'Language name is too long'),
   format: Yup.string().required('Format is required').max(20, 'Format name is too long'),
@@ -44,6 +48,7 @@ const AddBookSchema = Yup.object().shape({
     })
   ),
   coverImageFile: Yup.mixed()
+    .nullable()
     .test('fileSize', 'File too large', value => !value || value.size <= 10000000) // 10MB
     .test('fileType', 'Unsupported file type', value => 
       !value || ['image/jpeg', 'image/png', 'image/gif'].includes(value.type)
@@ -239,13 +244,13 @@ function DetailsStep() {
     <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Publication Year</label>
+          <label className="block text-sm font-medium text-gray-700">Publication Date</label>
           <Field
-            name="publicationYear"
+            name="publicationDate"
             className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
-            type="number"
+            type="date"
           />
-          <ErrorMessage name="publicationYear" component="div" className="mt-1 text-sm text-red-600" />
+          <ErrorMessage name="publicationDate" component="div" className="mt-1 text-sm text-red-600" />
         </div>
 
         <div>
@@ -1100,12 +1105,17 @@ function GenresStep({ genres }) {
 export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, authors, genres, editingBook }) {
   const [currentStep, setCurrentStep] = useState(0);
 
+  // Debug log for editing book
+  console.log('EditingBook prop:', editingBook);
+  
   // Initialize form with editing book data or defaults
   const initialValues = editingBook ? {
     title: editingBook.title || '',
     isbn: editingBook.isbn || '',
     price: editingBook.price || 0,
-    publicationYear: editingBook.publicationYear || new Date().getFullYear(),
+    publicationDate: editingBook.publicationDate && new Date(editingBook.publicationDate).getFullYear() > 1000 
+      ? new Date(editingBook.publicationDate).toISOString().split('T')[0] 
+      : new Date().toISOString().split('T')[0],
     pageCount: editingBook.pageCount || 1,
     language: editingBook.language || 'English',
     format: editingBook.format || 'Paperback',
@@ -1121,12 +1131,13 @@ export default function AddBookModal({ isOpen, onClose, onSubmit, publishers, au
     newGenreInProgress: [{ name: '', description: '' }],
     isAwardWinning: editingBook.isAwardWinning || false,
     status: editingBook.status || 'Published',
-    coverImageFile: null
+    coverImageFile: null,
+    bookId: editingBook.bookId // Ensure bookId is included in the form values
   } : {
     title: '',
     isbn: '',
     price: 0,
-    publicationYear: new Date().getFullYear(),
+    publicationDate: new Date().toISOString().split('T')[0],
     pageCount: 1,
     language: 'English',
     format: 'Paperback',

@@ -9,7 +9,7 @@ namespace BookNook.DTOs.BooksCatalogue
         public string Title { get; set; } = string.Empty;
         public string ISBN { get; set; } = string.Empty;
         public decimal Price { get; set; }
-        public int PublicationYear { get; set; }
+        public DateTime PublicationDate { get; set; }
         public int PageCount { get; set; }
         public string Language { get; set; } = string.Empty;
         public string Format { get; set; } = string.Empty;
@@ -27,6 +27,8 @@ namespace BookNook.DTOs.BooksCatalogue
         public decimal? DiscountedPrice { get; set; }
         public decimal? DiscountPercentage { get; set; }
         public decimal? OriginalPrice { get; set; }
+        public decimal? AverageRating { get; set; }
+        public int ReviewCount { get; set; }
     }
 
     public class AuthorDto

@@ -18,7 +18,7 @@ namespace BookNook.DTOs
         public int Availability { get; set; } // Inventory quantity
         public string Publisher { get; set; } = string.Empty;
         public string ISBN { get; set; } = string.Empty;
-        public int PublicationYear { get; set; }
+        public DateTime PublicationDate { get; set; }
         public int PageCount { get; set; }
         public string Language { get; set; } = string.Empty;
         public string? Description { get; set; }

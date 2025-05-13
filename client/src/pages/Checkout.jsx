@@ -146,12 +146,20 @@ const Checkout = () => {
                         <span className="ml-2 px-2 py-0.5 bg-gray-100 text-black text-xs font-bold rounded-full border border-gray-300">-{item.discountPercentage}%</span>
                       )}
                     </div>
-                    <div className="text-sm text-gray-700 mb-1 truncate">By: {item.authorNames && item.authorNames.length > 0 ? item.authorNames.join(", ") : "N/A"}</div>
-                    <div className="text-xs text-gray-500 mb-1 truncate">Genres: {item.genres && item.genres.length > 0 ? item.genres.join(", ") : "N/A"}</div>
+                    <div className="text-sm text-gray-700 mb-1 truncate">
+                      By: {Array.isArray(item.authorNames) && item.authorNames.length > 0 
+                        ? [...new Set(item.authorNames)].join(', ') 
+                        : 'Unknown Author'}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-1 truncate">
+                      Genres: {Array.isArray(item.genres) && item.genres.length > 0 
+                        ? [...new Set(item.genres)].join(', ') 
+                        : 'N/A'}
+                    </div>
                     <div className="text-xs text-gray-500 mb-1">Format: <span className="font-semibold text-black">{item.format}</span></div>
                     <div className="text-xs text-gray-500 mb-1">Publisher: {item.publisher}</div>
                     <div className="text-xs text-gray-500 mb-1">ISBN: {item.ISBN}</div>
-                    <div className="text-xs text-gray-500 mb-1">Year: {item.publicationYear} | Pages: {item.pageCount}</div>
+                    <div className="text-xs text-gray-500 mb-1">Date: {new Date(item.publicationDate).toLocaleDateString()} | Pages: {item.pageCount}</div>
                     <div className="text-xs text-gray-500 mb-1">Language: {item.language}</div>
                     {item.description && (
                       <div className="text-xs text-gray-500 mb-2 line-clamp-3 whitespace-normal overflow-hidden">

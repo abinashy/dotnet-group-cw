@@ -66,7 +66,7 @@ namespace BookNook.Services.BooksCatalogue
                             Title = b.Title,
                             ISBN = b.ISBN,
                             Price = b.Price,
-                            PublicationYear = b.PublicationYear,
+                            PublicationDate = b.PublicationDate,
                             PageCount = b.PageCount,
                             Language = b.Language,
                             Format = b.Format,
@@ -94,7 +94,9 @@ namespace BookNook.Services.BooksCatalogue
                             IsOnSale = isOnSale,
                             DiscountedPrice = discountedPrice,
                             DiscountPercentage = discountPercentage,
-                            OriginalPrice = originalPrice
+                            OriginalPrice = originalPrice,
+                            AverageRating = b.Reviews != null && b.Reviews.Any() ? (decimal?)b.Reviews.Average(r => r.Rating) : null,
+                            ReviewCount = b.Reviews != null ? b.Reviews.Count : 0
                         };
                     }).ToList(),
                     TotalCount = totalCount

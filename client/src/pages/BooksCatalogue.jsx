@@ -6,8 +6,9 @@ import { theme } from '../theme';
 import { useBooks } from '../context/BookContext';
 
 const FILTER_TABS = [
-    { key: 'all', label: 'All Books' },
+    { key: 'all', label: 'All Books', icon: '📚' },
     { key: 'new', label: 'New Arrivals', icon: '🔥' },
+    { key: 'release', label: 'New Releases', icon: '📗' },
     { key: 'bestseller', label: 'Bestsellers', icon: '⭐' },
     { key: 'discount', label: 'Deals', icon: '💸' },
     { key: 'award', label: 'Award Winning', icon: '🏆' },

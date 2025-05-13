@@ -20,7 +20,7 @@ namespace BookNook.DTOs.Books
         public string ISBN { get; set; } = string.Empty;
 
         [Required]
-        public int PublicationYear { get; set; }
+        public DateTime PublicationDate { get; set; }
 
         [Required]
         public int PageCount { get; set; }
