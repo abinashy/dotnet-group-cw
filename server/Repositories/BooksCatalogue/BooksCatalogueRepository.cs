@@ -79,6 +79,7 @@ namespace BookNook.Repositories.BooksCatalogue
                 query = query.Where(b =>
                     b.Title.ToLower().Contains(lowerSearch) ||
                     b.ISBN.ToLower().Contains(lowerSearch) ||
+                    (b.Description != null && b.Description.ToLower().Contains(lowerSearch)) ||
                     b.BookAuthors.Any(ba =>
                         ba.Author.FirstName.ToLower().Contains(lowerSearch) ||
                         ba.Author.LastName.ToLower().Contains(lowerSearch))
