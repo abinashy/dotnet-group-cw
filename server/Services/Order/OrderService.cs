@@ -335,6 +335,51 @@ namespace BookNook.Services.Order
             // Update IsClaimed and ClaimedDate directly
             order.IsClaimed = true;
             order.ClaimedDate = DateTime.UtcNow;
+            
+            // Grant 10% member discount after every 10th completed order
+            Console.WriteLine($"[OrderService] Checking if order #{orderId} for user {order.UserId} is a 10th completed order");
+            var completedOrdersBefore = await _context.Orders
+                .CountAsync(o => o.UserId == order.UserId && o.Status == "Completed");
+            
+            Console.WriteLine($"[OrderService] User has {completedOrdersBefore} completed orders (including this one)");
+            
+            if ((completedOrdersBefore - 1) % 10 == 9) // This is the 10th, 20th, etc. order (9 completed before, this is the 10th)
+            {
+                Console.WriteLine($"[OrderService] This is the user's {completedOrdersBefore}th order - creating 10% discount");
+                
+                // Clean up expired discounts first
+                var expiredDiscounts = await _context.MemberDiscounts
+                    .Where(md => md.UserId == order.UserId && md.ExpiryDate <= DateTime.UtcNow)
+                    .ToListAsync();
+                    
+                if (expiredDiscounts.Any())
+                {
+                    Console.WriteLine($"[OrderService] Removing {expiredDiscounts.Count} expired discounts");
+                    _context.MemberDiscounts.RemoveRange(expiredDiscounts);
+                    await _context.SaveChangesAsync();
+                }
+
+                var hasUnused = await _context.MemberDiscounts
+                    .AnyAsync(md => md.UserId == order.UserId && !md.IsUsed && md.DiscountPercentage == 10 && md.ExpiryDate > DateTime.UtcNow);
+                    
+                if (!hasUnused)
+                {
+                    Console.WriteLine($"[OrderService] Creating new 10% discount for user {order.UserId}");
+                    _context.MemberDiscounts.Add(new Entities.MemberDiscount
+                    {
+                        UserId = order.UserId,
+                        DiscountPercentage = 10,
+                        IsUsed = false,
+                        ExpiryDate = DateTime.UtcNow.AddMonths(3),
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"[OrderService] User already has an unused 10% discount");
+                }
+            }
+            
             await _context.SaveChangesAsync();
 
             // Send real-time notification to the user
