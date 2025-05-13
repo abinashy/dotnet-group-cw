@@ -42,14 +42,14 @@ export function WishlistProvider({ children }) {
   const fetchWishlist = async () => {
     // Prevent multiple simultaneous fetch requests
     if (fetchInProgress) return;
-    
+
     try {
       setFetchInProgress(true);
       // Only show loading indicator on initial load, not refreshes
       if (wishlist.length === 0) {
         setLoading(true);
       }
-      
+
       const token = getAuthToken();
       if (!token) {
         setWishlist([]);
@@ -61,7 +61,7 @@ export function WishlistProvider({ children }) {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       setWishlist(response.data);
     } catch (error) {
       console.error('Error fetching wishlist:', error);
@@ -87,7 +87,7 @@ export function WishlistProvider({ children }) {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       return response.data.isBookmarked;
     } catch (error) {
       console.error('Error checking wishlist status:', error);
@@ -160,12 +160,12 @@ export function WishlistProvider({ children }) {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       // No need to update wishlist state here since we've already done it optimistically
     } catch (error) {
       console.error('Error removing from wishlist:', error);
       alert('Failed to remove from wishlist. Please try again.');
-      
+
       // Revert the optimistic update if the API call failed
       fetchWishlist();
     }
@@ -174,7 +174,7 @@ export function WishlistProvider({ children }) {
   const toggleWishlist = async (book, event) => {
     const clientX = event?.clientX;
     const clientY = event?.clientY;
-    
+
     try {
       if (isInWishlist(book.bookId)) {
         await removeFromWishlist(book.bookId);
@@ -192,15 +192,15 @@ export function WishlistProvider({ children }) {
   };
 
   return (
-    <WishlistContext.Provider value={{ 
-      wishlist, 
-      loading, 
-      addToWishlist, 
-      removeFromWishlist, 
-      isInWishlist, 
-      toggleWishlist, 
+    <WishlistContext.Provider value={{
+      wishlist,
+      loading,
+      addToWishlist,
+      removeFromWishlist,
+      isInWishlist,
+      toggleWishlist,
       fetchWishlist,
-      checkWishlistStatus 
+      checkWishlistStatus
     }}>
       {children}
       {animationPosition && (
@@ -213,9 +213,9 @@ export function WishlistProvider({ children }) {
             pointerEvents: 'none',
           }}
         >
-          <svg 
-            width="40" 
-            height="40" 
+          <svg
+            width="40"
+            height="40"
             viewBox="0 0 24 24"
             style={{
               animation: 'flyToWishlist 1s forwards',
@@ -227,18 +227,18 @@ export function WishlistProvider({ children }) {
                 <stop offset="100%" stopColor="#EC4899" />
               </linearGradient>
               <filter id="animHeartShadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#EC4899" floodOpacity="0.5"/>
+                <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#EC4899" floodOpacity="0.5" />
               </filter>
             </defs>
-            <path 
-              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
-              fill="url(#animHeartGradient)" 
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              fill="url(#animHeartGradient)"
               filter="url(#animHeartShadow)"
             />
           </svg>
         </div>
       )}
-      <style jsx>{`
+      <style>{`
         @keyframes flyToWishlist {
           0% {
             opacity: 1;
