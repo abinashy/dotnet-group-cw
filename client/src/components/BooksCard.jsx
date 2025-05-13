@@ -3,6 +3,7 @@ import AddToCartButton from './Buttons/AddToCartButton';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { theme } from '../theme';
 
 const BooksCard = ({ book, onClick }) => {
     const [hover, setHover] = React.useState(false);
@@ -167,9 +168,9 @@ const BooksCard = ({ book, onClick }) => {
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || isUpcoming}
                 style={{
-                    border: '1px solid #1976d2',
-                    background: (isOutOfStock || isUpcoming) ? '#eee' : (hover ? '#1976d2' : '#fff'),
-                    color: (isOutOfStock || isUpcoming) ? '#888' : (hover ? '#fff' : '#1976d2'),
+                    border: `1px solid ${theme.colors.primary.main}`,
+                    background: (isOutOfStock || isUpcoming) ? '#eee' : (hover ? theme.colors.primary.main : '#fff'),
+                    color: (isOutOfStock || isUpcoming) ? '#888' : (hover ? theme.colors.primary.contrast : theme.colors.primary.main),
                     borderRadius: 4,
                     padding: '8px 0',
                     width: '100%',

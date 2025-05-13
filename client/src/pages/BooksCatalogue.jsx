@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import BooksCard from '../components/BooksCard';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { theme } from '../theme';
 
 const FILTER_TABS = [
     { key: 'all', label: 'All Books' },
@@ -405,8 +406,8 @@ const BooksCatalogue = () => {
                     onClick={resetFilters}
                     style={{
                         width: '100%',
-                        background: '#1976d2',
-                        color: '#fff',
+                        background: theme.colors.primary.main,
+                        color: theme.colors.primary.contrast,
                         border: 'none',
                         borderRadius: 8,
                         padding: '12px 0',
@@ -415,7 +416,7 @@ const BooksCatalogue = () => {
                         cursor: 'pointer',
                         marginTop: 12,
                         marginBottom: 24,
-                        boxShadow: '0 2px 8px rgba(25,118,210,0.08)'
+                        boxShadow: theme.shadows.sm
                     }}
                 >
                     Reset Filters
@@ -430,10 +431,10 @@ const BooksCatalogue = () => {
                             onClick={() => setFilter('tab', tab.key)}
                             style={{
                                 fontWeight: activeTab === tab.key ? 700 : 500,
-                                color: activeTab === tab.key ? '#1976d2' : '#333',
-                                background: activeTab === tab.key ? '#e3f0ff' : 'transparent',
+                                color: activeTab === tab.key ? theme.colors.primary.main : '#333',
+                                background: activeTab === tab.key ? '#eee' : 'transparent',
                                 border: 'none',
-                                borderBottom: activeTab === tab.key ? '2px solid #1976d2' : '2px solid transparent',
+                                borderBottom: activeTab === tab.key ? `2px solid ${theme.colors.primary.main}` : '2px solid transparent',
                                 fontSize: 16,
                                 padding: '8px 18px',
                                 borderRadius: 6,
@@ -507,9 +508,9 @@ const BooksCatalogue = () => {
                                 style={{
                                     padding: '8px 14px',
                                     borderRadius: 6,
-                                    border: '1px solid #1976d2',
-                                    background: page === 1 ? '#eee' : '#1976d2',
-                                    color: page === 1 ? '#888' : '#fff',
+                                    border: `1px solid ${theme.colors.primary.main}`,
+                                    background: page === 1 ? '#eee' : theme.colors.primary.main,
+                                    color: page === 1 ? '#888' : theme.colors.primary.contrast,
                                     fontWeight: 600,
                                     cursor: page === 1 ? 'not-allowed' : 'pointer',
                                     fontSize: 20,
@@ -525,14 +526,14 @@ const BooksCatalogue = () => {
                                     style={{
                                         padding: '8px 14px',
                                         borderRadius: 6,
-                                        border: p === page ? '2px solid #1976d2' : '1px solid #ccc',
-                                        background: p === page ? '#1976d2' : '#fff',
-                                        color: p === page ? '#fff' : '#1976d2',
+                                        border: p === page ? `2px solid ${theme.colors.primary.main}` : '1px solid #ccc',
+                                        background: p === page ? theme.colors.primary.main : '#fff',
+                                        color: p === page ? theme.colors.primary.contrast : '#1976d2',
                                         fontWeight: p === page ? 700 : 500,
                                         fontSize: 16,
                                         minWidth: 40,
                                         cursor: p === page ? 'default' : 'pointer',
-                                        boxShadow: p === page ? '0 2px 8px rgba(25,118,210,0.08)' : 'none',
+                                        boxShadow: p === page ? theme.shadows.sm : 'none',
                                         margin: '0 2px',
                                         outline: 'none',
                                         transition: 'background 0.2s, color 0.2s',
@@ -548,9 +549,9 @@ const BooksCatalogue = () => {
                                 style={{
                                     padding: '8px 14px',
                                     borderRadius: 6,
-                                    border: '1px solid #1976d2',
-                                    background: page === totalPages || totalPages === 0 ? '#eee' : '#1976d2',
-                                    color: page === totalPages || totalPages === 0 ? '#888' : '#fff',
+                                    border: `1px solid ${theme.colors.primary.main}`,
+                                    background: page === totalPages || totalPages === 0 ? '#eee' : theme.colors.primary.main,
+                                    color: page === totalPages || totalPages === 0 ? '#888' : theme.colors.primary.contrast,
                                     fontWeight: 600,
                                     cursor: page === totalPages || totalPages === 0 ? 'not-allowed' : 'pointer',
                                     fontSize: 20,

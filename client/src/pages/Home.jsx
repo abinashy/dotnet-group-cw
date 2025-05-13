@@ -4,6 +4,7 @@ import BooksCard from '../components/BooksCard';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import placeholderImg from '../assets/placeholder-book.png';
+import { theme } from '../theme';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -85,24 +86,30 @@ const Home = () => {
     );
 
     return (
-        <div className="relative min-h-screen w-full bg-gray-100 overflow-x-hidden">
+        <div className="relative min-h-screen w-full" style={{ backgroundColor: theme.colors.background.default }}>
             {/* Hero Section */}
-            <div className="flex flex-col md:flex-row items-center justify-between bg-gray-100 rounded-2xl p-8 md:p-16 mb-12 mt-6">
+            <div className="flex flex-col md:flex-row items-center justify-between rounded-2xl p-8 md:p-16 mb-12 mt-6" 
+                 style={{ backgroundColor: theme.colors.background.paper, boxShadow: theme.shadows.md }}>
                 <div className="flex-1 mb-8 md:mb-0">
-                    <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-                        Buy and sell your books <span className="text-blue-600">for the best prices</span>
+                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4" style={{ color: theme.colors.text.primary }}>
+                        Buy and sell your books <span style={{ color: theme.colors.primary.main }}>for the best prices</span>
                     </h1>
-                    <p className="text-lg text-gray-700 mb-6">
+                    <p className="text-lg mb-6" style={{ color: theme.colors.text.secondary }}>
                         Find and read more you'll love, and keep track of the books you want to read. Be part of the world's largest community of book lovers on BookNook.
                     </p>
                     <button
-                        className="bg-blue-600 text-white px-6 py-3 font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200"
+                        className="px-6 py-3 font-semibold rounded-lg transition-colors duration-200"
+                        style={{ 
+                            backgroundColor: theme.colors.primary.main,
+                            color: theme.colors.primary.contrast,
+                            boxShadow: theme.shadows.sm
+                        }}
                         onClick={() => navigate('/books?tab=discount')}
                     >
                         Explore Deals
                     </button>
                 </div>
-                <img src="/assets/hero-books.png" alt="Book Covers" className="w-64 md:w-80 flex-shrink-0 rounded-xl shadow-lg" />
+                <img src="/assets/hero-books.png" alt="Book Covers" className="w-64 md:w-80 flex-shrink-0 rounded-xl" style={{ boxShadow: theme.shadows.lg }} />
             </div>
 
             {/* Best Seller Books Section */}
@@ -155,29 +162,43 @@ const Home = () => {
 
             {/* Feature/Promo Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-12 items-center">
-                <div className="grid grid-cols-3 gap-2 bg-yellow-50 p-4 rounded-xl">
+                <div className="grid grid-cols-3 gap-2 p-4 rounded-xl" style={{ backgroundColor: theme.colors.background.paper, boxShadow: theme.shadows.sm }}>
                     {Array.isArray(featuredBooks) && [...featuredBooks, ...newArrivals].slice(0, 9).map((book, i) => (
-                        <img key={i} src={book.coverImageUrl || placeholderImg} alt={book.title} className="w-full h-32 object-cover rounded-lg shadow" />
+                        <img key={i} src={book.coverImageUrl || placeholderImg} alt={book.title} className="w-full h-32 object-cover rounded-lg" style={{ boxShadow: theme.shadows.sm }} />
                     ))}
                 </div>
                 <div className="flex flex-col items-start">
-                    <h3 className="text-2xl font-bold mb-2 text-blue-800">Find Your Favorite <span className="text-blue-600">Book Here!</span></h3>
-                    <p className="text-gray-700 mb-4">Discover, connect, and start accumulating advantages with BookNook. Join our community and find your next favorite read!</p>
+                    <h3 className="text-2xl font-bold mb-2" style={{ color: theme.colors.text.primary }}>
+                        Find Your Favorite <span style={{ color: theme.colors.primary.main }}>Book Here!</span>
+                    </h3>
+                    <p className="mb-4" style={{ color: theme.colors.text.secondary }}>
+                        Discover, connect, and start accumulating advantages with BookNook. Join our community and find your next favorite read!
+                    </p>
                     <div className="flex gap-8 mb-4">
                         <div>
-                            <div className="text-xl font-bold text-blue-700">800+</div>
-                            <div className="text-gray-500 text-sm">Book Listing</div>
+                            <div className="text-xl font-bold" style={{ color: theme.colors.primary.main }}>800+</div>
+                            <div style={{ color: theme.colors.text.secondary, fontSize: '0.875rem' }}>Book Listing</div>
                         </div>
                         <div>
-                            <div className="text-xl font-bold text-blue-700">550+</div>
-                            <div className="text-gray-500 text-sm">Register User</div>
+                            <div className="text-xl font-bold" style={{ color: theme.colors.primary.main }}>550+</div>
+                            <div style={{ color: theme.colors.text.secondary, fontSize: '0.875rem' }}>Register User</div>
                         </div>
                         <div>
-                            <div className="text-xl font-bold text-blue-700">1,200+</div>
-                            <div className="text-gray-500 text-sm">Books Sold</div>
+                            <div className="text-xl font-bold" style={{ color: theme.colors.primary.main }}>1,200+</div>
+                            <div style={{ color: theme.colors.text.secondary, fontSize: '0.875rem' }}>Books Sold</div>
                         </div>
                     </div>
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition" onClick={() => window.location.href = '/books'}>Explore Now</button>
+                    <button 
+                        className="px-6 py-2 rounded font-semibold transition"
+                        style={{ 
+                            backgroundColor: theme.colors.primary.main,
+                            color: theme.colors.primary.contrast,
+                            boxShadow: theme.shadows.sm
+                        }}
+                        onClick={() => window.location.href = '/books'}
+                    >
+                        Explore Now
+                    </button>
                 </div>
             </div>
 
