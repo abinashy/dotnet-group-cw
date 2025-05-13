@@ -8,6 +8,7 @@ import { FaRegCopy } from 'react-icons/fa';
 import AddToCartButton from '../components/Buttons/AddToCartButton';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useBooks } from '../context/BookContext';
 import { theme } from '../theme';
 
 // Helper to get initials from name
@@ -42,23 +43,51 @@ const BookDetails = () => {
     const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
     const { openCart, refreshCart } = useCart();
     const { isInWishlist, toggleWishlist } = useWishlist();
+    const { getBookDetails, lastRefreshTime } = useBooks();
 
+    // Initial load of book details
     useEffect(() => {
         const fetchBook = async () => {
             setLoading(true);
             setError(null);
             try {
-                const res = await axios.get(`http://localhost:5124/api/books/${id}`);
-                setBook(res.data);
-                setReviews(res.data.Reviews || []);
-            } catch {
+                // Use the BookContext to get book details
+                const bookData = await getBookDetails(id);
+                if (bookData) {
+                    setBook(bookData);
+                    setReviews(bookData.reviews || []);
+                } else {
+                    // Fallback to direct API call if not in cache
+                    const res = await axios.get(`http://localhost:5124/api/books/${id}`);
+                    setBook(res.data);
+                    setReviews(res.data.reviews || []);
+                }
+            } catch (err) {
                 setError('Failed to fetch book details.');
+                console.error('Error fetching book details:', err);
             } finally {
                 setLoading(false);
             }
         };
         fetchBook();
-    }, [id]);
+    }, [id, getBookDetails]);
+
+    // Refresh book data when lastRefreshTime changes (triggered by the BookContext)
+    useEffect(() => {
+        if (!loading && book) {
+            const refreshBookData = async () => {
+                try {
+                    const refreshedBook = await getBookDetails(id);
+                    if (refreshedBook) {
+                        setBook(refreshedBook);
+                    }
+                } catch (err) {
+                    console.error('Error refreshing book details:', err);
+                }
+            };
+            refreshBookData();
+        }
+    }, [lastRefreshTime, id, getBookDetails, loading, book]);
 
     useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth > 900);

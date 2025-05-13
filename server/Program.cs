@@ -128,6 +128,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddHostedService<AnnouncementPublisherService>();
+builder.Services.AddHostedService<DiscountExpirationService>();
 
 // Add SignalR services
 builder.Services.AddSignalR(options =>

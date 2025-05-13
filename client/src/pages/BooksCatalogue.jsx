@@ -3,6 +3,7 @@ import axios from 'axios';
 import BooksCard from '../components/BooksCard';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { theme } from '../theme';
+import { useBooks } from '../context/BookContext';
 
 const FILTER_TABS = [
     { key: 'all', label: 'All Books' },
@@ -38,6 +39,7 @@ const BooksCatalogue = () => {
     const [expandGenres, setExpandGenres] = useState(true);
     const [expandAuthors, setExpandAuthors] = useState(true);
     const [expandPublishers, setExpandPublishers] = useState(true);
+    const { lastRefreshTime } = useBooks();
 
     // Helper to get array param from searchParams
     const getArrayParam = (key) => searchParams.getAll(key);
@@ -145,7 +147,8 @@ const BooksCatalogue = () => {
             const response = await axios.get(`http://localhost:5124/api/BooksCatalogue?${query}`);
             setBooks(response.data.books || []);
             setTotalCount(response.data.totalCount || 0);
-        } catch {
+        } catch (error) {
+            console.error('Error fetching books:', error);
             setBooks([]);
             setTotalCount(0);
         }
@@ -156,6 +159,14 @@ const BooksCatalogue = () => {
         fetchBooks();
         // eslint-disable-next-line
     }, [searchParams]);
+
+    // Refresh books when lastRefreshTime changes (triggered by the BookContext)
+    useEffect(() => {
+        if (books.length > 0) {
+            fetchBooks();
+        }
+        // eslint-disable-next-line
+    }, [lastRefreshTime]);
 
     // Update URL (searchParams) when a filter changes
     const setFilter = (key, value, isArray = false) => {

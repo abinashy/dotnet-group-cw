@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
@@ -27,6 +27,11 @@ export function CartProvider({ children }) {
       setCartItems(await res.json());
     }
   };
+
+  // Load cart items when the component mounts
+  useEffect(() => {
+    refreshCart();
+  }, []);
 
   return (
     <CartContext.Provider value={{ cartItems, setCartItems, cartOpen, openCart, closeCart, refreshCart }}>

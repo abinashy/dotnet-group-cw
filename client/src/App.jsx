@@ -27,6 +27,7 @@ import AnnouncementBanner from './components/AnnouncementBanner';
 import OrderNotification from './components/OrderNotification';
 import Wishlist from './pages/Wishlist';
 import { WishlistProvider } from './context/WishlistContext';
+import { BookProvider } from './context/BookContext';
 
 function AppContent() {
   const location = useLocation();
@@ -194,17 +195,19 @@ function AppContent() {
 
 function App() {
   return (
-    <CartProvider>
-  <WishlistProvider>
-    <AnnouncementProvider>
-      <OrderNotificationProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </OrderNotificationProvider>
-    </AnnouncementProvider>
-  </WishlistProvider>
-</CartProvider>
+    <BookProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <AnnouncementProvider>
+            <OrderNotificationProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </OrderNotificationProvider>
+          </AnnouncementProvider>
+        </WishlistProvider>
+      </CartProvider>
+    </BookProvider>
   );
 }
 
