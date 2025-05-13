@@ -250,7 +250,7 @@ namespace BookNook.Controllers
                         OrderItemId = oi.OrderItemId,
                         Quantity = oi.Quantity,
                         UnitPrice = oi.UnitPrice,
-                        Book = oi.Book == null ? null : new BookDto
+                        Book = oi.Book == null ? null : new BookNook.DTOs.Order.BookDto
                         {
                             BookId = oi.Book.BookId,
                             Title = oi.Book.Title

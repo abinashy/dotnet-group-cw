@@ -3,6 +3,7 @@ using BookNook.DTOs;
 using BookNook.DTOs.Order;
 using BookNook.Entities;
 using BookNook.Hubs;
+using BookNook.Repositories.Order;
 using BookNook.Services.Email;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -11,28 +12,20 @@ using System.Text;
 
 namespace BookNook.Services.Order
 {
-    public interface IOrderService
-    {
-        Task<Entities.Order> CreateOrderAsync(long userId, CreateOrderDto orderDto);
-        Task<Entities.Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false);
-        Task CancelOrderAsync(int orderId, long userId);
-        Task<List<Entities.Order>> GetOrderHistoryAsync(long userId);
-        Task<List<Entities.Order>> GetAllOrdersAsync(string? searchTerm = null);
-        Task SaveChangesAsync();
-        Task CompleteOrderAsync(int orderId, string claimCode);
-    }
-
     public class OrderService : IOrderService
     {
+        private readonly IOrderRepository _orderRepository;
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IHubContext<OrderNotificationHub> _orderHubContext;
 
         public OrderService(
+            IOrderRepository orderRepository,
             ApplicationDbContext context, 
             IEmailService emailService,
             IHubContext<OrderNotificationHub> orderHubContext)
         {
+            _orderRepository = orderRepository;
             _context = context;
             _emailService = emailService;
             _orderHubContext = orderHubContext;
@@ -41,7 +34,7 @@ namespace BookNook.Services.Order
         public async Task<Entities.Order> CreateOrderAsync(long userId, CreateOrderDto orderDto)
         {
             // No navigation property for Orders on User, so query directly
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _orderRepository.GetUserAsync(userId);
             if (user == null)
                 throw new Exception("User not found");
 
@@ -145,8 +138,8 @@ namespace BookNook.Services.Order
                 }
             };
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            // Create order using repository
+            await _orderRepository.CreateAsync(order);
 
             // Notify staff about new order via email
             await _emailService.SendOrderNotificationToStaffAsync(order);
@@ -207,23 +200,7 @@ namespace BookNook.Services.Order
 
         public async Task<Entities.Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false)
         {
-            if (allowAnyUser)
-            {
-                return await _context.Orders
-                    .Include(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Book)
-                    .Include(o => o.OrderHistory)
-                    .FirstOrDefaultAsync(o => o.OrderId == orderId);
-            }
-            else if (userId.HasValue)
-            {
-                return await _context.Orders
-                    .Include(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Book)
-                    .Include(o => o.OrderHistory)
-                    .FirstOrDefaultAsync(o => o.OrderId == orderId && o.UserId == userId);
-            }
-            return null;
+            return await _orderRepository.GetByIdAsync(orderId, userId, allowAnyUser);
         }
 
         public async Task CancelOrderAsync(int orderId, long userId)
@@ -251,29 +228,10 @@ namespace BookNook.Services.Order
                 }
             }
 
-            order.Status = "Cancelled";
-            if (order.OrderHistory != null)
-            {
-                order.OrderHistory.Status = "Cancelled";
-                order.OrderHistory.StatusDate = DateTime.UtcNow;
-                order.OrderHistory.Notes = "Order cancelled by user";
-            }
-            else
-            {
-                order.OrderHistory = new OrderHistory
-                {
-                    Status = "Cancelled",
-                    StatusDate = DateTime.UtcNow,
-                    Notes = "Order cancelled by user"
-                };
-            }
+            // Update status through repository
+            await _orderRepository.UpdateStatusAsync(orderId, "Cancelled", "Order cancelled by user");
 
-            await _context.SaveChangesAsync();
-
-            // Notify staff about order cancellation via email
-            await _emailService.SendOrderCancellationToStaffAsync(order);
-            
-            // Send real-time notification to staff about cancellation
+            // Send order cancellation notification
             var confirmationDto = new OrderConfirmationDto
             {
                 OrderId = order.OrderId,
@@ -282,7 +240,7 @@ namespace BookNook.Services.Order
                 FinalAmount = order.FinalAmount,
                 DiscountAmount = order.DiscountAmount,
                 OrderDate = order.OrderDate,
-                Status = order.Status,
+                Status = "Cancelled",
                 OrderItems = order.OrderItems.Select(oi => new OrderItemConfirmationDto
                 {
                     BookId = oi.BookId,
@@ -323,62 +281,24 @@ namespace BookNook.Services.Order
                 Console.WriteLine($"Error sending cancellation notification: {ex.Message}");
                 // Log but don't rethrow, as this should not fail the order cancellation
             }
+
+            // Send email notification to staff
+            await _emailService.SendOrderCancellationToStaffAsync(order);
         }
 
         public async Task<List<Entities.Order>> GetOrderHistoryAsync(long userId)
         {
-            Console.WriteLine($"[OrderService] Fetching orders for userId: {userId}");
-            var orders = await _context.Orders
-                .Where(o => o.UserId == userId)
-                .Include(o => o.OrderHistory)
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Book)
-                .OrderByDescending(o => o.OrderDate)
-                .ToListAsync();
-            Console.WriteLine($"[OrderService] Orders fetched: {orders.Count}");
-            foreach (var order in orders)
-            {
-                if (order.OrderHistory == null)
-                {
-                    Console.WriteLine($"[OrderService] OrderId {order.OrderId} is missing OrderHistory!");
-                }
-                if (order.OrderItems == null || order.OrderItems.Count == 0)
-                {
-                    Console.WriteLine($"[OrderService] OrderId {order.OrderId} has no OrderItems!");
-                }
-            }
-            return orders;
+            return await _orderRepository.GetAllByUserIdAsync(userId);
         }
 
         public async Task<List<Entities.Order>> GetAllOrdersAsync(string? searchTerm = null)
         {
-            var query = _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Book)
-                .Include(o => o.OrderHistory)
-                .OrderByDescending(o => o.OrderDate)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                // Get user IDs that match search term (either by ID or name)
-                var matchingUserIds = await _context.Users
-                    .Where(u => u.Id.ToString().Contains(searchTerm) || 
-                               (u.FirstName + " " + u.LastName).Contains(searchTerm) ||
-                               u.Email.Contains(searchTerm))
-                    .Select(u => u.Id)
-                    .ToListAsync();
-
-                // Filter orders by those user IDs
-                query = query.Where(o => matchingUserIds.Contains(o.UserId));
-            }
-
-            return await query.ToListAsync();
+            return await _orderRepository.GetAllWithSearchAsync(searchTerm);
         }
 
         public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            await _orderRepository.SaveChangesAsync();
         }
 
         private string GenerateClaimCode()
@@ -409,11 +329,12 @@ namespace BookNook.Services.Order
             if (!string.Equals(order.ClaimCode?.Trim(), claimCode?.Trim(), StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Invalid claim code");
 
-            order.Status = "Completed";
-            order.OrderHistory.Status = "Completed";
-            order.OrderHistory.StatusDate = DateTime.UtcNow;
-            order.OrderHistory.Notes = "Order marked as completed by staff";
+            // Update order status using repository
+            await _orderRepository.UpdateStatusAsync(orderId, "Completed", "Order marked as completed by staff");
             
+            // Update IsClaimed and ClaimedDate directly
+            order.IsClaimed = true;
+            order.ClaimedDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             // Send real-time notification to the user
@@ -425,7 +346,7 @@ namespace BookNook.Services.Order
                 FinalAmount = order.FinalAmount,
                 DiscountAmount = order.DiscountAmount,
                 OrderDate = order.OrderDate,
-                Status = order.Status,
+                Status = "Completed",
                 OrderItems = order.OrderItems.Select(oi => new OrderItemConfirmationDto
                 {
                     BookId = oi.BookId,

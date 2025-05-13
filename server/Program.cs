@@ -24,6 +24,8 @@ using BookNook.Services.Email;
 using BookNook.Services.Order;
 using BookNook.Repositories.Books;
 using BookNook.Repositories.Inventory;
+using BookNook.Repositories.Order;
+using BookNook.Repositories.Announcement;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -128,8 +130,10 @@ builder.Services.AddScoped<IBookmarkService, BookmarkService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddHostedService<AnnouncementPublisherService>();
 builder.Services.AddHostedService<DiscountExpirationService>();

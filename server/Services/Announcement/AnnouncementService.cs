@@ -2,6 +2,7 @@ using BookNook.Data;
 using BookNook.DTOs.Announcement;
 using BookNook.Entities;
 using BookNook.Hubs;
+using BookNook.Repositories.Announcement;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,11 +22,13 @@ namespace BookNook.Services.Announcements
 
     public class AnnouncementService : IAnnouncementService
     {
+        private readonly IAnnouncementRepository _repository;
         private readonly ApplicationDbContext _db;
         private readonly IHubContext<AnnouncementHub> _hubContext;
         
-        public AnnouncementService(ApplicationDbContext db, IHubContext<AnnouncementHub> hubContext)
+        public AnnouncementService(IAnnouncementRepository repository, ApplicationDbContext db, IHubContext<AnnouncementHub> hubContext)
         {
+            _repository = repository;
             _db = db;
             _hubContext = hubContext;
         }
@@ -42,10 +45,10 @@ namespace BookNook.Services.Announcements
                 CreatedBy = userId,
                 CreatedAt = DateTime.UtcNow
             };
-            _db.Announcements.Add(ann);
-            await _db.SaveChangesAsync();
             
-            var announcementDto = await ToDtoAsync(ann);
+            var createdAnnouncement = await _repository.CreateAsync(ann);
+            
+            var announcementDto = await ToDtoAsync(createdAnnouncement);
             
             // If announcement is active now, notify connected clients immediately
             if (ann.IsActive && ann.StartDate <= DateTime.UtcNow && DateTime.UtcNow <= ann.EndDate)
@@ -58,51 +61,50 @@ namespace BookNook.Services.Announcements
 
         public async Task<List<AnnouncementDto>> GetAllAsync()
         {
-            return await _db.Announcements.Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
-                .Select(a => new AnnouncementDto
-                {
-                    AnnouncementId = a.AnnouncementId,
-                    Title = a.Title,
-                    Content = a.Content,
-                    StartDate = a.StartDate,
-                    EndDate = a.EndDate,
-                    IsActive = a.IsActive,
-                    CreatedBy = a.CreatedBy,
-                    CreatedByName = a.User.UserName,
-                    CreatedAt = a.CreatedAt
-                }).ToListAsync();
+            var announcements = await _repository.GetAllAsync();
+            return announcements.Select(a => new AnnouncementDto
+            {
+                AnnouncementId = a.AnnouncementId,
+                Title = a.Title,
+                Content = a.Content,
+                StartDate = a.StartDate,
+                EndDate = a.EndDate,
+                IsActive = a.IsActive,
+                CreatedBy = a.CreatedBy,
+                CreatedByName = a.User?.UserName ?? "",
+                CreatedAt = a.CreatedAt
+            }).ToList();
         }
         
         public async Task<List<AnnouncementDto>> GetActiveAnnouncementsAsync()
         {
-            var now = DateTime.UtcNow;
-            return await _db.Announcements.Include(a => a.User)
-                .Where(a => a.IsActive && a.StartDate <= now && now <= a.EndDate)
-                .OrderByDescending(a => a.CreatedAt)
-                .Select(a => new AnnouncementDto
-                {
-                    AnnouncementId = a.AnnouncementId,
-                    Title = a.Title,
-                    Content = a.Content,
-                    StartDate = a.StartDate,
-                    EndDate = a.EndDate,
-                    IsActive = a.IsActive,
-                    CreatedBy = a.CreatedBy,
-                    CreatedByName = a.User.UserName,
-                    CreatedAt = a.CreatedAt
-                }).ToListAsync();
+            var activeAnnouncements = await _repository.GetActiveAnnouncementsAsync();
+            return activeAnnouncements.Select(a => new AnnouncementDto
+            {
+                AnnouncementId = a.AnnouncementId,
+                Title = a.Title,
+                Content = a.Content,
+                StartDate = a.StartDate,
+                EndDate = a.EndDate,
+                IsActive = a.IsActive,
+                CreatedBy = a.CreatedBy,
+                CreatedByName = a.User?.UserName ?? "",
+                CreatedAt = a.CreatedAt
+            }).ToList();
         }
 
         public async Task<AnnouncementDto?> PublishAnnouncementAsync(int id)
         {
-            var ann = await _db.Announcements.Include(a => a.User).FirstOrDefaultAsync(a => a.AnnouncementId == id);
+            var ann = await _repository.GetByIdAsync(id);
             if (ann == null) return null;
+            
             ann.IsActive = true;
             ann.StartDate = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
             
-            var announcementDto = await ToDtoAsync(ann);
+            var updatedAnnouncement = await _repository.UpdateAsync(ann);
+            if (updatedAnnouncement == null) return null;
+            
+            var announcementDto = await ToDtoAsync(updatedAnnouncement);
             
             // Notify connected clients about the newly published announcement
             await _hubContext.Clients.All.SendAsync("ReceiveAnnouncement", announcementDto);
@@ -112,34 +114,25 @@ namespace BookNook.Services.Announcements
 
         public async Task<List<AnnouncementDto>> PublishDueAnnouncementsAsync()
         {
-            var now = DateTime.UtcNow;
-            var due = await _db.Announcements.Include(a => a.User)
-                .Where(a => !a.IsActive && a.StartDate <= now)
-                .ToListAsync();
+            var due = await _repository.GetDueAnnouncementsAsync();
                 
             if (due.Count == 0)
             {
                 return new List<AnnouncementDto>();
             }
             
+            var announcements = new List<AnnouncementDto>();
+            
             foreach (var ann in due)
             {
                 ann.IsActive = true;
+                var updatedAnnouncement = await _repository.UpdateAsync(ann);
+                if (updatedAnnouncement != null)
+                {
+                    var dto = await ToDtoAsync(updatedAnnouncement);
+                    announcements.Add(dto);
+                }
             }
-            await _db.SaveChangesAsync();
-            
-            var announcements = due.Select(a => new AnnouncementDto
-            {
-                AnnouncementId = a.AnnouncementId,
-                Title = a.Title,
-                Content = a.Content,
-                StartDate = a.StartDate,
-                EndDate = a.EndDate,
-                IsActive = a.IsActive,
-                CreatedBy = a.CreatedBy,
-                CreatedByName = a.User.UserName,
-                CreatedAt = a.CreatedAt
-            }).ToList();
             
             // Notify connected clients about each newly activated announcement
             foreach (var announcement in announcements)
@@ -152,17 +145,13 @@ namespace BookNook.Services.Announcements
 
         public async Task<bool> DeleteAnnouncementAsync(int id)
         {
-            var ann = await _db.Announcements.FindAsync(id);
-            if (ann == null) return false;
-            _db.Announcements.Remove(ann);
-            await _db.SaveChangesAsync();
-            return true;
+            return await _repository.DeleteAsync(id);
         }
 
         public async Task<AnnouncementDto> UpdateAnnouncementAsync(int id, CreateAnnouncementDto dto, long userId)
         {
             Console.WriteLine($"DEBUG: Updating announcement with ID: {id}");
-            var ann = await _db.Announcements.Include(a => a.User).FirstOrDefaultAsync(a => a.AnnouncementId == id);
+            var ann = await _repository.GetByIdAsync(id);
             if (ann == null) 
             {
                 Console.WriteLine($"DEBUG: Announcement with ID {id} not found");
@@ -179,13 +168,15 @@ namespace BookNook.Services.Announcements
             ann.EndDate = dto.EndDate;
             ann.IsActive = dto.IsActive;
             
-            await _db.SaveChangesAsync();
+            var updatedAnnouncement = await _repository.UpdateAsync(ann);
+            if (updatedAnnouncement == null) return null;
+            
             Console.WriteLine($"DEBUG: Updated announcement successfully");
             
-            var announcementDto = await ToDtoAsync(ann);
+            var announcementDto = await ToDtoAsync(updatedAnnouncement);
             
             // Check if announcement became active or was already active
-            bool isNowActive = ann.IsActive && ann.StartDate <= DateTime.UtcNow && DateTime.UtcNow <= ann.EndDate;
+            bool isNowActive = updatedAnnouncement.IsActive && updatedAnnouncement.StartDate <= DateTime.UtcNow && DateTime.UtcNow <= updatedAnnouncement.EndDate;
             
             // If announcement became active or was updated while active, notify clients
             if (isNowActive)
@@ -198,9 +189,7 @@ namespace BookNook.Services.Announcements
 
         public async Task<AnnouncementDto?> GetAnnouncementByIdAsync(int id)
         {
-            var announcement = await _db.Announcements.Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.AnnouncementId == id);
-            
+            var announcement = await _repository.GetByIdAsync(id);
             if (announcement == null) return null;
             
             return await ToDtoAsync(announcement);
