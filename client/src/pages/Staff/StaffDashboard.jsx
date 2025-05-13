@@ -1,46 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import UserList from '../../components/Staff/UserList';
 import OrderList from '../../components/Staff/OrderList';
+import StaffSideNav from '../../components/Staff/StaffSideNav';
+import { useOrderNotifications } from '../../context/OrderNotificationContext';
 
 const StaffDashboard = () => {
-  const [activeTab, setActiveTab] = useState('orders');
-  const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { notifications } = useOrderNotifications();
+
+  // Listen for new order notifications
+  useEffect(() => {
+    // When a new order notification is received, update the orders list
+    if (notifications && notifications.length > 0) {
+      const newOrderNotifications = notifications.filter(notif => notif.type === 'new-order');
+      
+      if (newOrderNotifications.length > 0) {
+        // Refresh the orders list to include the new orders
+        fetchOrders();
+      }
+    }
+  }, [notifications]);
+
+  const fetchOrders = useCallback(async (search = '') => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
+
+      const ordersResponse = await axios.get(`http://localhost:5124/api/order${search ? `?search=${encodeURIComponent(search)}` : ''}`, { headers });
+      setOrders(ordersResponse.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error fetching data');
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
+    fetchOrders();
+  }, [fetchOrders]);
 
-        const headers = {
-          'Authorization': `Bearer ${token}`
-        };
-
-        // Fetch both users and orders
-        const [usersResponse, ordersResponse] = await Promise.all([
-          axios.get('http://localhost:5124/api/user', { headers }),
-          axios.get('http://localhost:5124/api/order', { headers })
-        ]);
-
-        setUsers(usersResponse.data);
-        setOrders(ordersResponse.data);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Error fetching data');
-        console.error('Error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const handleSearch = (search) => {
+    fetchOrders(search);
+  };
 
   const handleOrderCompleted = (completedOrder) => {
     setOrders(orders.map(order => 
@@ -48,7 +59,7 @@ const StaffDashboard = () => {
     ));
   };
 
-  if (loading) {
+  if (loading && orders.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -56,7 +67,7 @@ const StaffDashboard = () => {
     );
   }
 
-  if (error) {
+  if (error && orders.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -68,50 +79,32 @@ const StaffDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Staff Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Manage users and process orders
-          </p>
-        </div>
+    <div className="flex min-h-screen bg-gray-50">
+      <StaffSideNav />
+      <main className="flex-1 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Orders Management</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              View and manage customer orders
+            </p>
+            {loading && (
+              <div className="mt-2 text-sm text-blue-600">
+                <span className="mr-2">Refreshing orders...</span>
+                <span className="inline-block animate-spin h-4 w-4 border-t-2 border-b-2 border-blue-500 rounded-full"></span>
+              </div>
+            )}
+          </div>
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`${
-                activeTab === 'orders'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              Orders
-            </button>
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`${
-                activeTab === 'users'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              Users
-            </button>
-          </nav>
+          <div className="bg-white shadow rounded-lg">
+            <OrderList 
+              orders={orders} 
+              onOrderCompleted={handleOrderCompleted} 
+              onSearch={handleSearch} 
+            />
+          </div>
         </div>
-
-        {/* Content */}
-        <div className="bg-white shadow rounded-lg">
-          {activeTab === 'orders' ? (
-            <OrderList orders={orders} onOrderCompleted={handleOrderCompleted} />
-          ) : (
-            <UserList users={users} />
-          )}
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

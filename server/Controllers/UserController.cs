@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 using BookNook.Entities;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace server.Controllers
 {
@@ -44,18 +45,68 @@ namespace server.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Staff,Admin")]
-        public IActionResult GetAllUsers()
+        public async Task<IActionResult> GetAllUsers()
         {
-            var users = _userManager.Users
-                .Select(u => new {
-                    u.Id,
-                    u.UserName,
-                    u.Email,
-                    u.FirstName,
-                    u.LastName,
-                    u.CreatedAt
-                }).ToList();
-            return Ok(users);
+            var users = _userManager.Users.ToList();
+            var userList = new List<object>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userList.Add(new {
+                    user.Id,
+                    user.UserName,
+                    user.Email,
+                    user.FirstName,
+                    user.LastName,
+                    user.CreatedAt,
+                    Roles = roles // This will be a list of role names
+                });
+            }
+
+            return Ok(userList);
+        }
+
+        [HttpGet("staff")]
+        [Authorize(Roles = "Staff,Admin")]
+        public IActionResult GetStaffUsers()
+        {
+            // RoleId 2 is Staff
+            var staffRoleId = 2L;
+            var context = HttpContext.RequestServices.GetService(typeof(BookNook.Data.ApplicationDbContext)) as BookNook.Data.ApplicationDbContext;
+            var staffUsers = (from user in context.Users
+                              join userRole in context.UserRoles on user.Id equals userRole.UserId
+                              where userRole.RoleId == staffRoleId
+                              select new {
+                                  user.Id,
+                                  user.UserName,
+                                  user.Email,
+                                  user.FirstName,
+                                  user.LastName,
+                                  user.CreatedAt
+                              }).ToList();
+            return Ok(staffUsers);
+        }
+
+        [HttpGet("member")]
+        [Authorize(Roles = "Staff,Admin")]
+        public IActionResult GetMemberUsers()
+        {
+            // RoleId 3 is Member
+            var memberRoleId = 3L;
+            var context = HttpContext.RequestServices.GetService(typeof(BookNook.Data.ApplicationDbContext)) as BookNook.Data.ApplicationDbContext;
+            var memberUsers = (from user in context.Users
+                               join userRole in context.UserRoles on user.Id equals userRole.UserId
+                               where userRole.RoleId == memberRoleId
+                               select new {
+                                   user.Id,
+                                   user.UserName,
+                                   user.Email,
+                                   user.FirstName,
+                                   user.LastName,
+                                   user.CreatedAt
+                               }).ToList();
+            return Ok(memberUsers);
         }
     }
 } 

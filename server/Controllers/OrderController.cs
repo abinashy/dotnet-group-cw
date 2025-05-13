@@ -4,6 +4,8 @@ using BookNook.Services;
 using BookNook.DTOs;
 using System.Security.Claims;
 using BookNook.Data;
+using BookNook.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookNook.Controllers
@@ -191,19 +193,24 @@ namespace BookNook.Controllers
         [HttpPost("{orderId}/cancel")]
         public async Task<IActionResult> CancelOrder(int orderId)
         {
+            Console.WriteLine($"[OrderController] CancelOrder called for orderId: {orderId}");
             try
             {
                 var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!long.TryParse(userIdStr, out var userId))
                 {
+                    Console.WriteLine("[OrderController] User ID not found in token");
                     return Unauthorized(new { message = "User ID not found in token" });
                 }
-
+                
+                Console.WriteLine($"[OrderController] Cancelling order {orderId} for user {userId}");
                 await _orderService.CancelOrderAsync(orderId, userId);
+                Console.WriteLine($"[OrderController] Order {orderId} cancelled successfully");
                 return Ok(new { message = "Order cancelled successfully" });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[OrderController] Error cancelling order: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -264,15 +271,16 @@ namespace BookNook.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Staff,Admin")]
-        public async Task<IActionResult> GetAllOrders()
+        public async Task<IActionResult> GetAllOrders([FromQuery] string search = null)
         {
-            var orders = await _orderService.GetAllOrdersAsync();
+            var orders = await _orderService.GetAllOrdersAsync(search);
             var orderDtos = (from order in orders
                              join user in _context.Users on order.UserId equals user.Id
                              select new {
                                  order.OrderId,
                                  order.UserId,
                                  CustomerName = user.FirstName + " " + user.LastName,
+                                 UserEmail = user.Email,
                                  order.OrderDate,
                                  order.Status,
                                  order.ClaimCode,
@@ -299,44 +307,16 @@ namespace BookNook.Controllers
                 return NotFound(new { message = "Order not found" });
             if (order.Status == "Completed")
                 return BadRequest(new { message = "Order is already completed" });
-            if (!string.Equals(order.ClaimCode?.Trim(), dto.ClaimCode?.Trim(), StringComparison.OrdinalIgnoreCase))
-                return BadRequest(new { message = $"Invalid claim code. (DEBUG: order='{order.ClaimCode}', input='{dto.ClaimCode}')" });
-            // Grant 10% member discount after every 10th completed order
-            var completedOrdersBefore = await _context.Orders
-                .CountAsync(o => o.UserId == order.UserId && o.Status == "Completed");
-            if (completedOrdersBefore % 10 == 9) // This is the 10th, 20th, etc. order (9 completed before, this is the 10th)
+                
+            try
             {
-                // Clean up expired discounts first
-                var expiredDiscounts = await _context.MemberDiscounts
-                    .Where(md => md.UserId == order.UserId && md.ExpiryDate <= DateTime.UtcNow)
-                    .ToListAsync();
-                if (expiredDiscounts.Any())
-                {
-                    _context.MemberDiscounts.RemoveRange(expiredDiscounts);
-                    await _context.SaveChangesAsync();
-                }
-
-                var hasUnused = await _context.MemberDiscounts
-                    .AnyAsync(md => md.UserId == order.UserId && !md.IsUsed && md.DiscountPercentage == 10 && md.ExpiryDate > DateTime.UtcNow);
-                if (!hasUnused)
-                {
-                    _context.MemberDiscounts.Add(new Entities.MemberDiscount
-                    {
-                        UserId = order.UserId,
-                        DiscountPercentage = 10,
-                        IsUsed = false,
-                        ExpiryDate = DateTime.UtcNow.AddMonths(3),
-                        CreatedAt = DateTime.UtcNow
-                    });
-                    await _context.SaveChangesAsync();
-                }
+                await _orderService.CompleteOrderAsync(orderId, dto.ClaimCode);
+                return Ok(new { message = "Order marked as completed" });
             }
-            order.Status = "Completed";
-            order.OrderHistory.Status = "Completed";
-            order.OrderHistory.StatusDate = DateTime.UtcNow;
-            order.OrderHistory.Notes = "Order marked as completed by staff";
-            await _orderService.SaveChangesAsync();
-            return Ok(new { message = "Order marked as completed" });
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{orderId}/resend-confirmation")]
