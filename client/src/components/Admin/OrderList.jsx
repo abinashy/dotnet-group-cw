@@ -4,7 +4,6 @@ import OrderDetailsModal from './OrderDetailsModal';
 const OrderList = ({ orders }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [searchOrderId, setSearchOrderId] = useState('');
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -19,22 +18,8 @@ const OrderList = ({ orders }) => {
     }
   };
 
-  const filteredOrders = orders.filter(order =>
-    searchOrderId.trim() === '' || String(order.orderId).includes(searchOrderId.trim())
-  );
-
   return (
     <>
-      <div className="mb-4 flex items-center">
-        <input
-          type="text"
-          placeholder="Search by Order ID"
-          value={searchOrderId}
-          onChange={e => setSearchOrderId(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <span className="text-gray-500 text-sm">Showing {filteredOrders.length} of {orders.length} orders</span>
-      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -63,7 +48,7 @@ const OrderList = ({ orders }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <tr key={order.orderId}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   #{order.orderId}

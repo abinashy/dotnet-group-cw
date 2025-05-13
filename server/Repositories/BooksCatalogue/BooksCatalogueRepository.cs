@@ -15,21 +15,64 @@ namespace BookNook.Repositories.BooksCatalogue
             _logger = logger;
         }
 
-        public async Task<IEnumerable<Book>> GetBooksAsync(
+        public async Task<(IEnumerable<Book> Books, int TotalCount)> GetBooksAsync(
             string? search,
             List<string>? genres,
             List<string>? authors,
             List<string>? languages,
             decimal? minPrice,
             decimal? maxPrice,
-            string? sortPrice)
+            string? sortPrice,
+            string? tab,
+            List<int>? publishers = null,
+            int page = 1,
+            int pageSize = 8)
         {
             var query = _context.Books
                 .Include(b => b.Publisher)
                 .Include(b => b.BookAuthors).ThenInclude(ba => ba.Author)
                 .Include(b => b.BookGenres).ThenInclude(bg => bg.Genre)
                 .Include(b => b.Inventory)
+                .Include(b => b.DiscountHistory)
+                .Include(b => b.Discounts)
                 .AsQueryable();
+
+            if (!string.IsNullOrEmpty(tab))
+            {
+                if (tab == "all")
+                {
+                    query = query.Where(b => b.Status.ToLower() == "published");
+                }
+                else if (tab == "coming")
+                {
+                    query = query.Where(b => b.Status.ToLower() == "upcoming");
+                }
+                else if (tab == "award")
+                {
+                    query = query.Where(b => b.IsAwardWinning == true);
+                }
+                else if (tab == "new")
+                {
+                    var oneMonthAgo = DateTime.UtcNow.AddMonths(-1);
+                    query = query.Where(b => b.CreatedAt >= oneMonthAgo);
+                }
+                else if (tab == "discount")
+                {
+                    query = query.Where(b => b.Discounts.Any(d => d.IsOnSale && d.IsActive && d.StartDate <= DateTime.UtcNow && d.EndDate >= DateTime.UtcNow));
+                }
+                else if (tab == "bestseller")
+                {
+                    // Get top 8 most ordered BookIds from OrderItems
+                    var topBookIds = _context.OrderItems
+                        .GroupBy(oi => oi.BookId)
+                        .Select(g => new { BookId = g.Key, TotalOrdered = g.Sum(oi => oi.Quantity) })
+                        .OrderByDescending(x => x.TotalOrdered)
+                        .Take(8)
+                        .Select(x => x.BookId)
+                        .ToList();
+                    query = query.Where(b => topBookIds.Contains(b.BookId));
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -37,6 +80,7 @@ namespace BookNook.Repositories.BooksCatalogue
                 query = query.Where(b =>
                     b.Title.ToLower().Contains(lowerSearch) ||
                     b.ISBN.ToLower().Contains(lowerSearch) ||
+                    (b.Description != null && b.Description.ToLower().Contains(lowerSearch)) ||
                     b.BookAuthors.Any(ba =>
                         ba.Author.FirstName.ToLower().Contains(lowerSearch) ||
                         ba.Author.LastName.ToLower().Contains(lowerSearch))
@@ -70,6 +114,11 @@ namespace BookNook.Repositories.BooksCatalogue
                 query = query.Where(b => b.Price <= maxPrice.Value);
             }
 
+            if (publishers != null && publishers.Count > 0)
+            {
+                query = query.Where(b => publishers.Contains(b.PublisherId));
+            }
+
             if (!string.IsNullOrWhiteSpace(sortPrice))
             {
                 if (sortPrice.ToLower() == "asc")
@@ -82,7 +131,11 @@ namespace BookNook.Repositories.BooksCatalogue
                 query = query.OrderBy(b => b.Title);
             }
 
-            return await query.ToListAsync();
+            int totalCount = await query.CountAsync();
+            // Pagination
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+            var books = await query.ToListAsync();
+            return (books, totalCount);
         }
 
         public async Task<bool> AddSampleDataAsync()

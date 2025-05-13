@@ -14,19 +14,32 @@ import './App.css';
 import Checkout from './pages/Checkout';
 import CartDrawer from './pages/Cart';
 import Header from './components/Header';
-import React from 'react';
+import React, { useState } from 'react';
 import Confirmation from './pages/Confirmation';
 import MyOrder from './pages/MyOrder';
 import Review from './pages/Review';
 import StaffDashboard from './pages/Staff/StaffDashboard';
 import Footer from './components/Footer';
 import { CartProvider } from './context/CartContext';
+import { AnnouncementProvider } from './context/AnnouncementContext';
+import { OrderNotificationProvider, useOrderNotifications } from './context/OrderNotificationContext';
+import AnnouncementBanner from './components/AnnouncementBanner';
+import OrderNotification from './components/OrderNotification';
+import Wishlist from './pages/Wishlist';
+import { WishlistProvider } from './context/WishlistContext';
 
 function AppContent() {
   const location = useLocation();
   const token = localStorage.getItem('token');
   const isLoggedIn = !!token;
   let userRoles = [];
+  
+  // Get order notifications
+  const { notifications, closeNotification } = useOrderNotifications();
+  
+  // Always use banner mode, no toggle needed
+  // eslint-disable-next-line no-unused-vars
+  const [displayMode] = useState('banner');
   
   if (token) {
     try {
@@ -46,10 +59,20 @@ function AppContent() {
 
   const shouldShowFooter = !isAdminOrStaff && !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/staff');
 
+  // Don't show announcements in admin or staff pages
+  const shouldShowAnnouncements = !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/staff');
+
   return (
     <>
+      {/* Announcement section - banner only */}
+      {shouldShowAnnouncements && <AnnouncementBanner />}
+      
+      {/* Order notifications */}
+      {isLoggedIn && <OrderNotification notifications={notifications} onClose={closeNotification} />}
+      
       <Header />
       {isLoggedIn && <CartDrawer />}
+      
       <Routes>
         <Route
           path="/login"
@@ -129,6 +152,14 @@ function AppContent() {
           } 
         />
         <Route 
+          path="/orders/:orderId" 
+          element={
+            <AuthenticatedRoute>
+              <MyOrder />
+            </AuthenticatedRoute>
+          } 
+        />
+        <Route 
           path="/review" 
           element={
             <AuthenticatedRoute>
@@ -145,6 +176,14 @@ function AppContent() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/wishlist" 
+          element={
+            <AuthenticatedRoute>
+              <Wishlist />
+            </AuthenticatedRoute>
+          } 
+        />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
@@ -156,10 +195,16 @@ function AppContent() {
 function App() {
   return (
     <CartProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </CartProvider>
+  <WishlistProvider>
+    <AnnouncementProvider>
+      <OrderNotificationProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </OrderNotificationProvider>
+    </AnnouncementProvider>
+  </WishlistProvider>
+</CartProvider>
   );
 }
 

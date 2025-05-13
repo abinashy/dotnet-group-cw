@@ -6,7 +6,6 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('members'); // 'members' or 'staff'
-  const [search, setSearch] = useState('');
 
   const fetchUsers = async (tab) => {
     try {
@@ -33,15 +32,6 @@ export default function AdminUsers() {
     fetchUsers(activeTab);
     // eslint-disable-next-line
   }, [activeTab]);
-
-  // Filter users by search (now includes User ID)
-  const filteredUsers = users.filter(user => {
-    if (!search) return true;
-    const userId = String(user.id || user.Id || '').toLowerCase();
-    const name = `${user.firstName || user.FirstName || ''} ${user.lastName || user.LastName || ''}`.toLowerCase();
-    const email = (user.email || user.Email || '').toLowerCase();
-    return userId.includes(search.toLowerCase()) || name.includes(search.toLowerCase()) || email.includes(search.toLowerCase());
-  });
 
   if (loading) {
     return (
@@ -91,17 +81,6 @@ export default function AdminUsers() {
         </nav>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-4 flex justify-end">
-        <input
-          type="text"
-          placeholder="Search by user ID, name or email..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
@@ -123,7 +102,7 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
+              {users.map((user) => (
                 <tr key={user.id || user.Id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.id || user.Id}
@@ -142,7 +121,7 @@ export default function AdminUsers() {
             </tbody>
           </table>
         </div>
-        {filteredUsers.length === 0 && (
+        {users.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No users found.
           </div>

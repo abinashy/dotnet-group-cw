@@ -34,16 +34,39 @@ const Header = () => {
         <Link to="/books" className="hover:text-black transition-colors">Books</Link>
         <Link to="/about" className="hover:text-black transition-colors">About</Link>
         {isLoggedIn && (
-          <button
-            onClick={openCart}
-            className="relative ml-2 p-2 rounded-full hover:bg-gray-100 transition shadow-sm border border-gray-200"
-            aria-label="Open cart"
-          >
-            {/* Modern cart icon: filled, bold, black/gray */}
-            <svg className="w-7 h-7 text-black" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M7 20a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7.16 16h9.68c.92 0 1.72-.62 1.93-1.52l2.18-8.7A1 1 0 0 0 20 4H6.21l-.94-2.36A1 1 0 0 0 4.34 1H1v2h2.34l3.6 9.03-1.35 2.44C4.52 15.37 5.48 17 7.16 17zm12.24-10l-1.6 6.4H8.53l-1.1-2h10.7l1.27-4.4z" />
-            </svg>
-          </button>
+          <>
+            <Link
+              to="/wishlist"
+              className="relative ml-2 p-2 rounded-full hover:bg-pink-100 transition shadow-sm border border-gray-200 group"
+              aria-label="Wishlist"
+            >
+              {/* Enhanced Heart icon with animation */}
+              <svg 
+                className="w-7 h-7 text-pink-500 transition-transform duration-300 ease-in-out group-hover:scale-110" 
+                viewBox="0 0 24 24" 
+                fill="currentColor"
+              >
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                <defs>
+                  <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#F472B6" />
+                    <stop offset="100%" stopColor="#EC4899" />
+                  </linearGradient>
+                </defs>
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#heartGradient)" />
+              </svg>
+            </Link>
+            <button
+              onClick={openCart}
+              className="relative ml-2 p-2 rounded-full hover:bg-gray-100 transition shadow-sm border border-gray-200"
+              aria-label="Open cart"
+            >
+              {/* Modern cart icon: filled, bold, black/gray */}
+              <svg className="w-7 h-7 text-black" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M7 20a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7.16 16h9.68c.92 0 1.72-.62 1.93-1.52l2.18-8.7A1 1 0 0 0 20 4H6.21l-.94-2.36A1 1 0 0 0 4.34 1H1v2h2.34l3.6 9.03-1.35 2.44C4.52 15.37 5.48 17 7.16 17zm12.24-10l-1.6 6.4H8.53l-1.1-2h10.7l1.27-4.4z" />
+              </svg>
+            </button>
+          </>
         )}
         {!isLoggedIn ? (
           <Link to="/login" className="ml-4 px-5 py-2 rounded-full bg-black text-white shadow font-bold hover:bg-gray-900 transition">Login</Link>

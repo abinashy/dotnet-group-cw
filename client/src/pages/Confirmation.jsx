@@ -18,6 +18,9 @@ const Confirmation = () => {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           });
+          console.log('[CLIENT] Order details received:', JSON.stringify(response.data, null, 2));
+          console.log('[CLIENT] 10% Discount value:', response.data.member10PercentDiscount);
+          console.log('[CLIENT] Is 10% discount showing?', response.data.member10PercentDiscount > 0);
           setOrderDetails(response.data);
         }
       } catch (error) {
@@ -163,21 +166,26 @@ const Confirmation = () => {
                 <span>Subtotal:</span>
                 <span className="font-bold text-black">₹{orderDetails.totalAmount.toFixed(2)}</span>
               </div>
+              {orderDetails.orderItems.some(item => item.discountPercent > 0) && (
+                <div className="text-xs text-gray-500 mb-2 italic">
+                  <span>(Member discounts are calculated on original price total)</span>
+                </div>
+              )}
               {orderDetails.perBookDiscount > 0 && (
                 <div className="flex justify-between text-green-700 font-semibold">
-                  <span>Per-Book Discount</span>
+                  <span>Per-Book Discount (Special Offers)</span>
                   <span>-₹{orderDetails.perBookDiscount.toFixed(2)}</span>
                 </div>
               )}
               {orderDetails.member5PercentDiscount > 0 && (
                 <div className="flex justify-between text-green-700 font-semibold">
-                  <span>Member 5% Discount</span>
+                  <span>Member 5% Discount (5+ books)</span>
                   <span>-₹{orderDetails.member5PercentDiscount.toFixed(2)}</span>
                 </div>
               )}
               {orderDetails.member10PercentDiscount > 0 && (
                 <div className="flex justify-between text-green-700 font-semibold">
-                  <span>Member 10% Discount</span>
+                  <span title="Applied on your 11th, 21st, 31st, etc. orders">Member 10% Discount (11th, 21st, etc. order)</span>
                   <span>-₹{orderDetails.member10PercentDiscount.toFixed(2)}</span>
                 </div>
               )}

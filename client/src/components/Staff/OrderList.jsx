@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import OrderDetailsModal from './OrderDetailsModal';
 import axios from 'axios';
 
-const OrderList = ({ orders, onOrderCompleted }) => {
+const OrderList = ({ orders, onOrderCompleted, onSearch }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [searchOrderId, setSearchOrderId] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [resendStatus, setResendStatus] = useState({});
 
   const getStatusColor = (status) => {
@@ -21,9 +21,18 @@ const OrderList = ({ orders, onOrderCompleted }) => {
     }
   };
 
-  const filteredOrders = orders.filter(order =>
-    searchOrderId.trim() === '' || String(order.orderId).includes(searchOrderId.trim())
-  );
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    if (onSearch) {
+      onSearch(e.target.value);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && onSearch) {
+      onSearch(searchTerm);
+    }
+  };
 
   const handleResendEmail = async (orderId) => {
     setResendStatus((prev) => ({ ...prev, [orderId]: 'loading' }));
@@ -48,12 +57,19 @@ const OrderList = ({ orders, onOrderCompleted }) => {
       <div className="mb-4 flex items-center">
         <input
           type="text"
-          placeholder="Search by Order ID"
-          value={searchOrderId}
-          onChange={e => setSearchOrderId(e.target.value)}
+          placeholder="Search by Member ID or Name"
+          value={searchTerm}
+          onChange={handleSearch}
+          onKeyDown={handleKeyDown}
           className="border border-gray-300 rounded-md px-3 py-2 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <span className="text-gray-500 text-sm">Showing {filteredOrders.length} of {orders.length} orders</span>
+        <button 
+          onClick={() => onSearch(searchTerm)}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Search
+        </button>
+        <span className="text-gray-500 text-sm ml-2">Showing {orders.length} orders</span>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -67,6 +83,9 @@ const OrderList = ({ orders, onOrderCompleted }) => {
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Customer Name
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Date
@@ -83,7 +102,7 @@ const OrderList = ({ orders, onOrderCompleted }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <tr key={order.orderId}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   #{order.orderId}
@@ -93,6 +112,9 @@ const OrderList = ({ orders, onOrderCompleted }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {order.customerName || order.userName || (order.firstName && order.lastName ? `${order.firstName} ${order.lastName}` : order.userId)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {order.userEmail}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {new Date(order.orderDate).toLocaleString()}

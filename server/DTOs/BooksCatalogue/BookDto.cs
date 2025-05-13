@@ -22,6 +22,11 @@ namespace BookNook.DTOs.BooksCatalogue
         public List<AuthorDto> Authors { get; set; } = new();
         public List<GenreDto> Genres { get; set; } = new();
         public int Availability { get; set; } // Stock quantity
+        public string Status { get; set; } = string.Empty;
+        public bool IsOnSale { get; set; } = false;
+        public decimal? DiscountedPrice { get; set; }
+        public decimal? DiscountPercentage { get; set; }
+        public decimal? OriginalPrice { get; set; }
     }
 
     public class AuthorDto
@@ -37,5 +42,11 @@ namespace BookNook.DTOs.BooksCatalogue
         public int GenreId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
+    }
+
+    public class PagedBooksDto
+    {
+        public List<BookDto> Books { get; set; } = new();
+        public int TotalCount { get; set; }
     }
 } 

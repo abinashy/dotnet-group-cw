@@ -10,7 +10,7 @@ const Checkout = () => {
   const [subtotal, setSubtotal] = useState(0);
   const [member5PercentDiscountAmount, setMember5PercentDiscountAmount] = useState(0);
   const [member10PercentDiscountAmount, setMember10PercentDiscountAmount] = useState(0);
-  const [memberDiscountAmount, setMemberDiscountAmount] = useState(0);
+  const [_memberDiscountAmount, set_MemberDiscountAmount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
   const [totalQuantity, setTotalQuantity] = useState(0);
 
@@ -49,7 +49,7 @@ const Checkout = () => {
         setSubtotal(typeof data.subtotal === 'number' ? data.subtotal : 0);
         setMember5PercentDiscountAmount(typeof data.member5PercentDiscountAmount === 'number' ? data.member5PercentDiscountAmount : 0);
         setMember10PercentDiscountAmount(typeof data.member10PercentDiscountAmount === 'number' ? data.member10PercentDiscountAmount : 0);
-        setMemberDiscountAmount(typeof data.memberDiscountAmount === 'number' ? data.memberDiscountAmount : 0);
+        set_MemberDiscountAmount(typeof data.memberDiscountAmount === 'number' ? data.memberDiscountAmount : 0);
         setFinalTotal(typeof data.finalTotal === 'number' ? data.finalTotal : 0);
         setTotalQuantity(typeof data.totalQuantity === 'number' ? data.totalQuantity : 0);
         setLoading(false);
@@ -200,15 +200,18 @@ const Checkout = () => {
             <span>Subtotal</span>
             <span className="font-bold text-black">₹{subtotal.toFixed(2)}</span>
           </div>
+          
+          {/* Book discounts are already shown in the item prices */}
+          
           {member5PercentDiscountAmount > 0 && (
             <div className="flex justify-between mb-2 text-green-700 font-semibold">
-              <span>Member 5% Discount</span>
+              <span>Member 5% Discount (5+ books)</span>
               <span>-₹{member5PercentDiscountAmount.toFixed(2)}</span>
             </div>
           )}
           {member10PercentDiscountAmount > 0 && (
             <div className="flex justify-between mb-2 text-green-700 font-semibold">
-              <span>Member 10% Discount</span>
+              <span>Member 10% Discount (11th, 21st, etc. order)</span>
               <span>-₹{member10PercentDiscountAmount.toFixed(2)}</span>
             </div>
           )}
@@ -220,6 +223,18 @@ const Checkout = () => {
             <span>Total</span>
             <span>₹{finalTotal.toFixed(2)}</span>
           </div>
+          
+          <div className="bg-blue-50 p-3 rounded-lg mb-4 text-xs text-blue-800">
+            <p className="font-semibold mb-1">Available Discounts:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Book-specific discounts are applied directly to individual book prices</li>
+              <li>Buy 5+ books in one order to get 5% off the original price total</li>
+              <li>After every 10th completed order, you get a 10% discount for your next order (applies on 11th, 21st, 31st order)</li>
+              <li>All discounts can be stacked for maximum savings!</li>
+            </ul>
+            <p className="mt-2 text-gray-600 italic text-[10px]">Note: Your 10% milestone discount becomes available after completing your 10th, 20th, 30th order and is automatically applied to your next purchase.</p>
+          </div>
+          
           <button 
             onClick={handlePlaceOrder}
             disabled={submitting || checkoutItems.length === 0}

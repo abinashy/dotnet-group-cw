@@ -4,6 +4,8 @@ using BookNook.Services;
 using BookNook.DTOs;
 using System.Security.Claims;
 using BookNook.Data;
+using BookNook.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookNook.Controllers
@@ -83,13 +85,72 @@ namespace BookNook.Controllers
                 }
                 // 10% member discount if it was actually applied to this order
                 var member10PercentDiscount = 0m;
-                // Try to reconstruct the actual 10% discount applied
-                var expected10Percent = order.TotalAmount * 0.10m;
-                // The 10% discount is only applied if the discount amount is at least the sum of 5% and 10% (or just 10% if 5% doesn't apply)
-                if (order.DiscountAmount >= member5PercentDiscount + expected10Percent - 0.01m) // allow for rounding
+                
+                // Check if a 10% member discount was actually used for this order
+                Console.WriteLine($"[OrderController] Checking 10% discount for Order #{orderId}, UserId: {userId}, OrderDate: {order.OrderDate}");
+                
+                // Debug section: dump all memberDiscounts for this user
+                Console.WriteLine($"[OrderController] Debugging: All MemberDiscounts for user {userId}:");
+                var allMemberDiscounts = await _context.MemberDiscounts
+                    .Where(md => md.UserId == userId)
+                    .OrderByDescending(md => md.CreatedAt)
+                    .ToListAsync();
+                
+                foreach (var md in allMemberDiscounts)
                 {
-                    member10PercentDiscount = expected10Percent;
+                    Console.WriteLine($"  - ID: {md.MemberDiscountId}, Created: {md.CreatedAt}, IsUsed: {md.IsUsed}, ExpiryDate: {md.ExpiryDate}, Percentage: {md.DiscountPercentage}%");
                 }
+                Console.WriteLine($"[OrderController] End of MemberDiscounts debug info");
+                
+                // Get all orders for this user to determine position
+                Console.WriteLine($"[OrderController] Counting completed and pending orders for user {userId}");
+                
+                var allOrders = await _context.Orders
+                    .Where(o => o.UserId == userId)
+                    .OrderBy(o => o.OrderDate)
+                    .ToListAsync();
+                    
+                Console.WriteLine($"[OrderController] Total orders found: {allOrders.Count}");
+                foreach (var o in allOrders.Take(5)) // Log the first 5 for debugging
+                {
+                    Console.WriteLine($"  - Order #{o.OrderId}, Date: {o.OrderDate}, Status: {o.Status}");
+                }
+                
+                // Calculate this order's position within all user orders
+                var orderPosition = allOrders.FindIndex(o => o.OrderId == orderId) + 1;
+                
+                Console.WriteLine($"[OrderController] Current order position: {orderPosition}");
+                Console.WriteLine($"[OrderController] Is milestone order? {orderPosition % 10 == 1 && orderPosition > 10}");
+                
+                // Only milestone orders (11th, 21st, 31st) can have the 10% discount
+                if (orderPosition % 10 == 1 && orderPosition > 10)
+                {
+                    Console.WriteLine($"[OrderController] This is a milestone order (position {orderPosition})");
+                    // Check if there was a 10% member discount record used for this order
+                    var memberDiscount = await _context.MemberDiscounts
+                        .FirstOrDefaultAsync(md => md.UserId == userId 
+                            && md.IsUsed 
+                            && md.DiscountPercentage == 10
+                            && md.CreatedAt <= order.OrderDate.AddDays(1)
+                            && md.CreatedAt >= order.OrderDate.AddDays(-1));
+                            
+                    if (memberDiscount != null)
+                    {
+                        member10PercentDiscount = order.TotalAmount * 0.10m;
+                        Console.WriteLine($"[OrderController] Applying 10% discount: {member10PercentDiscount}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[OrderController] This is a milestone order but no discount record was found/used");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[OrderController] Not a milestone order, no 10% discount applied");
+                }
+                
+                Console.WriteLine($"[OrderController] Final discount values - PerBook: {perBookDiscount}, Member5%: {member5PercentDiscount}, Member10%: {member10PercentDiscount}");
+                
                 var dto = new OrderConfirmationDto
                 {
                     OrderId = order.OrderId,
@@ -132,19 +193,24 @@ namespace BookNook.Controllers
         [HttpPost("{orderId}/cancel")]
         public async Task<IActionResult> CancelOrder(int orderId)
         {
+            Console.WriteLine($"[OrderController] CancelOrder called for orderId: {orderId}");
             try
             {
                 var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!long.TryParse(userIdStr, out var userId))
                 {
+                    Console.WriteLine("[OrderController] User ID not found in token");
                     return Unauthorized(new { message = "User ID not found in token" });
                 }
-
+                
+                Console.WriteLine($"[OrderController] Cancelling order {orderId} for user {userId}");
                 await _orderService.CancelOrderAsync(orderId, userId);
+                Console.WriteLine($"[OrderController] Order {orderId} cancelled successfully");
                 return Ok(new { message = "Order cancelled successfully" });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[OrderController] Error cancelling order: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -205,15 +271,16 @@ namespace BookNook.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Staff,Admin")]
-        public async Task<IActionResult> GetAllOrders()
+        public async Task<IActionResult> GetAllOrders([FromQuery] string search = null)
         {
-            var orders = await _orderService.GetAllOrdersAsync();
+            var orders = await _orderService.GetAllOrdersAsync(search);
             var orderDtos = (from order in orders
                              join user in _context.Users on order.UserId equals user.Id
                              select new {
                                  order.OrderId,
                                  order.UserId,
                                  CustomerName = user.FirstName + " " + user.LastName,
+                                 UserEmail = user.Email,
                                  order.OrderDate,
                                  order.Status,
                                  order.ClaimCode,
@@ -240,44 +307,16 @@ namespace BookNook.Controllers
                 return NotFound(new { message = "Order not found" });
             if (order.Status == "Completed")
                 return BadRequest(new { message = "Order is already completed" });
-            if (!string.Equals(order.ClaimCode?.Trim(), dto.ClaimCode?.Trim(), StringComparison.OrdinalIgnoreCase))
-                return BadRequest(new { message = $"Invalid claim code. (DEBUG: order='{order.ClaimCode}', input='{dto.ClaimCode}')" });
-            // Grant 10% member discount after every 10th completed order
-            var completedOrdersBefore = await _context.Orders
-                .CountAsync(o => o.UserId == order.UserId && o.Status == "Completed");
-            if (completedOrdersBefore % 10 == 9) // This is the 10th, 20th, etc. order (9 completed before, this is the 10th)
+                
+            try
             {
-                // Clean up expired discounts first
-                var expiredDiscounts = await _context.MemberDiscounts
-                    .Where(md => md.UserId == order.UserId && md.ExpiryDate <= DateTime.UtcNow)
-                    .ToListAsync();
-                if (expiredDiscounts.Any())
-                {
-                    _context.MemberDiscounts.RemoveRange(expiredDiscounts);
-                    await _context.SaveChangesAsync();
-                }
-
-                var hasUnused = await _context.MemberDiscounts
-                    .AnyAsync(md => md.UserId == order.UserId && !md.IsUsed && md.DiscountPercentage == 10 && md.ExpiryDate > DateTime.UtcNow);
-                if (!hasUnused)
-                {
-                    _context.MemberDiscounts.Add(new Entities.MemberDiscount
-                    {
-                        UserId = order.UserId,
-                        DiscountPercentage = 10,
-                        IsUsed = false,
-                        ExpiryDate = DateTime.UtcNow.AddMonths(3),
-                        CreatedAt = DateTime.UtcNow
-                    });
-                    await _context.SaveChangesAsync();
-                }
+                await _orderService.CompleteOrderAsync(orderId, dto.ClaimCode);
+                return Ok(new { message = "Order marked as completed" });
             }
-            order.Status = "Completed";
-            order.OrderHistory.Status = "Completed";
-            order.OrderHistory.StatusDate = DateTime.UtcNow;
-            order.OrderHistory.Notes = "Order marked as completed by staff";
-            await _orderService.SaveChangesAsync();
-            return Ok(new { message = "Order marked as completed" });
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{orderId}/resend-confirmation")]

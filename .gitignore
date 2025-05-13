@@ -23,6 +23,5 @@ obj/
 
 # Ignore environment files that might contain sensitive information
 /server/appsettings.Development.json
-/server/Migrations/
 
 /server/Migrations/

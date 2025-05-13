@@ -122,20 +122,23 @@ namespace BookNook.Controllers
             decimal member5PercentDiscountAmount = 0;
             decimal member10PercentDiscountAmount = 0;
 
-            // 5% discount for 5+ books
+            // Calculate original price total (before any per-book discounts)
+            decimal originalPriceTotal = checkoutItems.Sum(i => i.Price * i.Quantity);
+
+            // 5% discount for 5+ books - apply to original price total
             if (totalQuantity >= 5)
             {
-                member5PercentDiscountAmount = subtotal * 0.05m;
+                member5PercentDiscountAmount = originalPriceTotal * 0.05m;
             }
 
-            // 10% stackable member discount (from MemberDiscount table)
+            // 10% stackable member discount - apply to original price total
             var memberDiscount = await _context.MemberDiscounts
                 .Where(md => md.UserId == userIdLong && !md.IsUsed && md.ExpiryDate > DateTime.UtcNow && md.DiscountPercentage == 10)
                 .OrderBy(md => md.ExpiryDate)
                 .FirstOrDefaultAsync();
             if (memberDiscount != null)
             {
-                member10PercentDiscountAmount = subtotal * 0.10m;
+                member10PercentDiscountAmount = originalPriceTotal * 0.10m;
             }
 
             decimal memberDiscountAmount = member5PercentDiscountAmount + member10PercentDiscountAmount;

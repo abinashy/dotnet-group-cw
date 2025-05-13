@@ -32,9 +32,11 @@ const DiscountSchema = Yup.object().shape({
     .max(100, 'Discount cannot exceed 100%')
     .required('Discount percentage is required'),
   startDate: Yup.date().required('Start date is required'),
+  startTime: Yup.string().required('Start time is required'),
   endDate: Yup.date()
     .min(Yup.ref('startDate'), 'End date must be after start date')
     .required('End date is required'),
+  endTime: Yup.string().required('End time is required'),
   isOnSale: Yup.boolean(),
 });
 
@@ -76,12 +78,22 @@ export default function AdminDiscounts() {
     try {
       setFormError(null);
       setFormSuccess(null);
+      
+      // Create full datetime by combining date and time inputs
+      const startDateTime = new Date(`${values.startDate}T${values.startTime}`);
+      const endDateTime = new Date(`${values.endDate}T${values.endTime}`);
+      
       // Convert dates to UTC
       const discountData = {
         ...values,
-        startDate: new Date(values.startDate).toISOString(),
-        endDate: new Date(values.endDate).toISOString()
+        startDate: startDateTime.toISOString(),
+        endDate: endDateTime.toISOString()
       };
+      
+      // Remove the separate time fields before sending to API
+      delete discountData.startTime;
+      delete discountData.endTime;
+      
       await api.post('/Discounts', discountData);
       setIsAddModalOpen(false);
       resetForm();
@@ -101,23 +113,23 @@ export default function AdminDiscounts() {
     try {
       setFormError(null);
       setFormSuccess(null);
+      
+      // Create full datetime by combining date and time inputs
+      const startDateTime = new Date(`${values.startDate}T${values.startTime}`);
+      const endDateTime = new Date(`${values.endDate}T${values.endTime}`);
+      
       // Convert dates to UTC
       const discountData = {
         ...values,
-        discountId: currentDiscount.discountId, // Ensure the ID is included
-        startDate: new Date(values.startDate).toISOString(),
-        endDate: new Date(values.endDate).toISOString()
+        startDate: startDateTime.toISOString(),
+        endDate: endDateTime.toISOString()
       };
       
-      console.log('Updating discount:', discountData);
+      // Remove the separate time fields before sending to API
+      delete discountData.startTime;
+      delete discountData.endTime;
       
-      // Use the proper RESTful PUT method for updates
-      const updateUrl = `/Discounts/${currentDiscount.discountId}`;
-      console.log('Using standard PUT endpoint:', updateUrl);
-      
-      const response = await api.put(updateUrl, discountData);
-      console.log('Update response:', response);
-      
+      await api.put(`/Discounts/${discountData.discountId}`, discountData);
       setIsEditModalOpen(false);
       resetForm();
       fetchData();
@@ -125,13 +137,35 @@ export default function AdminDiscounts() {
       setFormSuccess('Discount updated successfully!');
       setTimeout(() => setFormSuccess(null), 3000);
     } catch (error) {
-      console.error('Error updating discount:', error);
-      console.error('Error details:', error.response?.data);
-      
       const errorMessage = error.response?.data || 'Failed to update discount. Please try again.';
-      setFormError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
+      setFormError(errorMessage);
       setFormSuccess(null);
+      console.error('Error updating discount:', error);
     }
+  };
+
+  const handleEditClick = (discount) => {
+    // Format dates for form inputs
+    const startDate = new Date(discount.startDate);
+    const endDate = new Date(discount.endDate);
+    
+    const formattedStartDate = startDate.toISOString().split('T')[0];
+    const formattedEndDate = endDate.toISOString().split('T')[0];
+    
+    const formattedStartTime = startDate.toTimeString().slice(0, 5);
+    const formattedEndTime = endDate.toTimeString().slice(0, 5);
+    
+    setCurrentDiscount({
+      ...discount,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime
+    });
+    
+    setIsEditModalOpen(true);
+    setFormError(null);
+    setFormSuccess(null);
   };
 
   const handleDeleteDiscount = async (discountId) => {
@@ -149,19 +183,10 @@ export default function AdminDiscounts() {
     }
   };
 
-  const openEditModal = (discount) => {
-    // Format the dates for the form
-    const startDate = discount.startDate ? new Date(discount.startDate).toISOString().split('T')[0] : '';
-    const endDate = discount.endDate ? new Date(discount.endDate).toISOString().split('T')[0] : '';
-    
-    setCurrentDiscount({
-      ...discount,
-      startDate,
-      endDate
-    });
-    setIsEditModalOpen(true);
-    setFormError(null);
-    setFormSuccess(null);
+  // Format datetime with both date and time
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
 
   if (loading) {
@@ -205,56 +230,70 @@ export default function AdminDiscounts() {
           Add New Discount
         </button>
       </div>
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
+
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Book
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Discount
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Period
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {discounts.map((discount) => (
                 <tr key={discount.discountId}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {books.find((book) => book.bookId === discount.bookId)?.title || 'Unknown Book'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{discount.discountPercentage}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {new Date(discount.startDate).toLocaleDateString()}
+                    <div className="text-sm font-medium text-gray-900">
+                      {books.find(b => b.bookId === discount.bookId)?.title || 'Unknown Book'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {new Date(discount.endDate).toLocaleDateString()}
+                    <div className="text-sm text-gray-900">{discount.discountPercentage}%</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        discount.isOnSale ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {discount.isOnSale ? 'Active' : 'Inactive'}
+                    <div className="text-sm text-gray-900">
+                      {formatDateTime(discount.startDate)} - {formatDateTime(discount.endDate)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      discount.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {discount.isActive ? 'Active' : 'Inactive'}
                     </span>
+                    {discount.isOnSale && (
+                      <span className="ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                        On Sale
+                      </span>
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => openEditModal(discount)}
-                        className="text-indigo-600 hover:text-indigo-900 transition"
-                      >
-                        Edit
-                      </button>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEditClick(discount)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                    >
+                      Edit
+                    </button>
                     <button
                       onClick={() => handleDeleteDiscount(discount.discountId)}
-                        className="text-red-600 hover:text-red-900 transition"
+                      className="text-red-600 hover:text-red-900"
                     >
                       Delete
                     </button>
-                    </div>
                   </td>
                 </tr>
               ))}
@@ -268,7 +307,6 @@ export default function AdminDiscounts() {
         )}
       </div>
 
-      {/* Add Discount Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -299,7 +337,9 @@ export default function AdminDiscounts() {
                 bookId: '',
                 discountPercentage: '',
                 startDate: '',
+                startTime: '00:00',
                 endDate: '',
+                endTime: '23:59',
                 isOnSale: false,
               }}
               validationSchema={DiscountSchema}
@@ -337,24 +377,46 @@ export default function AdminDiscounts() {
                     <ErrorMessage name="discountPercentage" component="div" className="mt-1 text-sm text-red-600" />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                    <Field
-                      name="startDate"
-                      type="date"
-                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
-                    />
-                    <ErrorMessage name="startDate" component="div" className="mt-1 text-sm text-red-600" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                      <Field
+                        name="startDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Time</label>
+                      <Field
+                        name="startTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">End Date</label>
-                    <Field
-                      name="endDate"
-                      type="date"
-                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
-                    />
-                    <ErrorMessage name="endDate" component="div" className="mt-1 text-sm text-red-600" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Date</label>
+                      <Field
+                        name="endDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Time</label>
+                      <Field
+                        name="endTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
                   </div>
 
                   <div className="flex items-center">
@@ -389,7 +451,6 @@ export default function AdminDiscounts() {
         </div>
       )}
 
-      {/* Edit Discount Modal */}
       {isEditModalOpen && currentDiscount && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -417,11 +478,15 @@ export default function AdminDiscounts() {
 
             <Formik
               initialValues={{
+                discountId: currentDiscount.discountId,
                 bookId: currentDiscount.bookId,
                 discountPercentage: currentDiscount.discountPercentage,
                 startDate: currentDiscount.startDate,
+                startTime: currentDiscount.startTime,
                 endDate: currentDiscount.endDate,
+                endTime: currentDiscount.endTime,
                 isOnSale: currentDiscount.isOnSale,
+                isActive: currentDiscount.isActive
               }}
               validationSchema={DiscountSchema}
               onSubmit={handleEditDiscount}
@@ -458,24 +523,46 @@ export default function AdminDiscounts() {
                     <ErrorMessage name="discountPercentage" component="div" className="mt-1 text-sm text-red-600" />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                    <Field
-                      name="startDate"
-                      type="date"
-                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
-                    />
-                    <ErrorMessage name="startDate" component="div" className="mt-1 text-sm text-red-600" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                      <Field
+                        name="startDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Time</label>
+                      <Field
+                        name="startTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">End Date</label>
-                    <Field
-                      name="endDate"
-                      type="date"
-                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
-                    />
-                    <ErrorMessage name="endDate" component="div" className="mt-1 text-sm text-red-600" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Date</label>
+                      <Field
+                        name="endDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Time</label>
+                      <Field
+                        name="endTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
                   </div>
 
                   <div className="flex items-center">

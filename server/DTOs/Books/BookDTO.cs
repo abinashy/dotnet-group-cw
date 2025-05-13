@@ -23,6 +23,10 @@ namespace BookNook.DTOs.Books
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public int Availability { get; set; } // Stock quantity
+        public bool IsOnSale { get; set; } = false;
+        public decimal? DiscountedPrice { get; set; }
+        public decimal? DiscountPercentage { get; set; }
+        public decimal? OriginalPrice { get; set; }
     }
 
     public class BookResponseDTO : BookDTO
