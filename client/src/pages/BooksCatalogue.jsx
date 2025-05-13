@@ -22,10 +22,26 @@ const PRICE_RANGES = [
     { key: 'custom', label: 'Custom' },
 ];
 
-const LANGUAGES = [
-    'English',
-    'Nepali',
-    'Hindi',
+const SORT_OPTIONS = [
+    { key: 'default', label: 'Default' },
+    { key: 'title_asc', label: 'A to Z' },
+    { key: 'title_desc', label: 'Z to A' },
+    { key: 'popularity', label: 'Most Popular' },
+];
+
+const RATING_OPTIONS = [
+    { key: '0', label: 'Any Rating', value: 0 },
+    { key: '1', label: '⭐ & Up', value: 1 },
+    { key: '2', label: '⭐⭐ & Up', value: 2 },
+    { key: '3', label: '⭐⭐⭐ & Up', value: 3 },
+    { key: '4', label: '⭐⭐⭐⭐ & Up', value: 4 },
+    { key: '5', label: '⭐⭐⭐⭐⭐', value: 5 },
+];
+
+const AVAILABILITY_OPTIONS = [
+    { key: 'all', label: 'All', value: null },
+    { key: 'in_stock', label: 'In Stock', value: true },
+    { key: 'out_of_stock', label: 'Out of Stock', value: false },
 ];
 
 const BooksCatalogue = () => {
@@ -34,12 +50,16 @@ const BooksCatalogue = () => {
     const [genres, setGenres] = useState([]);
     const [authors, setAuthors] = useState([]);
     const [publishers, setPublishers] = useState([]);
+    const [formats, setFormats] = useState([]);
+    const [languages, setLanguages] = useState([]);
     const [customPrice, setCustomPrice] = useState({ min: '', max: '' });
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const [expandGenres, setExpandGenres] = useState(true);
     const [expandAuthors, setExpandAuthors] = useState(true);
     const [expandPublishers, setExpandPublishers] = useState(true);
+    const [expandFormats, setExpandFormats] = useState(true);
+    const [expandLanguages, setExpandLanguages] = useState(true);
     const { lastRefreshTime } = useBooks();
 
     // Helper to get array param from searchParams
@@ -51,7 +71,11 @@ const BooksCatalogue = () => {
     const selectedAuthors = getArrayParam('authors');
     const selectedPublishers = getArrayParam('publishers');
     const selectedLanguages = getArrayParam('languages');
+    const selectedFormats = getArrayParam('formats');
     const selectedPrice = getParam('selectedPrice', null);
+    const sortOption = getParam('sort', 'default');
+    const minRating = parseFloat(getParam('minRating', '0'));
+    const availability = getParam('availability', 'all');
     const sortPrice = getParam('sortPrice', 'asc');
     const searchQuery = getParam('search', '');
     const activeTab = getParam('tab', 'all');
@@ -108,9 +132,30 @@ const BooksCatalogue = () => {
                 // ignore publisher error for now
             }
         };
+        const fetchFormats = async () => {
+            try {
+                const res = await axios.get('http://localhost:5124/api/Books/formats');
+                setFormats(res.data || []);
+            } catch {
+                // Use default formats if API fails
+                setFormats(['Paperback', 'Hardcover', 'Signed', 'Limited Edition', 'First Edition', 
+                            'Collector\'s Edition', 'Author\'s Edition', 'Deluxe Edition']);
+            }
+        };
+        const fetchLanguages = async () => {
+            try {
+                const res = await axios.get('http://localhost:5124/api/Books/languages');
+                setLanguages(res.data || []);
+            } catch {
+                // Use default languages if API fails
+                setLanguages(['English', 'Nepali', 'Hindi', 'Spanish', 'French', 'German']);
+            }
+        };
         fetchGenres();
         fetchAuthors();
         fetchPublishers();
+        fetchFormats();
+        fetchLanguages();
     }, []);
 
     // Build query string for backend filters from searchParams
@@ -121,6 +166,8 @@ const BooksCatalogue = () => {
         selectedAuthors.forEach(a => params.append('authors', a));
         selectedPublishers.forEach(p => params.append('publishers', p));
         selectedLanguages.forEach(l => params.append('languages', l));
+        selectedFormats.forEach(f => params.append('formats', f));
+        
         if (selectedPrice) {
             params.append('selectedPrice', selectedPrice);
             if (selectedPrice === 'custom') {
@@ -134,7 +181,21 @@ const BooksCatalogue = () => {
                 }
             }
         }
-        if (sortPrice) params.append('sortPrice', sortPrice);
+        
+        if (availability && availability !== 'all') {
+            params.append('availability', availability === 'in_stock' ? 'true' : 'false');
+        }
+        
+        if (minRating > 0) {
+            params.append('minRating', minRating.toString());
+        }
+        
+        if (sortOption !== 'default') {
+            params.append('sort', sortOption);
+        } else if (sortPrice) {
+            params.append('sortPrice', sortPrice);
+        }
+        
         if (activeTab && activeTab !== 'all') params.append('tab', activeTab);
         params.append('page', page);
         params.append('pageSize', PAGE_SIZE);
@@ -192,9 +253,20 @@ const BooksCatalogue = () => {
     const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
     return (
-        <div style={{ display: 'flex', minHeight: '80vh', background: '#fafbfc' }}>
+        <div style={{ display: 'flex', minHeight: '80vh', background: '#fafbfc', position: 'relative' }}>
             {/* Side Nav for Genres and Filters */}
-            <aside style={{ width: 320, background: '#fff', borderRight: '1px solid #eee', padding: '2rem 1rem 2rem 2rem' }}>
+            <aside style={{ 
+                width: 320, 
+                background: '#fff', 
+                borderRight: '1px solid #eee', 
+                padding: '2rem 1rem 2rem 2rem',
+                position: 'sticky',
+                top: 0,
+                height: 'calc(100vh - 64px)', /* Adjust the 64px based on your header height */
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#ccc #f5f5f5'
+            }}>
                 {/* Genre Box */}
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
                     <div
@@ -387,12 +459,95 @@ const BooksCatalogue = () => {
                         </label>
                     </div>
                 </div>
+                {/* Availability Box */}
+                <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
+                    <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>Availability</div>
+                    <div>
+                        {AVAILABILITY_OPTIONS.map(option => (
+                            <div key={option.key} style={{ marginBottom: 6 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <input
+                                        type="radio"
+                                        checked={availability === option.key}
+                                        onChange={() => setFilter('availability', option.key)}
+                                    />
+                                    {option.label}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                {/* Rating Box */}
+                <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
+                    <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>Minimum Rating</div>
+                    <div>
+                        {RATING_OPTIONS.map(option => (
+                            <div key={option.key} style={{ marginBottom: 6 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <input
+                                        type="radio"
+                                        checked={minRating.toString() === option.key}
+                                        onChange={() => setFilter('minRating', option.key)}
+                                    />
+                                    {option.label}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                {/* Format Box */}
+                <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandFormats(exp => !exp)}
+                    >
+                        Book Formats
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandFormats ? '▼' : '▶'}</span>
+                    </div>
+                    {expandFormats && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
+                            {formats.length === 0 && (
+                                <li key="no-formats" style={{ color: 'red', fontSize: 14 }}>No formats found. Check API response.</li>
+                            )}
+                            {formats.map((format, idx) => (
+                                <li key={`format-${idx}`} style={{ marginBottom: idx !== formats.length - 1 ? 6 : 0 }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedFormats.includes(format)}
+                                            onChange={() => {
+                                                let newFormats;
+                                                if (selectedFormats.includes(format)) {
+                                                    newFormats = selectedFormats.filter(f => f !== format);
+                                                } else {
+                                                    newFormats = [...selectedFormats, format];
+                                                }
+                                                setFilter('formats', newFormats, true);
+                                            }}
+                                        />
+                                        {format}
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
                 {/* Language Box */}
                 <div style={{ marginBottom: 16, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
-                    <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>Languages</div>
-                    <div>
-                        {LANGUAGES.map(lang => (
-                            <div key={lang} style={{ marginBottom: 6 }}>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandLanguages(exp => !exp)}
+                    >
+                        Languages
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandLanguages ? '▼' : '▶'}</span>
+                    </div>
+                    {expandLanguages && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
+                            {languages.length === 0 && (
+                                <li key="no-languages" style={{ color: 'red', fontSize: 14 }}>No languages found. Check API response.</li>
+                            )}
+                            {languages.map((lang, idx) => (
+                                <li key={`lang-${idx}`} style={{ marginBottom: idx !== languages.length - 1 ? 6 : 0 }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                     <input
                                         type="checkbox"
@@ -409,9 +564,10 @@ const BooksCatalogue = () => {
                                     />
                                     {lang}
                                 </label>
-                            </div>
+                                </li>
                         ))}
-                    </div>
+                        </ul>
+                    )}
                 </div>
                 {/* Reset Filters Button */}
                 <button
@@ -435,7 +591,12 @@ const BooksCatalogue = () => {
                 </button>
             </aside>
             {/* Main Content */}
-            <main style={{ flex: 1, padding: '2rem 2rem 2rem 2rem' }}>
+            <main style={{ 
+                flex: 1, 
+                padding: '2rem 2rem 2rem 2rem',
+                height: 'calc(100vh - 64px)', /* Match the height of the sidebar */
+                overflow: 'auto' 
+            }}>
                 <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
                     {FILTER_TABS.map(tab => (
                         <button
@@ -470,6 +631,31 @@ const BooksCatalogue = () => {
                                 : 'All Books'}
                     </h2>
                     <div style={{ flex: 1 }} />
+                    
+                    {/* Sort By Dropdown */}
+                    <div style={{ marginRight: 16 }}>
+                        <select 
+                            value={sortOption}
+                            onChange={(e) => setFilter('sort', e.target.value)}
+                            style={{
+                                padding: '10px 16px',
+                                borderRadius: 8,
+                                border: '1px solid #e0e0e0',
+                                fontSize: 15,
+                                background: '#fff',
+                                outline: 'none',
+                                minWidth: 180,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            {SORT_OPTIONS.map(option => (
+                                <option key={option.key} value={option.key}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    
                     <div style={{ position: 'relative', width: 340 }}>
                         <input
                             type="text"

@@ -4,6 +4,11 @@ using BookNook.Services.Books;
 using BookNook.Data;
 using BookNook.Entities;
 using Microsoft.EntityFrameworkCore;
+using BookNook.Repositories;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace BookNook.Controllers
 {
@@ -13,11 +18,15 @@ namespace BookNook.Controllers
     {
         private readonly IBookService _bookService;
         private readonly ApplicationDbContext _context;
+        private readonly IBookRepository _repository;
+        private readonly ILogger<BooksController> _logger;
 
-        public BooksController(IBookService bookService, ApplicationDbContext context)
+        public BooksController(IBookService bookService, ApplicationDbContext context, IBookRepository repository, ILogger<BooksController> logger)
         {
             _bookService = bookService;
             _context = context;
+            _repository = repository;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -101,6 +110,48 @@ namespace BookNook.Controllers
                 return NotFound();
 
             return NoContent();
+        }
+
+        [HttpGet("formats")]
+        public async Task<ActionResult<IEnumerable<string>>> GetFormats()
+        {
+            try
+            {
+                var formats = await _context.Books
+                    .Select(b => b.Format)
+                    .Distinct()
+                    .Where(f => !string.IsNullOrWhiteSpace(f))
+                    .OrderBy(f => f)
+                    .ToListAsync();
+
+                return Ok(formats);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving formats");
+                return StatusCode(500, "An error occurred while retrieving book formats");
+            }
+        }
+
+        [HttpGet("languages")]
+        public async Task<ActionResult<IEnumerable<string>>> GetLanguages()
+        {
+            try
+            {
+                var languages = await _context.Books
+                    .Select(b => b.Language)
+                    .Distinct()
+                    .Where(l => !string.IsNullOrWhiteSpace(l))
+                    .OrderBy(l => l)
+                    .ToListAsync();
+
+                return Ok(languages);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving languages");
+                return StatusCode(500, "An error occurred while retrieving book languages");
+            }
         }
     }
 } 

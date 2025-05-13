@@ -13,7 +13,7 @@ const AddBookSchema = Yup.object().shape({
     .typeError('Please enter a valid date'),
   pageCount: Yup.number().required('Page count is required').min(1, 'Must have at least 1 page'),
   language: Yup.string().required('Language is required').max(20, 'Language name is too long'),
-  format: Yup.string().required('Format is required').max(20, 'Format name is too long'),
+  format: Yup.string().required('Format is required').max(30, 'Format name is too long'),
   description: Yup.string(),
   coverImageUrl: Yup.string().max(500, 'URL is too long'),
   isAwardWinning: Yup.boolean(),
@@ -139,9 +139,8 @@ function BasicInfoStep() {
           className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
         >
           <option value="Published">Published</option>
-          <option value="Draft">Draft</option>
-          <option value="Upcoming">Upcoming</option>
-          <option value="Out of Print">Out of Print</option>
+          <option value="Upcoming">Coming Soon</option>
+          
         </Field>
         <ErrorMessage name="status" component="div" className="mt-1 text-sm text-red-600" />
       </div>
@@ -295,6 +294,14 @@ function DetailsStep() {
             <option value="Hardcover">Hardcover</option>
             <option value="eBook">eBook</option>
             <option value="Audiobook">Audiobook</option>
+            <option value="Limited Edition">Limited Edition</option>
+            <option value="Signed Edition">Signed Edition</option>
+            <option value="Collector's Edition">Collector's Edition</option>
+            <option value="Large Print">Large Print</option>
+            <option value="Illustrated">Illustrated</option>
+            <option value="Box Set">Box Set</option>
+            <option value="Graphic Novel">Graphic Novel</option>
+            <option value="Manga">Manga</option>
           </Field>
           <ErrorMessage name="format" component="div" className="mt-1 text-sm text-red-600" />
         </div>

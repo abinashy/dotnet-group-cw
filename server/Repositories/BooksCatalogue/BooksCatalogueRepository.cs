@@ -20,20 +20,26 @@ namespace BookNook.Repositories.BooksCatalogue
             List<string>? genres,
             List<string>? authors,
             List<string>? languages,
+            List<string>? formats,
             decimal? minPrice,
             decimal? maxPrice,
             string? sortPrice,
+            string? sort,
+            bool? availability,
+            decimal? minRating,
             string? tab,
             List<int>? publishers = null,
             int page = 1,
             int pageSize = 8)
         {
+            _logger.LogInformation("Starting GetBooksAsync with parameters: search={Search}, languages={Languages}, formats={Formats}, availability={Availability}, minRating={MinRating}, sort={Sort}", 
+                                  search, languages, formats, availability, minRating, sort);
+            
             var query = _context.Books
                 .Include(b => b.Publisher)
                 .Include(b => b.BookAuthors).ThenInclude(ba => ba.Author)
                 .Include(b => b.BookGenres).ThenInclude(bg => bg.Genre)
                 .Include(b => b.Inventory)
-                .Include(b => b.DiscountHistory)
                 .Include(b => b.Discounts)
                 .Include(b => b.Reviews)
                 .AsQueryable();
@@ -103,13 +109,22 @@ namespace BookNook.Repositories.BooksCatalogue
             if (authors != null && authors.Count > 0)
             {
                 var lowerAuthors = authors.Select(a => a.ToLower()).ToList();
-                query = query.Where(b => b.BookAuthors.Any(ba => lowerAuthors.Contains((ba.Author.FirstName + " " + ba.Author.LastName).ToLower())));
+                query = query.Where(b => b.BookAuthors.Any(ba => 
+                    lowerAuthors.Contains((ba.Author.FirstName.ToLower() + " " + ba.Author.LastName.ToLower()))));
             }
 
             if (languages != null && languages.Count > 0)
             {
+                _logger.LogInformation("Filtering by languages: {Languages}", string.Join(", ", languages));
                 var lowerLanguages = languages.Select(l => l.ToLower()).ToList();
-                query = query.Where(b => lowerLanguages.Contains(b.Language.ToLower()));
+                query = query.Where(b => b.Language != null && lowerLanguages.Contains(b.Language.ToLower()));
+            }
+
+            if (formats != null && formats.Count > 0)
+            {
+                _logger.LogInformation("Filtering by formats: {Formats}", string.Join(", ", formats));
+                var lowerFormats = formats.Select(f => f.ToLower()).ToList();
+                query = query.Where(b => b.Format != null && lowerFormats.Contains(b.Format.ToLower()));
             }
 
             if (minPrice.HasValue)
@@ -126,23 +141,150 @@ namespace BookNook.Repositories.BooksCatalogue
                 query = query.Where(b => publishers.Contains(b.PublisherId));
             }
 
-            if (!string.IsNullOrWhiteSpace(sortPrice))
+            // Availability filter
+            if (availability.HasValue)
             {
-                if (sortPrice.ToLower() == "asc")
-                    query = query.OrderBy(b => b.Price);
-                else if (sortPrice.ToLower() == "desc")
-                    query = query.OrderByDescending(b => b.Price);
+                _logger.LogInformation("Filtering by availability: {Availability}", availability.Value);
+                if (availability.Value)
+                {
+                    // In stock (quantity > 0)
+                    query = query.Where(b => b.Inventory != null && b.Inventory.Quantity > 0);
+                }
+                else
+                {
+                    // Out of stock (quantity = 0)
+                    query = query.Where(b => b.Inventory == null || b.Inventory.Quantity == 0);
+                }
             }
-            else
+            
+            // Minimum rating filter
+            if (minRating.HasValue && minRating.Value > 0)
             {
-                query = query.OrderBy(b => b.Title);
+                _logger.LogInformation("Filtering by minimum rating: {MinRating}", minRating.Value);
+                // We need to filter after materializing the results because EF Core can't translate this well
+                var booksWithoutPaging = await query.ToListAsync();
+                
+                booksWithoutPaging = booksWithoutPaging.Where(b => 
+                    b.Reviews != null && 
+                    b.Reviews.Any() && 
+                    b.Reviews.Average(r => r.Rating) >= (double)minRating.Value).ToList();
+                
+                int totalFilteredCount = booksWithoutPaging.Count;
+                
+                // Apply sorting
+                booksWithoutPaging = ApplySorting(booksWithoutPaging, sort, sortPrice);
+                
+                // Apply pagination manually
+                var pagedBooks = booksWithoutPaging
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+                
+                return (pagedBooks, totalFilteredCount);
             }
 
+            // Apply sorting to query
+            query = ApplySortingToQuery(query, sort, sortPrice);
+
+            // Get total count before pagination
             int totalCount = await query.CountAsync();
-            // Pagination
+            
+            // Apply pagination
             query = query.Skip((page - 1) * pageSize).Take(pageSize);
+            
             var books = await query.ToListAsync();
             return (books, totalCount);
+        }
+
+        private IQueryable<Book> ApplySortingToQuery(IQueryable<Book> query, string? sort, string? sortPrice)
+        {
+            _logger.LogInformation("Applying sort to query: sort={Sort}, sortPrice={SortPrice}", sort, sortPrice);
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                switch (sort.ToLower())
+                {
+                    case "title_asc":
+                        _logger.LogInformation("Sorting by title ascending");
+                        return query.OrderBy(b => b.Title);
+                    case "title_desc":
+                        _logger.LogInformation("Sorting by title descending");
+                        return query.OrderByDescending(b => b.Title);
+                    case "popularity":
+                        _logger.LogInformation("Sorting by popularity (in-memory)");
+                        // For popularity, we need special handling with manual sorting
+                        return query.OrderBy(b => b.Title); // Temporary default order, will be replaced in PopularitySorting method
+                    default:
+                        _logger.LogInformation("Using default sort (title asc)");
+                        return query.OrderBy(b => b.Title);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(sortPrice))
+            {
+                if (sortPrice.ToLower() == "asc")
+                    return query.OrderBy(b => b.Price);
+                else if (sortPrice.ToLower() == "desc")
+                    return query.OrderByDescending(b => b.Price);
+            }
+
+            // Default sorting
+            return query.OrderBy(b => b.Title);
+        }
+
+        private List<Book> ApplySorting(List<Book> books, string? sort, string? sortPrice)
+        {
+            _logger.LogInformation("Applying in-memory sort: sort={Sort}, sortPrice={SortPrice}", sort, sortPrice);
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                switch (sort.ToLower())
+                {
+                    case "title_asc":
+                        _logger.LogInformation("In-memory sorting by title ascending");
+                        return books.OrderBy(b => b.Title).ToList();
+                    case "title_desc":
+                        _logger.LogInformation("In-memory sorting by title descending");
+                        return books.OrderByDescending(b => b.Title).ToList();
+                    case "popularity":
+                        _logger.LogInformation("In-memory sorting by popularity");
+                        return PopularitySorting(books);
+                    default:
+                        _logger.LogInformation("In-memory using default sort (title asc)");
+                        return books.OrderBy(b => b.Title).ToList();
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(sortPrice))
+            {
+                if (sortPrice.ToLower() == "asc")
+                    return books.OrderBy(b => b.Price).ToList();
+                else if (sortPrice.ToLower() == "desc")
+                    return books.OrderByDescending(b => b.Price).ToList();
+            }
+
+            // Default sorting
+            return books.OrderBy(b => b.Title).ToList();
+        }
+
+        private List<Book> PopularitySorting(List<Book> books)
+        {
+            if (!books.Any()) return books;
+
+            // Get all book IDs to query
+            var bookIds = books.Select(b => b.BookId).ToList();
+
+            // Get popularity data
+            var bookPopularity = _context.OrderItems
+                .Where(oi => bookIds.Contains(oi.BookId))
+                .GroupBy(oi => oi.BookId)
+                .Select(g => new { BookId = g.Key, TotalSold = g.Sum(oi => oi.Quantity) })
+                .OrderByDescending(bp => bp.TotalSold)
+                .ToList();
+
+            // Create a dictionary for performance
+            var popularityDict = bookPopularity.ToDictionary(bp => bp.BookId, bp => bp.TotalSold);
+
+            // Sort the books by popularity
+            return books
+                .OrderByDescending(b => popularityDict.ContainsKey(b.BookId) ? popularityDict[b.BookId] : 0)
+                .ToList();
         }
 
         public async Task<bool> AddSampleDataAsync()

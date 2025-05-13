@@ -23,9 +23,13 @@ namespace BookNook.Controllers
             [FromQuery] List<string>? genres,
             [FromQuery] List<string>? authors,
             [FromQuery] List<string>? languages,
+            [FromQuery] List<string>? formats,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
             [FromQuery] string? sortPrice,
+            [FromQuery] string? sort,
+            [FromQuery] bool? availability,
+            [FromQuery] decimal? minRating,
             [FromQuery] string? tab,
             [FromQuery] List<int>? publishers,
             [FromQuery] int page = 1,
@@ -34,10 +38,12 @@ namespace BookNook.Controllers
             try
             {
                 _logger.LogInformation("Received request to fetch books with parameters: " +
-                    "search={Search}, genres={Genres}, authors={Authors}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}, tab={Tab}, publishers={Publishers}, page={Page}, pageSize={PageSize}",
-                    search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab, publishers, page, pageSize);
+                    "search={Search}, genres={Genres}, authors={Authors}, languages={Languages}, formats={Formats}, " +
+                    "minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}, sort={Sort}, " +
+                    "availability={Availability}, minRating={MinRating}, tab={Tab}, publishers={Publishers}, page={Page}, pageSize={PageSize}",
+                    search, genres, authors, languages, formats, minPrice, maxPrice, sortPrice, sort, availability, minRating, tab, publishers, page, pageSize);
 
-                var pagedResult = await _service.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab, publishers, page, pageSize);
+                var pagedResult = await _service.GetBooksAsync(search, genres, authors, languages, formats, minPrice, maxPrice, sortPrice, sort, availability, minRating, tab, publishers, page, pageSize);
                 return Ok(pagedResult);
             }
             catch (Exception ex)
