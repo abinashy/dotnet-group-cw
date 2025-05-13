@@ -77,14 +77,37 @@ const BooksCard = ({ book, onClick }) => {
                 alt={book.title}
                 style={{ width: 180, height: 260, objectFit: 'cover', borderRadius: 6, marginBottom: 16 }}
             />
+            {book.isOnSale && (
+                <div style={{
+                    position: 'absolute',
+                    top: 10,
+                    left: 10,
+                    background: '#ff5252',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    borderRadius: 6,
+                    padding: '2px 10px',
+                    zIndex: 2
+                }}>
+                    {book.discountPercentage ? `-${book.discountPercentage}%` : 'SALE'}
+                </div>
+            )}
             <div style={{ fontWeight: 600, fontSize: 16, textAlign: 'center', marginBottom: 4 }}>
                 {book.title}
             </div>
             <div style={{ color: '#555', fontSize: 14, marginBottom: 8, textAlign: 'center' }}>
                 by {book.authors && book.authors.length > 0 ? book.authors.map(a => `${a.firstName} ${a.lastName}`).join(', ') : 'Unknown Author'}
             </div>
-            <div style={{ fontWeight: 500, fontSize: 16, marginBottom: 12 }}>
-                Rs. {book.price}
+            <div style={{ fontWeight: 500, fontSize: 16, marginBottom: 12, textAlign: 'center' }}>
+                {book.isOnSale && book.discountedPrice ? (
+                    <>
+                        <span style={{ textDecoration: 'line-through', color: '#888', marginLeft: 8, fontSize: 15 }}>Rs. {book.price}</span>
+                        <span style={{ color: '#ff5252', fontWeight: 700 }}> Rs. {book.discountedPrice}</span>
+                    </>
+                ) : (
+                    <>Rs. {book.price}</>
+                )}
             </div>
             <AddToCartButton
                 onClick={handleAddToCart}
