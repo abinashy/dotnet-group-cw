@@ -27,6 +27,7 @@ const LANGUAGES = [
 
 const BooksCatalogue = () => {
     const [books, setBooks] = useState([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [genres, setGenres] = useState([]);
     const [authors, setAuthors] = useState([]);
     const [customPrice, setCustomPrice] = useState({ min: '', max: '' });
@@ -45,6 +46,8 @@ const BooksCatalogue = () => {
     const sortPrice = getParam('sortPrice', 'asc');
     const searchQuery = getParam('search', '');
     const activeTab = getParam('tab', 'all');
+    const page = parseInt(getParam('page', '1'), 10);
+    const PAGE_SIZE = 8;
 
     // Keep custom price UI in sync with URL
     useEffect(() => {
@@ -110,6 +113,8 @@ const BooksCatalogue = () => {
         }
         if (sortPrice) params.append('sortPrice', sortPrice);
         if (activeTab && activeTab !== 'all') params.append('tab', activeTab);
+        params.append('page', page);
+        params.append('pageSize', PAGE_SIZE);
         return params.toString();
     };
 
@@ -118,9 +123,11 @@ const BooksCatalogue = () => {
         try {
             const query = buildQuery();
             const response = await axios.get(`http://localhost:5124/api/BooksCatalogue?${query}`);
-            setBooks(response.data);
+            setBooks(response.data.books || []);
+            setTotalCount(response.data.totalCount || 0);
         } catch {
             setBooks([]);
+            setTotalCount(0);
         }
     };
 
@@ -149,6 +156,8 @@ const BooksCatalogue = () => {
         setSearchParams({});
         setCustomPrice({ min: '', max: '' });
     };
+
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
     return (
         <div style={{ display: 'flex', minHeight: '80vh', background: '#fafbfc' }}>
@@ -404,15 +413,78 @@ const BooksCatalogue = () => {
                 {books.length === 0 ? (
                     <p>No books found.</p>
                 ) : (
-                    <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                        {books.map((book, idx) => (
-                            <BooksCard
-                                key={book.bookId || idx}
-                                book={book}
-                                onClick={() => navigate(`/books/${book.bookId}`)}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                            {books.map((book, idx) => (
+                                <BooksCard
+                                    key={book.bookId || idx}
+                                    book={book}
+                                    onClick={() => navigate(`/books/${book.bookId}`)}
+                                />
+                            ))}
+                        </div>
+                        {/* Pagination Controls */}
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 32, gap: 8 }}>
+                            <button
+                                onClick={() => setFilter('page', Math.max(1, page - 1))}
+                                disabled={page === 1}
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: 6,
+                                    border: '1px solid #1976d2',
+                                    background: page === 1 ? '#eee' : '#1976d2',
+                                    color: page === 1 ? '#888' : '#fff',
+                                    fontWeight: 600,
+                                    cursor: page === 1 ? 'not-allowed' : 'pointer',
+                                    fontSize: 20,
+                                    minWidth: 40,
+                                }}
+                            >
+                                &#8592;
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => setFilter('page', p)}
+                                    style={{
+                                        padding: '8px 14px',
+                                        borderRadius: 6,
+                                        border: p === page ? '2px solid #1976d2' : '1px solid #ccc',
+                                        background: p === page ? '#1976d2' : '#fff',
+                                        color: p === page ? '#fff' : '#1976d2',
+                                        fontWeight: p === page ? 700 : 500,
+                                        fontSize: 16,
+                                        minWidth: 40,
+                                        cursor: p === page ? 'default' : 'pointer',
+                                        boxShadow: p === page ? '0 2px 8px rgba(25,118,210,0.08)' : 'none',
+                                        margin: '0 2px',
+                                        outline: 'none',
+                                        transition: 'background 0.2s, color 0.2s',
+                                    }}
+                                    disabled={p === page}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setFilter('page', page + 1)}
+                                disabled={page === totalPages || totalPages === 0}
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: 6,
+                                    border: '1px solid #1976d2',
+                                    background: page === totalPages || totalPages === 0 ? '#eee' : '#1976d2',
+                                    color: page === totalPages || totalPages === 0 ? '#888' : '#fff',
+                                    fontWeight: 600,
+                                    cursor: page === totalPages || totalPages === 0 ? 'not-allowed' : 'pointer',
+                                    fontSize: 20,
+                                    minWidth: 40,
+                                }}
+                            >
+                                &#8594;
+                            </button>
+                        </div>
+                    </>
                 )}
             </main>
         </div>

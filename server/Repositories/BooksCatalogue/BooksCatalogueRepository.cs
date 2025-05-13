@@ -15,7 +15,7 @@ namespace BookNook.Repositories.BooksCatalogue
             _logger = logger;
         }
 
-        public async Task<IEnumerable<Book>> GetBooksAsync(
+        public async Task<(IEnumerable<Book> Books, int TotalCount)> GetBooksAsync(
             string? search,
             List<string>? genres,
             List<string>? authors,
@@ -23,7 +23,9 @@ namespace BookNook.Repositories.BooksCatalogue
             decimal? minPrice,
             decimal? maxPrice,
             string? sortPrice,
-            string? tab)
+            string? tab,
+            int page = 1,
+            int pageSize = 8)
         {
             var query = _context.Books
                 .Include(b => b.Publisher)
@@ -122,7 +124,11 @@ namespace BookNook.Repositories.BooksCatalogue
                 query = query.OrderBy(b => b.Title);
             }
 
-            return await query.ToListAsync();
+            int totalCount = await query.CountAsync();
+            // Pagination
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+            var books = await query.ToListAsync();
+            return (books, totalCount);
         }
 
         public async Task<bool> AddSampleDataAsync()

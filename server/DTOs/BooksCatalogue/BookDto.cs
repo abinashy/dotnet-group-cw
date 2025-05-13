@@ -43,4 +43,10 @@ namespace BookNook.DTOs.BooksCatalogue
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
     }
+
+    public class PagedBooksDto
+    {
+        public List<BookDto> Books { get; set; } = new();
+        public int TotalCount { get; set; }
+    }
 } 

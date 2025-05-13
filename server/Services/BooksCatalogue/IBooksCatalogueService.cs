@@ -4,7 +4,7 @@ namespace BookNook.Services.BooksCatalogue
 {
     public interface IBooksCatalogueService
     {
-        Task<IEnumerable<BookDto>> GetBooksAsync(
+        Task<PagedBooksDto> GetBooksAsync(
             string? search,
             List<string>? genres,
             List<string>? authors,
@@ -12,6 +12,8 @@ namespace BookNook.Services.BooksCatalogue
             decimal? minPrice,
             decimal? maxPrice,
             string? sortPrice,
-            string? tab);
+            string? tab,
+            int page = 1,
+            int pageSize = 8);
     }
 } 
