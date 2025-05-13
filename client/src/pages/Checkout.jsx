@@ -153,7 +153,11 @@ const Checkout = () => {
                     <div className="text-xs text-gray-500 mb-1">ISBN: {item.ISBN}</div>
                     <div className="text-xs text-gray-500 mb-1">Year: {item.publicationYear} | Pages: {item.pageCount}</div>
                     <div className="text-xs text-gray-500 mb-1">Language: {item.language}</div>
-                    {item.description && <div className="text-xs text-gray-500 mb-1 truncate">{item.description}</div>}
+                    {item.description && (
+                      <div className="text-xs text-gray-500 mb-2 line-clamp-3 whitespace-normal overflow-hidden">
+                        {item.description}
+                      </div>
+                    )}
                     <div className="text-xs mt-1">
                       <span className={item.availability > 0 ? "text-green-600" : "text-red-600 font-semibold"}>
                         {item.availability > 0 ? `In Stock (${item.availability})` : "Out of Stock"}
