@@ -34,7 +34,7 @@ const CartDrawer = () => {
   const { cartItems, cartOpen, closeCart, refreshCart } = useCart();
 
   const total = cartItems.reduce(
-    (sum, item) => sum + (item.price || 0) * item.quantity,
+    (sum, item) => sum + ((item.discountedPrice && item.discountedPrice < item.price ? item.discountedPrice : item.price) || 0) * item.quantity,
     0
   );
 
@@ -69,7 +69,19 @@ const CartDrawer = () => {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-black text-lg truncate">{item.title || `Book #${item.bookId}`}</div>
                     <div className="text-gray-500 text-sm mb-2">{item.authorName}</div>
-                    <div className="font-bold text-black text-lg mb-2">₹{(item.price || 0).toFixed(2)}</div>
+                    <div className="font-bold text-black text-lg mb-2">
+                      {item.discountedPrice && item.discountedPrice < item.price ? (
+                        <>
+                          <span className="line-through text-gray-400 mr-2">₹{(item.price || 0).toFixed(2)}</span>
+                          <span className="text-red-600 font-bold">₹{(item.discountedPrice).toFixed(2)}</span>
+                          <span className="ml-2 text-xs text-green-600 font-semibold">-
+                            {Math.round(100 * (item.price - item.discountedPrice) / item.price)}%
+                          </span>
+                        </>
+                      ) : (
+                        <>₹{(item.price || 0).toFixed(2)}</>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <button
                         className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 bg-white text-black text-xl disabled:opacity-40"

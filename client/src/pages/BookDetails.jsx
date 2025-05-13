@@ -8,6 +8,7 @@ import { FaRegCopy } from 'react-icons/fa';
 import AddToCartButton from '../components/Buttons/AddToCartButton';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { theme } from '../theme';
 
 // Helper to get initials from name
 function getInitials(name) {
@@ -141,7 +142,7 @@ const BookDetails = () => {
                 {breadcrumbs.map((b, i) => (
                     <span key={i}>
                         {i > 0 && ' / '}
-                        {b.link ? <a href={b.link} style={{ color: '#1976d2', textDecoration: 'none' }}>{b.name}</a> : b.name}
+                        {b.link ? <a href={b.link} style={{ color: theme.colors.primary.main, textDecoration: 'none' }}>{b.name}</a> : b.name}
                     </span>
                 ))}
             </div>
@@ -153,7 +154,7 @@ const BookDetails = () => {
                         <img
                             src={book.coverImageUrl || 'https://placehold.co/240x340?text=No+Image'}
                             alt={book.title}
-                            style={{ width: 240, height: 340, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+                            style={{ width: 240, height: 340, objectFit: 'cover', borderRadius: 8, boxShadow: theme.shadows.sm }}
                         />
                         {book.isOnSale && (
                             <div style={{
@@ -256,7 +257,7 @@ const BookDetails = () => {
                     </div>
                     {/* Seller */}
                     <div style={{ marginBottom: 8 }}>
-                        <span>Sold by <span style={{ color: '#1976d2', fontWeight: 500, cursor: 'pointer' }}>BookNook</span></span>
+                        <span>Sold by <span style={{ color: theme.colors.primary.main, fontWeight: 500, cursor: 'pointer' }}>BookNook</span></span>
                         {book.stock && book.stock < 10 && (
                             <span style={{ color: 'red', marginLeft: 16 }}>Only {book.stock} item{book.stock > 1 ? 's' : ''} left in stock!</span>
                         )}
@@ -303,7 +304,7 @@ const BookDetails = () => {
                             border: '1px solid #eee',
                             borderRadius: 12,
                             padding: 24,
-                            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                            boxShadow: theme.shadows.sm,
                             zIndex: 1,
                         }}
                     >
@@ -354,8 +355,8 @@ const BookDetails = () => {
                             onClick={handleAddToCart}
                             disabled={isOutOfStock || isUpcoming}
                             style={{
-                                background: (isOutOfStock || isUpcoming) ? '#eee' : '#1976d2',
-                                color: (isOutOfStock || isUpcoming) ? '#888' : '#fff',
+                                background: (isOutOfStock || isUpcoming) ? '#eee' : theme.colors.primary.main,
+                                color: (isOutOfStock || isUpcoming) ? '#888' : theme.colors.primary.contrast,
                                 cursor: (isOutOfStock || isUpcoming) ? 'not-allowed' : 'pointer',
                             }}
                         >
@@ -369,7 +370,7 @@ const BookDetails = () => {
                         border: '1px solid #eee',
                         borderRadius: 12,
                         padding: 24,
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                        boxShadow: theme.shadows.sm,
                         alignSelf: 'flex-start'
                     }}>
                         <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
@@ -419,8 +420,8 @@ const BookDetails = () => {
                             onClick={handleAddToCart}
                             disabled={isOutOfStock || isUpcoming}
                             style={{
-                                background: (isOutOfStock || isUpcoming) ? '#eee' : '#1976d2',
-                                color: (isOutOfStock || isUpcoming) ? '#888' : '#fff',
+                                background: (isOutOfStock || isUpcoming) ? '#eee' : theme.colors.primary.main,
+                                color: (isOutOfStock || isUpcoming) ? '#888' : theme.colors.primary.contrast,
                                 cursor: (isOutOfStock || isUpcoming) ? 'not-allowed' : 'pointer',
                             }}
                         >
