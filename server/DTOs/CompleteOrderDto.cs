@@ -2,6 +2,6 @@ namespace BookNook.DTOs
 {
     public class CompleteOrderDto
     {
-        public string ClaimCode { get; set; }
+        public string? ClaimCode { get; set; }
     }
 } 

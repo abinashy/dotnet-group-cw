@@ -130,6 +130,19 @@ namespace BookNook.Services.Books
 
         private static BookResponseDTO MapToBookResponseDTO(Book book)
         {
+            // Find active discount (IsOnSale and IsActive and within date)
+            var discount = book.Discounts?.FirstOrDefault(d => d.IsOnSale && d.IsActive && d.StartDate <= DateTime.UtcNow && d.EndDate >= DateTime.UtcNow);
+            decimal? discountedPrice = null;
+            decimal? discountPercentage = null;
+            decimal? originalPrice = null;
+            bool isOnSale = false;
+            if (discount != null)
+            {
+                isOnSale = true;
+                discountPercentage = discount.DiscountPercentage;
+                originalPrice = book.Price;
+                discountedPrice = Math.Round(book.Price * (1 - (discount.DiscountPercentage / 100)), 2);
+            }
             return new BookResponseDTO
             {
                 BookId = book.BookId,
@@ -149,7 +162,25 @@ namespace BookNook.Services.Books
                 CreatedAt = book.CreatedAt,
                 UpdatedAt = book.UpdatedAt,
                 AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList(),
-                GenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList()
+                GenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList(),
+                Authors = book.BookAuthors.Select(ba => new BookNook.DTOs.Books.AuthorDTO
+                {
+                    AuthorId = ba.Author.AuthorId,
+                    FirstName = ba.Author.FirstName,
+                    LastName = ba.Author.LastName,
+                    Biography = ba.Author.Biography
+                }).ToList(),
+                Genres = book.BookGenres.Select(bg => new BookNook.DTOs.Books.GenreDTO
+                {
+                    GenreId = bg.Genre.GenreId,
+                    Name = bg.Genre.Name,
+                    Description = bg.Genre.Description
+                }).ToList(),
+                Availability = book.Inventory != null ? book.Inventory.Quantity : 0,
+                IsOnSale = isOnSale,
+                DiscountedPrice = discountedPrice,
+                DiscountPercentage = discountPercentage,
+                OriginalPrice = originalPrice
             };
         }
     }

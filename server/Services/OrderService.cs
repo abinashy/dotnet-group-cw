@@ -12,7 +12,7 @@ namespace BookNook.Services
     public interface IOrderService
     {
         Task<Order> CreateOrderAsync(long userId, CreateOrderDto orderDto);
-        Task<Order> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false);
+        Task<Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false);
         Task CancelOrderAsync(int orderId, long userId);
         Task<List<Order>> GetOrderHistoryAsync(long userId);
         Task<List<Order>> GetAllOrdersAsync(string searchTerm = null);
@@ -203,7 +203,7 @@ namespace BookNook.Services
             return order;
         }
 
-        public async Task<Order> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false)
+        public async Task<Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false)
         {
             if (allowAnyUser)
             {

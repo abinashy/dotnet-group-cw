@@ -18,23 +18,27 @@ namespace BookNook.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks(
+        public async Task<ActionResult<PagedBooksDto>> GetBooks(
             [FromQuery] string? search,
             [FromQuery] List<string>? genres,
             [FromQuery] List<string>? authors,
             [FromQuery] List<string>? languages,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
-            [FromQuery] string? sortPrice)
+            [FromQuery] string? sortPrice,
+            [FromQuery] string? tab,
+            [FromQuery] List<int>? publishers,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 8)
         {
             try
             {
                 _logger.LogInformation("Received request to fetch books with parameters: " +
-                    "search={Search}, genres={Genres}, authors={Authors}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}",
-                    search, genres, authors, languages, minPrice, maxPrice, sortPrice);
+                    "search={Search}, genres={Genres}, authors={Authors}, languages={Languages}, minPrice={MinPrice}, maxPrice={MaxPrice}, sortPrice={SortPrice}, tab={Tab}, publishers={Publishers}, page={Page}, pageSize={PageSize}",
+                    search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab, publishers, page, pageSize);
 
-                var books = await _service.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice);
-                return Ok(books);
+                var pagedResult = await _service.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab, publishers, page, pageSize);
+                return Ok(pagedResult);
             }
             catch (Exception ex)
             {

@@ -7,7 +7,7 @@ const FILTER_TABS = [
     { key: 'all', label: 'All Books' },
     { key: 'new', label: 'New Arrivals', icon: '🔥' },
     { key: 'bestseller', label: 'Bestsellers', icon: '⭐' },
-    { key: 'discount', label: 'With Discount', icon: '💸' },
+    { key: 'discount', label: 'Deals', icon: '💸' },
     { key: 'award', label: 'Award Winning', icon: '🏆' },
     { key: 'coming', label: 'Coming Soon', icon: '⏳' },
 ];
@@ -27,11 +27,16 @@ const LANGUAGES = [
 
 const BooksCatalogue = () => {
     const [books, setBooks] = useState([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [genres, setGenres] = useState([]);
     const [authors, setAuthors] = useState([]);
+    const [publishers, setPublishers] = useState([]);
     const [customPrice, setCustomPrice] = useState({ min: '', max: '' });
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+    const [expandGenres, setExpandGenres] = useState(true);
+    const [expandAuthors, setExpandAuthors] = useState(true);
+    const [expandPublishers, setExpandPublishers] = useState(true);
 
     // Helper to get array param from searchParams
     const getArrayParam = (key) => searchParams.getAll(key);
@@ -40,11 +45,14 @@ const BooksCatalogue = () => {
     // UI state derived from URL
     const selectedGenres = getArrayParam('genres');
     const selectedAuthors = getArrayParam('authors');
+    const selectedPublishers = getArrayParam('publishers');
     const selectedLanguages = getArrayParam('languages');
     const selectedPrice = getParam('selectedPrice', null);
     const sortPrice = getParam('sortPrice', 'asc');
     const searchQuery = getParam('search', '');
     const activeTab = getParam('tab', 'all');
+    const page = parseInt(getParam('page', '1'), 10);
+    const PAGE_SIZE = 8;
 
     // Keep custom price UI in sync with URL
     useEffect(() => {
@@ -84,8 +92,21 @@ const BooksCatalogue = () => {
                 // ignore author error for now
             }
         };
+        const fetchPublishers = async () => {
+            try {
+                const res = await axios.get('http://localhost:5124/api/Publishers');
+                setPublishers(
+                    res.data.filter(
+                        p => (p.Name ?? p.name) && (p.PublisherId ?? p.publisherId)
+                    )
+                );
+            } catch {
+                // ignore publisher error for now
+            }
+        };
         fetchGenres();
         fetchAuthors();
+        fetchPublishers();
     }, []);
 
     // Build query string for backend filters from searchParams
@@ -94,6 +115,7 @@ const BooksCatalogue = () => {
         if (searchQuery.trim() !== "") params.append('search', searchQuery.trim());
         selectedGenres.forEach(g => params.append('genres', g));
         selectedAuthors.forEach(a => params.append('authors', a));
+        selectedPublishers.forEach(p => params.append('publishers', p));
         selectedLanguages.forEach(l => params.append('languages', l));
         if (selectedPrice) {
             params.append('selectedPrice', selectedPrice);
@@ -110,6 +132,8 @@ const BooksCatalogue = () => {
         }
         if (sortPrice) params.append('sortPrice', sortPrice);
         if (activeTab && activeTab !== 'all') params.append('tab', activeTab);
+        params.append('page', page);
+        params.append('pageSize', PAGE_SIZE);
         return params.toString();
     };
 
@@ -118,9 +142,11 @@ const BooksCatalogue = () => {
         try {
             const query = buildQuery();
             const response = await axios.get(`http://localhost:5124/api/BooksCatalogue?${query}`);
-            setBooks(response.data);
+            setBooks(response.data.books || []);
+            setTotalCount(response.data.totalCount || 0);
         } catch {
             setBooks([]);
+            setTotalCount(0);
         }
     };
 
@@ -150,77 +176,136 @@ const BooksCatalogue = () => {
         setCustomPrice({ min: '', max: '' });
     };
 
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
     return (
         <div style={{ display: 'flex', minHeight: '80vh', background: '#fafbfc' }}>
             {/* Side Nav for Genres and Filters */}
             <aside style={{ width: 320, background: '#fff', borderRight: '1px solid #eee', padding: '2rem 1rem 2rem 2rem' }}>
                 {/* Genre Box */}
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
-                    <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>All Genres</div>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {genres.length === 0 && (
-                            <li key="no-genres" style={{ color: 'red', fontSize: 14 }}>No genres found. Check API response.</li>
-                        )}
-                        {genres.map((genre, idx) => {
-                            const genreId = genre.GenreId ?? genre.genreId;
-                            const genreName = genre.Name ?? genre.name;
-                            return (
-                                <li key={`genre-${genreId}`} style={{ marginBottom: idx !== genres.length - 1 ? 6 : 0 }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedGenres.includes(genreName)}
-                                            onChange={() => {
-                                                let newGenres;
-                                                if (selectedGenres.includes(genreName)) {
-                                                    newGenres = selectedGenres.filter(g => g !== genreName);
-                                                } else {
-                                                    newGenres = [...selectedGenres, genreName];
-                                                }
-                                                setFilter('genres', newGenres, true);
-                                            }}
-                                        />
-                                        {genreName}
-                                    </label>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandGenres(exp => !exp)}
+                    >
+                        All Genres
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandGenres ? '▼' : '▶'}</span>
+                    </div>
+                    {expandGenres && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                            {genres.length === 0 && (
+                                <li key="no-genres" style={{ color: 'red', fontSize: 14 }}>No genres found. Check API response.</li>
+                            )}
+                            {genres.map((genre, idx) => {
+                                const genreId = genre.GenreId ?? genre.genreId;
+                                const genreName = genre.Name ?? genre.name;
+                                return (
+                                    <li key={`genre-${genreId}`} style={{ marginBottom: idx !== genres.length - 1 ? 6 : 0 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedGenres.includes(genreName)}
+                                                onChange={() => {
+                                                    let newGenres;
+                                                    if (selectedGenres.includes(genreName)) {
+                                                        newGenres = selectedGenres.filter(g => g !== genreName);
+                                                    } else {
+                                                        newGenres = [...selectedGenres, genreName];
+                                                    }
+                                                    setFilter('genres', newGenres, true);
+                                                }}
+                                            />
+                                            {genreName}
+                                        </label>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </div>
                 {/* Author Box */}
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
-                    <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>All Authors</div>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
-                        {authors.length === 0 && (
-                            <li key="no-authors" style={{ color: 'red', fontSize: 14 }}>No authors found. Check API response.</li>
-                        )}
-                        {authors.map((author, idx) => {
-                            const authorId = author.AuthorId ?? author.authorId;
-                            const firstName = author.FirstName ?? author.firstName;
-                            const lastName = author.LastName ?? author.lastName;
-                            const authorName = `${firstName} ${lastName}`;
-                            return (
-                                <li key={`author-${authorId ?? idx}`} style={{ marginBottom: idx !== authors.length - 1 ? 6 : 0 }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedAuthors.includes(authorName)}
-                                            onChange={() => {
-                                                let newAuthors;
-                                                if (selectedAuthors.includes(authorName)) {
-                                                    newAuthors = selectedAuthors.filter(a => a !== authorName);
-                                                } else {
-                                                    newAuthors = [...selectedAuthors, authorName];
-                                                }
-                                                setFilter('authors', newAuthors, true);
-                                            }}
-                                        />
-                                        {authorName}
-                                    </label>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandAuthors(exp => !exp)}
+                    >
+                        All Authors
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandAuthors ? '▼' : '▶'}</span>
+                    </div>
+                    {expandAuthors && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
+                            {authors.length === 0 && (
+                                <li key="no-authors" style={{ color: 'red', fontSize: 14 }}>No authors found. Check API response.</li>
+                            )}
+                            {authors.map((author, idx) => {
+                                const authorId = author.AuthorId ?? author.authorId;
+                                const firstName = author.FirstName ?? author.firstName;
+                                const lastName = author.LastName ?? author.lastName;
+                                const authorName = `${firstName} ${lastName}`;
+                                return (
+                                    <li key={`author-${authorId ?? idx}`} style={{ marginBottom: idx !== authors.length - 1 ? 6 : 0 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedAuthors.includes(authorName)}
+                                                onChange={() => {
+                                                    let newAuthors;
+                                                    if (selectedAuthors.includes(authorName)) {
+                                                        newAuthors = selectedAuthors.filter(a => a !== authorName);
+                                                    } else {
+                                                        newAuthors = [...selectedAuthors, authorName];
+                                                    }
+                                                    setFilter('authors', newAuthors, true);
+                                                }}
+                                            />
+                                            {authorName}
+                                        </label>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </div>
+                {/* Publisher Box */}
+                <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandPublishers(exp => !exp)}
+                    >
+                        All Publishers
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandPublishers ? '▼' : '▶'}</span>
+                    </div>
+                    {expandPublishers && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
+                            {publishers.length === 0 && (
+                                <li key="no-publishers" style={{ color: 'red', fontSize: 14 }}>No publishers found. Check API response.</li>
+                            )}
+                            {publishers.map((publisher, idx) => {
+                                const publisherId = publisher.PublisherId ?? publisher.publisherId;
+                                const publisherName = publisher.Name ?? publisher.name;
+                                return (
+                                    <li key={`publisher-${publisherId}`} style={{ marginBottom: idx !== publishers.length - 1 ? 6 : 0 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPublishers.includes(String(publisherId))}
+                                                onChange={() => {
+                                                    let newPublishers;
+                                                    if (selectedPublishers.includes(String(publisherId))) {
+                                                        newPublishers = selectedPublishers.filter(p => p !== String(publisherId));
+                                                    } else {
+                                                        newPublishers = [...selectedPublishers, String(publisherId)];
+                                                    }
+                                                    setFilter('publishers', newPublishers, true);
+                                                }}
+                                            />
+                                            {publisherName}
+                                        </label>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </div>
                 {/* Price and Sort Box */}
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
@@ -338,28 +423,26 @@ const BooksCatalogue = () => {
             </aside>
             {/* Main Content */}
             <main style={{ flex: 1, padding: '2rem 2rem 2rem 2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
                     {FILTER_TABS.map(tab => (
                         <button
                             key={tab.key}
                             onClick={() => setFilter('tab', tab.key)}
                             style={{
-                                background: activeTab === tab.key ? '#1976d2' : '#f4f6fa',
-                                color: activeTab === tab.key ? '#fff' : '#222',
+                                fontWeight: activeTab === tab.key ? 700 : 500,
+                                color: activeTab === tab.key ? '#1976d2' : '#333',
+                                background: activeTab === tab.key ? '#e3f0ff' : 'transparent',
                                 border: 'none',
-                                borderRadius: 8,
+                                borderBottom: activeTab === tab.key ? '2px solid #1976d2' : '2px solid transparent',
+                                fontSize: 16,
                                 padding: '8px 18px',
-                                fontWeight: 600,
-                                fontSize: 15,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8,
+                                borderRadius: 6,
                                 cursor: 'pointer',
-                                boxShadow: activeTab === tab.key ? '0 2px 8px rgba(25,118,210,0.08)' : 'none',
-                                transition: 'background 0.2s',
+                                outline: 'none',
+                                transition: 'background 0.2s, color 0.2s',
                             }}
                         >
-                            {tab.icon && <span>{tab.icon}</span>}
+                            {tab.icon && <span style={{ marginRight: 6 }}>{tab.icon}</span>}
                             {tab.label}
                         </button>
                     ))}
@@ -371,7 +454,7 @@ const BooksCatalogue = () => {
                             ? selectedGenres[0]
                             : selectedGenres.length > 1
                                 ? `${selectedGenres.length} Genres`
-                                : 'All Genres'}
+                                : 'All Books'}
                     </h2>
                     <div style={{ flex: 1 }} />
                     <div style={{ position: 'relative', width: 340 }}>
@@ -379,7 +462,7 @@ const BooksCatalogue = () => {
                             type="text"
                             value={searchQuery}
                             onChange={e => setFilter('search', e.target.value)}
-                            placeholder={`Search on ${selectedGenres.length === 1 ? selectedGenres[0] : 'All Genres'}`}
+                            placeholder={`Search ${selectedGenres.length === 1 ? selectedGenres[0] : 'Books'}`}
                             style={{
                                 width: '100%',
                                 padding: '10px 44px 10px 18px',
@@ -406,15 +489,78 @@ const BooksCatalogue = () => {
                 {books.length === 0 ? (
                     <p>No books found.</p>
                 ) : (
-                    <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                        {books.map((book, idx) => (
-                            <BooksCard
-                                key={book.bookId || idx}
-                                book={book}
-                                onClick={() => navigate(`/books/${book.bookId}`)}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                            {books.map((book, idx) => (
+                                <BooksCard
+                                    key={book.bookId || idx}
+                                    book={book}
+                                    onClick={() => navigate(`/books/${book.bookId}`)}
+                                />
+                            ))}
+                        </div>
+                        {/* Pagination Controls */}
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 32, gap: 8 }}>
+                            <button
+                                onClick={() => setFilter('page', Math.max(1, page - 1))}
+                                disabled={page === 1}
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: 6,
+                                    border: '1px solid #1976d2',
+                                    background: page === 1 ? '#eee' : '#1976d2',
+                                    color: page === 1 ? '#888' : '#fff',
+                                    fontWeight: 600,
+                                    cursor: page === 1 ? 'not-allowed' : 'pointer',
+                                    fontSize: 20,
+                                    minWidth: 40,
+                                }}
+                            >
+                                &#8592;
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => setFilter('page', p)}
+                                    style={{
+                                        padding: '8px 14px',
+                                        borderRadius: 6,
+                                        border: p === page ? '2px solid #1976d2' : '1px solid #ccc',
+                                        background: p === page ? '#1976d2' : '#fff',
+                                        color: p === page ? '#fff' : '#1976d2',
+                                        fontWeight: p === page ? 700 : 500,
+                                        fontSize: 16,
+                                        minWidth: 40,
+                                        cursor: p === page ? 'default' : 'pointer',
+                                        boxShadow: p === page ? '0 2px 8px rgba(25,118,210,0.08)' : 'none',
+                                        margin: '0 2px',
+                                        outline: 'none',
+                                        transition: 'background 0.2s, color 0.2s',
+                                    }}
+                                    disabled={p === page}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setFilter('page', page + 1)}
+                                disabled={page === totalPages || totalPages === 0}
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: 6,
+                                    border: '1px solid #1976d2',
+                                    background: page === totalPages || totalPages === 0 ? '#eee' : '#1976d2',
+                                    color: page === totalPages || totalPages === 0 ? '#888' : '#fff',
+                                    fontWeight: 600,
+                                    cursor: page === totalPages || totalPages === 0 ? 'not-allowed' : 'pointer',
+                                    fontSize: 20,
+                                    minWidth: 40,
+                                }}
+                            >
+                                &#8594;
+                            </button>
+                        </div>
+                    </>
                 )}
             </main>
         </div>

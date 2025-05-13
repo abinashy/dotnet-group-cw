@@ -25,6 +25,8 @@ import { AnnouncementProvider } from './context/AnnouncementContext';
 import { OrderNotificationProvider, useOrderNotifications } from './context/OrderNotificationContext';
 import AnnouncementBanner from './components/AnnouncementBanner';
 import OrderNotification from './components/OrderNotification';
+import Wishlist from './pages/Wishlist';
+import { WishlistProvider } from './context/WishlistContext';
 
 function AppContent() {
   const location = useLocation();
@@ -174,6 +176,14 @@ function AppContent() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/wishlist" 
+          element={
+            <AuthenticatedRoute>
+              <Wishlist />
+            </AuthenticatedRoute>
+          } 
+        />
         {/* Redirect root to home */}
         <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
@@ -185,14 +195,16 @@ function AppContent() {
 function App() {
   return (
     <CartProvider>
-      <AnnouncementProvider>
-        <OrderNotificationProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </OrderNotificationProvider>
-      </AnnouncementProvider>
-    </CartProvider>
+  <WishlistProvider>
+    <AnnouncementProvider>
+      <OrderNotificationProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </OrderNotificationProvider>
+    </AnnouncementProvider>
+  </WishlistProvider>
+</CartProvider>
   );
 }
 

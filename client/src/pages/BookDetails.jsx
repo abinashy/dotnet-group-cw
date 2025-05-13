@@ -6,7 +6,8 @@ import { BiBarcode } from 'react-icons/bi';
 import { FiBox } from 'react-icons/fi';
 import { FaRegCopy } from 'react-icons/fa';
 import AddToCartButton from '../components/Buttons/AddToCartButton';
-import { addToCart } from '../utils/cart';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 // Helper to get initials from name
 function getInitials(name) {
@@ -37,6 +38,9 @@ const BookDetails = () => {
     const [error, setError] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [quantity, setQuantity] = useState(1);
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth > 900);
+    const { openCart, refreshCart } = useCart();
+    const { isInWishlist, toggleWishlist } = useWishlist();
 
     useEffect(() => {
         const fetchBook = async () => {
@@ -55,6 +59,12 @@ const BookDetails = () => {
         fetchBook();
     }, [id]);
 
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth > 900);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Quantity handlers
     const handleDecrease = () => {
         setQuantity(q => (q > 1 ? q - 1 : 1));
@@ -67,18 +77,20 @@ const BookDetails = () => {
     if (error) return <div style={{ padding: 40, color: 'red' }}>{error}</div>;
     if (!book) return null;
 
-    // Helper for genres
-    // const genres = book.genres && book.genres.length > 0
-    //     ? book.genres.map(g => g.name).join(', ')
-    //     : 'N/A';
-    const authors = book.authors && book.authors.length > 0
-        ? book.authors.map(a => [a.firstName, a.lastName].filter(Boolean).join(' ')).join(', ')
+    // Authors: robust handling
+    const authors = Array.isArray(book.authors) && book.authors.length > 0
+        ? book.authors.map(a => [a.firstName, a.lastName].filter(Boolean).join(' ')).filter(Boolean).join(', ')
         : 'Unknown Author';
+
+    // Genres: robust handling
+    const genres = Array.isArray(book.genres) && book.genres.length > 0
+        ? book.genres.map(g => g.name).filter(Boolean).join(', ')
+        : 'N/A';
 
     // Breadcrumbs (simulate)
     const breadcrumbs = [
         { name: 'Home', link: '/' },
-        ...(book.genres && book.genres.length > 0 ? book.genres.map(g => ({ name: g.name, link: '#' })) : []),
+        { name: 'Books', link: '/books' },
         { name: book.title }
     ];
 
@@ -86,6 +98,41 @@ const BookDetails = () => {
     // const avgRating = reviews.length > 0 ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length) : 0;
 
     const isOutOfStock = book.availability === 0;
+    const isUpcoming = book.status === 'Upcoming';
+
+    // Consistent add to cart logic as BooksCard
+    const handleAddToCart = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            const response = await fetch('http://localhost:5124/api/AddToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    bookId: book.bookId,
+                    quantity: quantity
+                })
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
+                throw new Error('Failed to add to cart');
+            }
+            await refreshCart();
+            openCart();
+        } catch (err) {
+            alert('Failed to add to cart. Please try again.');
+        }
+    };
 
     return (
         <div style={{ maxWidth: 1300, margin: '0 auto', padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -99,24 +146,36 @@ const BookDetails = () => {
                 ))}
             </div>
             {/* Main Section */}
-            <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start', position: 'relative' }}>
                 {/* Cover & Genres */}
                 <div style={{ minWidth: 260 }}>
-                    <img
-                        src={book.coverImageUrl || 'https://placehold.co/240x340?text=No+Image'}
-                        alt={book.title}
-                        style={{ width: 240, height: 340, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <img
+                            src={book.coverImageUrl || 'https://placehold.co/240x340?text=No+Image'}
+                            alt={book.title}
+                            style={{ width: 240, height: 340, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+                        />
+                        {book.isOnSale && (
+                            <div style={{
+                                position: 'absolute',
+                                top: 16,
+                                left: 16,
+                                background: '#ff5252',
+                                color: '#fff',
+                                fontWeight: 700,
+                                fontSize: 15,
+                                borderRadius: 8,
+                                padding: '4px 14px',
+                                zIndex: 2
+                            }}>
+                                {book.discountPercentage ? `-${book.discountPercentage}%` : 'SALE'}
+                            </div>
+                        )}
+                    </div>
                     {/* Genres */}
                     <div style={{ marginTop: 18 }}>
                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Genres:</div>
-                        {book.genres && book.genres.length > 0 ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                {book.genres.map((g) => (
-                                    <a key={g.genreId} href="#" style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer', fontSize: 15 }}>{g.name}</a>
-                                ))}
-                            </div>
-                        ) : 'N/A'}
+                        {genres}
                     </div>
                 </div>
                 {/* Main Info */}
@@ -124,8 +183,71 @@ const BookDetails = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                         <span style={{ fontWeight: 600, fontSize: 16, background: '#f4f6fa', borderRadius: 6, padding: '2px 12px' }}>{book.format || 'Paper Back'}</span>
                     </div>
-                    <h1 style={{ fontWeight: 700, fontSize: 32, margin: 0 }}>{book.title}</h1>
+                    <h1 style={{ fontWeight: 700, fontSize: 32, margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {book.title}
+                        <button
+                            onClick={(e) => toggleWishlist(book, e)}
+                            style={{ 
+                                background: 'none', 
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                padding: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'transform 0.2s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                            aria-label={isInWishlist(book.bookId) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                            {isInWishlist(book.bookId) ? (
+                                <svg width="34" height="34" viewBox="0 0 24 24">
+                                    <defs>
+                                        <linearGradient id="detailHeartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#F472B6" />
+                                            <stop offset="100%" stopColor="#E11D48" />
+                                        </linearGradient>
+                                        <filter id="heartShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#E11D48" floodOpacity="0.5"/>
+                                        </filter>
+                                    </defs>
+                                    <path 
+                                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
+                                        fill="url(#detailHeartGradient)" 
+                                        filter="url(#heartShadow)"
+                                    />
+                                </svg>
+                            ) : (
+                                <svg width="34" height="34" viewBox="0 0 24 24">
+                                    <defs>
+                                        <linearGradient id="detailHeartStrokeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#F472B6" />
+                                            <stop offset="100%" stopColor="#E11D48" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path 
+                                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" 
+                                        fill="none" 
+                                        stroke="url(#detailHeartStrokeGradient)" 
+                                        strokeWidth="2" 
+                                    />
+                                </svg>
+                            )}
+                        </button>
+                    </h1>
                     <div style={{ fontSize: 18, color: '#444', marginBottom: 8 }}>by {authors}</div>
+                    {/* Discounted Price Display */}
+                    <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0', color: book.isOnSale ? '#ff5252' : '#222', textAlign: 'left' }}>
+                        {book.isOnSale && book.discountedPrice ? (
+                            <>
+                                Rs. {book.discountedPrice}
+                                <span style={{ textDecoration: 'line-through', color: '#888', marginLeft: 12, fontSize: 18, fontWeight: 500 }}>Rs. {book.price}</span>
+                            </>
+                        ) : (
+                            <>Rs. {book.price}</>
+                        )}
+                    </div>
                     {/* Ratings and Reviews */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
                         <span style={{ color: '#f7b500', fontSize: 20 }}>★</span>
@@ -170,38 +292,142 @@ const BookDetails = () => {
                     </div>
                 </div>
                 {/* Right Side Card */}
-                <div style={{ minWidth: 300, background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
-                    <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
-                    <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-                        <button onClick={handleDecrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>-</button>
-                        <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
-                        <button onClick={handleIncrease} style={{ background: '#eee', border: 'none', borderRadius: 6, width: 32, height: 32, fontSize: 20, cursor: 'pointer' }}>+</button>
-                    </div>
-                    <AddToCartButton
-                        onClick={async () => {
-                            try {
-                                if (!quantity || quantity < 1) {
-                                    alert('Please select a valid quantity.');
-                                    return;
-                                }
-                                await addToCart({ bookId: book.bookId, quantity });
-                                alert('Book added to cart!');
-                            } catch {
-                                alert('Failed to add to cart.');
-                            }
-                        }}
-                        disabled={isOutOfStock}
+                {isDesktop ? (
+                    <div
                         style={{
-                            background: isOutOfStock ? '#eee' : '#1976d2',
-                            color: isOutOfStock ? '#888' : '#fff',
-                            cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                            position: 'fixed',
+                            top: 100,
+                            right: 40,
+                            width: 340,
+                            background: '#fff',
+                            border: '1px solid #eee',
+                            borderRadius: 12,
+                            padding: 24,
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                            zIndex: 1,
                         }}
                     >
-                        {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
-                    </AddToCartButton>
-                </div>
+                        <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
+                        <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
+                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0', color: book.isOnSale ? '#ff5252' : '#222' }}>
+                            {book.isOnSale && book.discountedPrice ? (
+                                <>
+                                    Rs. {book.discountedPrice}
+                                    <span style={{ textDecoration: 'line-through', color: '#888', marginLeft: 12, fontSize: 18, fontWeight: 500 }}>Rs. {book.price}</span>
+                                </>
+                            ) : (
+                                <>Rs. {book.price}</>
+                            )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+                            <button
+                                onClick={handleDecrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >-</button>
+                            <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
+                            <button
+                                onClick={handleIncrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >+</button>
+                        </div>
+                        <AddToCartButton
+                            onClick={handleAddToCart}
+                            disabled={isOutOfStock || isUpcoming}
+                            style={{
+                                background: (isOutOfStock || isUpcoming) ? '#eee' : '#1976d2',
+                                color: (isOutOfStock || isUpcoming) ? '#888' : '#fff',
+                                cursor: (isOutOfStock || isUpcoming) ? 'not-allowed' : 'pointer',
+                            }}
+                        >
+                            {isUpcoming ? 'Coming soon' : isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+                        </AddToCartButton>
+                    </div>
+                ) : (
+                    <div style={{
+                        minWidth: 300,
+                        background: '#fff',
+                        border: '1px solid #eee',
+                        borderRadius: 12,
+                        padding: 24,
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                        alignSelf: 'flex-start'
+                    }}>
+                        <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
+                        <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
+                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0', color: book.isOnSale ? '#ff5252' : '#222' }}>
+                            {book.isOnSale && book.discountedPrice ? (
+                                <>
+                                    Rs. {book.discountedPrice}
+                                    <span style={{ textDecoration: 'line-through', color: '#888', marginLeft: 12, fontSize: 18, fontWeight: 500 }}>Rs. {book.price}</span>
+                                </>
+                            ) : (
+                                <>Rs. {book.price}</>
+                            )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+                            <button
+                                onClick={handleDecrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >-</button>
+                            <span style={{ fontWeight: 600 }}>QTY: {quantity}</span>
+                            <button
+                                onClick={handleIncrease}
+                                style={{
+                                    background: '#eee',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 20,
+                                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                                    opacity: isOutOfStock ? 0.5 : 1
+                                }}
+                                disabled={isOutOfStock}
+                            >+</button>
+                        </div>
+                        <AddToCartButton
+                            onClick={handleAddToCart}
+                            disabled={isOutOfStock || isUpcoming}
+                            style={{
+                                background: (isOutOfStock || isUpcoming) ? '#eee' : '#1976d2',
+                                color: (isOutOfStock || isUpcoming) ? '#888' : '#fff',
+                                cursor: (isOutOfStock || isUpcoming) ? 'not-allowed' : 'pointer',
+                            }}
+                        >
+                            {isUpcoming ? 'Coming soon' : isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+                        </AddToCartButton>
+                    </div>
+                )}
             </div>
             {/* Ratings & Reviews */}
             <div style={{ marginTop: 48, maxWidth: 1000 }}>
