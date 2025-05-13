@@ -147,11 +147,29 @@ const BookDetails = () => {
             <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start', position: 'relative' }}>
                 {/* Cover & Genres */}
                 <div style={{ minWidth: 260 }}>
-                    <img
-                        src={book.coverImageUrl || 'https://placehold.co/240x340?text=No+Image'}
-                        alt={book.title}
-                        style={{ width: 240, height: 340, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <img
+                            src={book.coverImageUrl || 'https://placehold.co/240x340?text=No+Image'}
+                            alt={book.title}
+                            style={{ width: 240, height: 340, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+                        />
+                        {book.isOnSale && (
+                            <div style={{
+                                position: 'absolute',
+                                top: 16,
+                                left: 16,
+                                background: '#ff5252',
+                                color: '#fff',
+                                fontWeight: 700,
+                                fontSize: 15,
+                                borderRadius: 8,
+                                padding: '4px 14px',
+                                zIndex: 2
+                            }}>
+                                {book.discountPercentage ? `-${book.discountPercentage}%` : 'SALE'}
+                            </div>
+                        )}
+                    </div>
                     {/* Genres */}
                     <div style={{ marginTop: 18 }}>
                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Genres:</div>
@@ -165,6 +183,17 @@ const BookDetails = () => {
                     </div>
                     <h1 style={{ fontWeight: 700, fontSize: 32, margin: 0 }}>{book.title}</h1>
                     <div style={{ fontSize: 18, color: '#444', marginBottom: 8 }}>by {authors}</div>
+                    {/* Discounted Price Display */}
+                    <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0', color: book.isOnSale ? '#ff5252' : '#222', textAlign: 'left' }}>
+                        {book.isOnSale && book.discountedPrice ? (
+                            <>
+                                Rs. {book.discountedPrice}
+                                <span style={{ textDecoration: 'line-through', color: '#888', marginLeft: 12, fontSize: 18, fontWeight: 500 }}>Rs. {book.price}</span>
+                            </>
+                        ) : (
+                            <>Rs. {book.price}</>
+                        )}
+                    </div>
                     {/* Ratings and Reviews */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
                         <span style={{ color: '#f7b500', fontSize: 20 }}>★</span>
@@ -226,7 +255,16 @@ const BookDetails = () => {
                     >
                         <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
                         <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
-                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
+                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0', color: book.isOnSale ? '#ff5252' : '#222' }}>
+                            {book.isOnSale && book.discountedPrice ? (
+                                <>
+                                    Rs. {book.discountedPrice}
+                                    <span style={{ textDecoration: 'line-through', color: '#888', marginLeft: 12, fontSize: 18, fontWeight: 500 }}>Rs. {book.price}</span>
+                                </>
+                            ) : (
+                                <>Rs. {book.price}</>
+                            )}
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
                             <button
                                 onClick={handleDecrease}
@@ -282,7 +320,16 @@ const BookDetails = () => {
                     }}>
                         <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 12 }}>Total Price</h3>
                         <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 18px 0' }} />
-                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0' }}>Rs. {book.price}</div>
+                        <div style={{ fontWeight: 700, fontSize: 24, margin: '0 0 18px 0', color: book.isOnSale ? '#ff5252' : '#222' }}>
+                            {book.isOnSale && book.discountedPrice ? (
+                                <>
+                                    Rs. {book.discountedPrice}
+                                    <span style={{ textDecoration: 'line-through', color: '#888', marginLeft: 12, fontSize: 18, fontWeight: 500 }}>Rs. {book.price}</span>
+                                </>
+                            ) : (
+                                <>Rs. {book.price}</>
+                            )}
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
                             <button
                                 onClick={handleDecrease}

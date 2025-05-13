@@ -23,6 +23,10 @@ namespace BookNook.DTOs.BooksCatalogue
         public List<GenreDto> Genres { get; set; } = new();
         public int Availability { get; set; } // Stock quantity
         public string Status { get; set; } = string.Empty;
+        public bool IsOnSale { get; set; } = false;
+        public decimal? DiscountedPrice { get; set; }
+        public decimal? DiscountPercentage { get; set; }
+        public decimal? OriginalPrice { get; set; }
     }
 
     public class AuthorDto

@@ -7,7 +7,7 @@ const FILTER_TABS = [
     { key: 'all', label: 'All Books' },
     { key: 'new', label: 'New Arrivals', icon: '🔥' },
     { key: 'bestseller', label: 'Bestsellers', icon: '⭐' },
-    { key: 'discount', label: 'With Discount', icon: '💸' },
+    { key: 'discount', label: 'Deals', icon: '💸' },
     { key: 'award', label: 'Award Winning', icon: '🏆' },
     { key: 'coming', label: 'Coming Soon', icon: '⏳' },
 ];
@@ -338,28 +338,26 @@ const BooksCatalogue = () => {
             </aside>
             {/* Main Content */}
             <main style={{ flex: 1, padding: '2rem 2rem 2rem 2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
                     {FILTER_TABS.map(tab => (
                         <button
                             key={tab.key}
                             onClick={() => setFilter('tab', tab.key)}
                             style={{
-                                background: activeTab === tab.key ? '#1976d2' : '#f4f6fa',
-                                color: activeTab === tab.key ? '#fff' : '#222',
+                                fontWeight: activeTab === tab.key ? 700 : 500,
+                                color: activeTab === tab.key ? '#1976d2' : '#333',
+                                background: activeTab === tab.key ? '#e3f0ff' : 'transparent',
                                 border: 'none',
-                                borderRadius: 8,
+                                borderBottom: activeTab === tab.key ? '2px solid #1976d2' : '2px solid transparent',
+                                fontSize: 16,
                                 padding: '8px 18px',
-                                fontWeight: 600,
-                                fontSize: 15,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 8,
+                                borderRadius: 6,
                                 cursor: 'pointer',
-                                boxShadow: activeTab === tab.key ? '0 2px 8px rgba(25,118,210,0.08)' : 'none',
-                                transition: 'background 0.2s',
+                                outline: 'none',
+                                transition: 'background 0.2s, color 0.2s',
                             }}
                         >
-                            {tab.icon && <span>{tab.icon}</span>}
+                            {tab.icon && <span style={{ marginRight: 6 }}>{tab.icon}</span>}
                             {tab.label}
                         </button>
                     ))}

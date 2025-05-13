@@ -30,6 +30,8 @@ namespace BookNook.Repositories.BooksCatalogue
                 .Include(b => b.BookAuthors).ThenInclude(ba => ba.Author)
                 .Include(b => b.BookGenres).ThenInclude(bg => bg.Genre)
                 .Include(b => b.Inventory)
+                .Include(b => b.DiscountHistory)
+                .Include(b => b.Discounts)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(tab))
@@ -50,6 +52,22 @@ namespace BookNook.Repositories.BooksCatalogue
                 {
                     var oneMonthAgo = DateTime.UtcNow.AddMonths(-1);
                     query = query.Where(b => b.CreatedAt >= oneMonthAgo);
+                }
+                else if (tab == "discount")
+                {
+                    query = query.Where(b => b.Discounts.Any(d => d.IsOnSale && d.IsActive && d.StartDate <= DateTime.UtcNow && d.EndDate >= DateTime.UtcNow));
+                }
+                else if (tab == "bestseller")
+                {
+                    // Get top 8 most ordered BookIds from OrderItems
+                    var topBookIds = _context.OrderItems
+                        .GroupBy(oi => oi.BookId)
+                        .Select(g => new { BookId = g.Key, TotalOrdered = g.Sum(oi => oi.Quantity) })
+                        .OrderByDescending(x => x.TotalOrdered)
+                        .Take(8)
+                        .Select(x => x.BookId)
+                        .ToList();
+                    query = query.Where(b => topBookIds.Contains(b.BookId));
                 }
             }
 

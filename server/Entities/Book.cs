@@ -65,5 +65,6 @@ namespace BookNook.Entities
         public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
         public virtual ICollection<ShoppingCart> ShoppingCarts { get; set; } = new List<ShoppingCart>();
         public virtual ICollection<BookDiscountHistory> DiscountHistory { get; set; } = new List<BookDiscountHistory>();
+        public virtual ICollection<Discount> Discounts { get; set; } = new List<Discount>();
     }
 } 
