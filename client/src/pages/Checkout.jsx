@@ -10,7 +10,7 @@ const Checkout = () => {
   const [subtotal, setSubtotal] = useState(0);
   const [member5PercentDiscountAmount, setMember5PercentDiscountAmount] = useState(0);
   const [member10PercentDiscountAmount, setMember10PercentDiscountAmount] = useState(0);
-  
+  const [_memberDiscountAmount, set_MemberDiscountAmount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
   const [totalQuantity, setTotalQuantity] = useState(0);
 
@@ -49,6 +49,7 @@ const Checkout = () => {
         setSubtotal(typeof data.subtotal === 'number' ? data.subtotal : 0);
         setMember5PercentDiscountAmount(typeof data.member5PercentDiscountAmount === 'number' ? data.member5PercentDiscountAmount : 0);
         setMember10PercentDiscountAmount(typeof data.member10PercentDiscountAmount === 'number' ? data.member10PercentDiscountAmount : 0);
+        set_MemberDiscountAmount(typeof data.memberDiscountAmount === 'number' ? data.memberDiscountAmount : 0);
         setFinalTotal(typeof data.finalTotal === 'number' ? data.finalTotal : 0);
         setTotalQuantity(typeof data.totalQuantity === 'number' ? data.totalQuantity : 0);
         setLoading(false);
@@ -201,16 +202,6 @@ const Checkout = () => {
           </div>
           
           {/* Book discounts are already shown in the item prices */}
-          
-          {checkoutItems.some(item => item.isDiscountActive) && (
-            <div className="text-xs text-gray-500 mb-2 italic">
-              <div className="flex justify-between">
-                <span>Original Price Total:</span>
-                <span>₹{checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
-              </div>
-              <span>(Member discounts are calculated on original prices)</span>
-            </div>
-          )}
           
           {member5PercentDiscountAmount > 0 && (
             <div className="flex justify-between mb-2 text-green-700 font-semibold">

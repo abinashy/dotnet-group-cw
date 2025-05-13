@@ -80,16 +80,71 @@ namespace BookNook.Services
             // Check for 10% discount by looking for a used MemberDiscount record
             var orderDate = order.OrderDate;
             var oneDayAfter = orderDate.AddDays(1);
-            var memberDiscount = await _context.MemberDiscounts
-                .FirstOrDefaultAsync(md => md.UserId == order.UserId 
-                    && md.IsUsed 
-                    && md.DiscountPercentage == 10
-                    && md.CreatedAt <= oneDayAfter);
             
-            if (memberDiscount != null)
+            Console.WriteLine($"[EmailService] Checking 10% discount for Order #{order.OrderId}, UserId: {order.UserId}, OrderDate: {orderDate}");
+            
+            // Debug section: dump all memberDiscounts for this user
+            Console.WriteLine($"[EmailService] Debugging: All MemberDiscounts for user {order.UserId}:");
+            var allMemberDiscounts = await _context.MemberDiscounts
+                .Where(md => md.UserId == order.UserId)
+                .OrderByDescending(md => md.CreatedAt)
+                .ToListAsync();
+            
+            foreach (var md in allMemberDiscounts)
             {
-                member10PercentDiscount = order.TotalAmount * 0.10m;
+                Console.WriteLine($"  - ID: {md.MemberDiscountId}, Created: {md.CreatedAt}, IsUsed: {md.IsUsed}, ExpiryDate: {md.ExpiryDate}, Percentage: {md.DiscountPercentage}%");
             }
+            Console.WriteLine($"[EmailService] End of MemberDiscounts debug info");
+            
+            // Get all orders for this user to determine position
+            Console.WriteLine($"[EmailService] Getting all orders for user {order.UserId}");
+            
+            var allOrders = await _context.Orders
+                .Where(o => o.UserId == order.UserId)
+                .OrderBy(o => o.OrderDate)
+                .ToListAsync();
+                
+            Console.WriteLine($"[EmailService] Total orders found: {allOrders.Count}");
+            foreach (var o in allOrders.Take(5)) // Log the first 5 for debugging
+            {
+                Console.WriteLine($"  - Order #{o.OrderId}, Date: {o.OrderDate}, Status: {o.Status}");
+            }
+            
+            // Calculate this order's position within all user orders
+            var orderPosition = allOrders.FindIndex(o => o.OrderId == order.OrderId) + 1;
+            
+            Console.WriteLine($"[EmailService] Current order position: {orderPosition}");
+            Console.WriteLine($"[EmailService] Is milestone order? {orderPosition % 10 == 1 && orderPosition > 10}");
+            
+            // Only milestone orders (11th, 21st, 31st) can have the 10% discount
+            if (orderPosition % 10 == 1 && orderPosition > 10)
+            {
+                Console.WriteLine($"[EmailService] This is a milestone order (position {orderPosition})");
+                // Check if there was a 10% member discount record used for this order
+                var memberDiscount = await _context.MemberDiscounts
+                    .FirstOrDefaultAsync(md => md.UserId == order.UserId 
+                        && md.IsUsed 
+                        && md.DiscountPercentage == 10
+                        && md.CreatedAt <= oneDayAfter
+                        && md.CreatedAt >= orderDate.AddDays(-1));
+                        
+                if (memberDiscount != null)
+                {
+                    member10PercentDiscount = order.TotalAmount * 0.10m;
+                    Console.WriteLine($"[EmailService] Applying 10% discount: {member10PercentDiscount}");
+                }
+                else
+                {
+                    Console.WriteLine($"[EmailService] This is a milestone order but no discount record was found/used");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[EmailService] Not a milestone order, no 10% discount applied");
+            }
+            
+            Console.WriteLine($"[EmailService] Final discount values - PerBook: {perBookDiscount}, Member5%: {member5PercentDiscount}, Member10%: {member10PercentDiscount}");
+            
             var discountExplanation = "";
             
             if (perBookDiscount > 0)
@@ -128,8 +183,17 @@ namespace BookNook.Services
                             {(member10PercentDiscount > 0 ? $"<p><strong>Member 10% Discount (Milestone):</strong> -${member10PercentDiscount:F2}</p>" : "")}
                             <p><strong>Total Discount:</strong> -${order.DiscountAmount:F2}</p>
                             <p><strong>Final Amount:</strong> ${order.FinalAmount:F2}</p>
-                        </div>
-
+                        </div>";
+            
+            // Debug display values
+            Console.WriteLine("[EmailService] DEBUG - Email display values:");
+            Console.WriteLine($"  - Will show Per-Book Discount? {perBookDiscount > 0}, Value: {perBookDiscount:F2}");
+            Console.WriteLine($"  - Will show 5% Discount? {member5PercentDiscount > 0}, Value: {member5PercentDiscount:F2}");
+            Console.WriteLine($"  - Will show 10% Discount? {member10PercentDiscount > 0}, Value: {member10PercentDiscount:F2}");
+            Console.WriteLine($"  - Order total discount amount from DB: {order.DiscountAmount:F2}");
+            Console.WriteLine($"  - Calculated discount (sum): {perBookDiscount + member5PercentDiscount + member10PercentDiscount:F2}");
+            
+            body += $@"
                         <h3>Order Items:</h3>
                         <table style='width: 100%; border-collapse: collapse; margin: 20px 0;'>
                             <tr style='background-color: #f8f9fa;'>
@@ -224,15 +288,31 @@ namespace BookNook.Services
             // Check for 10% discount by looking for a used MemberDiscount record
             var orderDate = order.OrderDate;
             var oneDayAfter = orderDate.AddDays(1);
-            var memberDiscount = await _context.MemberDiscounts
-                .FirstOrDefaultAsync(md => md.UserId == order.UserId 
-                    && md.IsUsed 
-                    && md.DiscountPercentage == 10
-                    && md.CreatedAt <= oneDayAfter);
             
-            if (memberDiscount != null)
+            // Get all orders for this user to determine position
+            var allOrders = await _context.Orders
+                .Where(o => o.UserId == order.UserId)
+                .OrderBy(o => o.OrderDate)
+                .ToListAsync();
+                
+            // Calculate this order's position within all user orders
+            var orderPosition = allOrders.FindIndex(o => o.OrderId == order.OrderId) + 1;
+            
+            // Only milestone orders (11th, 21st, 31st) can have the 10% discount
+            if (orderPosition % 10 == 1 && orderPosition > 10)
             {
-                member10PercentDiscount = order.TotalAmount * 0.10m;
+                // Check if there was a 10% member discount record used for this order
+                var memberDiscount = await _context.MemberDiscounts
+                    .FirstOrDefaultAsync(md => md.UserId == order.UserId 
+                        && md.IsUsed 
+                        && md.DiscountPercentage == 10
+                        && md.CreatedAt <= oneDayAfter
+                        && md.CreatedAt >= orderDate.AddDays(-1));
+                        
+                if (memberDiscount != null)
+                {
+                    member10PercentDiscount = order.TotalAmount * 0.10m;
+                }
             }
             var body = $@"
                 <html>
@@ -335,15 +415,31 @@ namespace BookNook.Services
             // Check for 10% discount by looking for a used MemberDiscount record
             var orderDate = order.OrderDate;
             var oneDayAfter = orderDate.AddDays(1);
-            var memberDiscount = await _context.MemberDiscounts
-                .FirstOrDefaultAsync(md => md.UserId == order.UserId 
-                    && md.IsUsed 
-                    && md.DiscountPercentage == 10
-                    && md.CreatedAt <= oneDayAfter);
             
-            if (memberDiscount != null)
+            // Get all orders for this user to determine position
+            var allOrders = await _context.Orders
+                .Where(o => o.UserId == order.UserId)
+                .OrderBy(o => o.OrderDate)
+                .ToListAsync();
+                
+            // Calculate this order's position within all user orders
+            var orderPosition = allOrders.FindIndex(o => o.OrderId == order.OrderId) + 1;
+            
+            // Only milestone orders (11th, 21st, 31st) can have the 10% discount
+            if (orderPosition % 10 == 1 && orderPosition > 10)
             {
-                member10PercentDiscount = order.TotalAmount * 0.10m;
+                // Check if there was a 10% member discount record used for this order
+                var memberDiscount = await _context.MemberDiscounts
+                    .FirstOrDefaultAsync(md => md.UserId == order.UserId 
+                        && md.IsUsed 
+                        && md.DiscountPercentage == 10
+                        && md.CreatedAt <= oneDayAfter
+                        && md.CreatedAt >= orderDate.AddDays(-1));
+                        
+                if (memberDiscount != null)
+                {
+                    member10PercentDiscount = order.TotalAmount * 0.10m;
+                }
             }
             var body = $@"
                 <html>
