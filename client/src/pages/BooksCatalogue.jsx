@@ -30,9 +30,13 @@ const BooksCatalogue = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [genres, setGenres] = useState([]);
     const [authors, setAuthors] = useState([]);
+    const [publishers, setPublishers] = useState([]);
     const [customPrice, setCustomPrice] = useState({ min: '', max: '' });
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+    const [expandGenres, setExpandGenres] = useState(true);
+    const [expandAuthors, setExpandAuthors] = useState(true);
+    const [expandPublishers, setExpandPublishers] = useState(true);
 
     // Helper to get array param from searchParams
     const getArrayParam = (key) => searchParams.getAll(key);
@@ -41,6 +45,7 @@ const BooksCatalogue = () => {
     // UI state derived from URL
     const selectedGenres = getArrayParam('genres');
     const selectedAuthors = getArrayParam('authors');
+    const selectedPublishers = getArrayParam('publishers');
     const selectedLanguages = getArrayParam('languages');
     const selectedPrice = getParam('selectedPrice', null);
     const sortPrice = getParam('sortPrice', 'asc');
@@ -87,8 +92,21 @@ const BooksCatalogue = () => {
                 // ignore author error for now
             }
         };
+        const fetchPublishers = async () => {
+            try {
+                const res = await axios.get('http://localhost:5124/api/Publishers');
+                setPublishers(
+                    res.data.filter(
+                        p => (p.Name ?? p.name) && (p.PublisherId ?? p.publisherId)
+                    )
+                );
+            } catch {
+                // ignore publisher error for now
+            }
+        };
         fetchGenres();
         fetchAuthors();
+        fetchPublishers();
     }, []);
 
     // Build query string for backend filters from searchParams
@@ -97,6 +115,7 @@ const BooksCatalogue = () => {
         if (searchQuery.trim() !== "") params.append('search', searchQuery.trim());
         selectedGenres.forEach(g => params.append('genres', g));
         selectedAuthors.forEach(a => params.append('authors', a));
+        selectedPublishers.forEach(p => params.append('publishers', p));
         selectedLanguages.forEach(l => params.append('languages', l));
         if (selectedPrice) {
             params.append('selectedPrice', selectedPrice);
@@ -165,71 +184,128 @@ const BooksCatalogue = () => {
             <aside style={{ width: 320, background: '#fff', borderRight: '1px solid #eee', padding: '2rem 1rem 2rem 2rem' }}>
                 {/* Genre Box */}
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
-                    <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>All Genres</div>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {genres.length === 0 && (
-                            <li key="no-genres" style={{ color: 'red', fontSize: 14 }}>No genres found. Check API response.</li>
-                        )}
-                        {genres.map((genre, idx) => {
-                            const genreId = genre.GenreId ?? genre.genreId;
-                            const genreName = genre.Name ?? genre.name;
-                            return (
-                                <li key={`genre-${genreId}`} style={{ marginBottom: idx !== genres.length - 1 ? 6 : 0 }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedGenres.includes(genreName)}
-                                            onChange={() => {
-                                                let newGenres;
-                                                if (selectedGenres.includes(genreName)) {
-                                                    newGenres = selectedGenres.filter(g => g !== genreName);
-                                                } else {
-                                                    newGenres = [...selectedGenres, genreName];
-                                                }
-                                                setFilter('genres', newGenres, true);
-                                            }}
-                                        />
-                                        {genreName}
-                                    </label>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandGenres(exp => !exp)}
+                    >
+                        All Genres
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandGenres ? '▼' : '▶'}</span>
+                    </div>
+                    {expandGenres && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                            {genres.length === 0 && (
+                                <li key="no-genres" style={{ color: 'red', fontSize: 14 }}>No genres found. Check API response.</li>
+                            )}
+                            {genres.map((genre, idx) => {
+                                const genreId = genre.GenreId ?? genre.genreId;
+                                const genreName = genre.Name ?? genre.name;
+                                return (
+                                    <li key={`genre-${genreId}`} style={{ marginBottom: idx !== genres.length - 1 ? 6 : 0 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedGenres.includes(genreName)}
+                                                onChange={() => {
+                                                    let newGenres;
+                                                    if (selectedGenres.includes(genreName)) {
+                                                        newGenres = selectedGenres.filter(g => g !== genreName);
+                                                    } else {
+                                                        newGenres = [...selectedGenres, genreName];
+                                                    }
+                                                    setFilter('genres', newGenres, true);
+                                                }}
+                                            />
+                                            {genreName}
+                                        </label>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </div>
                 {/* Author Box */}
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
-                    <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>All Authors</div>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
-                        {authors.length === 0 && (
-                            <li key="no-authors" style={{ color: 'red', fontSize: 14 }}>No authors found. Check API response.</li>
-                        )}
-                        {authors.map((author, idx) => {
-                            const authorId = author.AuthorId ?? author.authorId;
-                            const firstName = author.FirstName ?? author.firstName;
-                            const lastName = author.LastName ?? author.lastName;
-                            const authorName = `${firstName} ${lastName}`;
-                            return (
-                                <li key={`author-${authorId ?? idx}`} style={{ marginBottom: idx !== authors.length - 1 ? 6 : 0 }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedAuthors.includes(authorName)}
-                                            onChange={() => {
-                                                let newAuthors;
-                                                if (selectedAuthors.includes(authorName)) {
-                                                    newAuthors = selectedAuthors.filter(a => a !== authorName);
-                                                } else {
-                                                    newAuthors = [...selectedAuthors, authorName];
-                                                }
-                                                setFilter('authors', newAuthors, true);
-                                            }}
-                                        />
-                                        {authorName}
-                                    </label>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandAuthors(exp => !exp)}
+                    >
+                        All Authors
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandAuthors ? '▼' : '▶'}</span>
+                    </div>
+                    {expandAuthors && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
+                            {authors.length === 0 && (
+                                <li key="no-authors" style={{ color: 'red', fontSize: 14 }}>No authors found. Check API response.</li>
+                            )}
+                            {authors.map((author, idx) => {
+                                const authorId = author.AuthorId ?? author.authorId;
+                                const firstName = author.FirstName ?? author.firstName;
+                                const lastName = author.LastName ?? author.lastName;
+                                const authorName = `${firstName} ${lastName}`;
+                                return (
+                                    <li key={`author-${authorId ?? idx}`} style={{ marginBottom: idx !== authors.length - 1 ? 6 : 0 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedAuthors.includes(authorName)}
+                                                onChange={() => {
+                                                    let newAuthors;
+                                                    if (selectedAuthors.includes(authorName)) {
+                                                        newAuthors = selectedAuthors.filter(a => a !== authorName);
+                                                    } else {
+                                                        newAuthors = [...selectedAuthors, authorName];
+                                                    }
+                                                    setFilter('authors', newAuthors, true);
+                                                }}
+                                            />
+                                            {authorName}
+                                        </label>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </div>
+                {/* Publisher Box */}
+                <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>
+                    <div
+                        style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', userSelect: 'none' }}
+                        onClick={() => setExpandPublishers(exp => !exp)}
+                    >
+                        All Publishers
+                        <span style={{ marginLeft: 8, fontSize: 18 }}>{expandPublishers ? '▼' : '▶'}</span>
+                    </div>
+                    {expandPublishers && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 180, overflowY: 'auto' }}>
+                            {publishers.length === 0 && (
+                                <li key="no-publishers" style={{ color: 'red', fontSize: 14 }}>No publishers found. Check API response.</li>
+                            )}
+                            {publishers.map((publisher, idx) => {
+                                const publisherId = publisher.PublisherId ?? publisher.publisherId;
+                                const publisherName = publisher.Name ?? publisher.name;
+                                return (
+                                    <li key={`publisher-${publisherId}`} style={{ marginBottom: idx !== publishers.length - 1 ? 6 : 0 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPublishers.includes(String(publisherId))}
+                                                onChange={() => {
+                                                    let newPublishers;
+                                                    if (selectedPublishers.includes(String(publisherId))) {
+                                                        newPublishers = selectedPublishers.filter(p => p !== String(publisherId));
+                                                    } else {
+                                                        newPublishers = [...selectedPublishers, String(publisherId)];
+                                                    }
+                                                    setFilter('publishers', newPublishers, true);
+                                                }}
+                                            />
+                                            {publisherName}
+                                        </label>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </div>
                 {/* Price and Sort Box */}
                 <div style={{ marginBottom: 32, border: '1px solid #e0e0e0', borderRadius: 10, padding: '18px 18px 12px 18px', background: '#fafbfc' }}>

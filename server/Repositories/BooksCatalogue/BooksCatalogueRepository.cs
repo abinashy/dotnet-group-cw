@@ -24,6 +24,7 @@ namespace BookNook.Repositories.BooksCatalogue
             decimal? maxPrice,
             string? sortPrice,
             string? tab,
+            List<int>? publishers = null,
             int page = 1,
             int pageSize = 8)
         {
@@ -111,6 +112,11 @@ namespace BookNook.Repositories.BooksCatalogue
             if (maxPrice.HasValue)
             {
                 query = query.Where(b => b.Price <= maxPrice.Value);
+            }
+
+            if (publishers != null && publishers.Count > 0)
+            {
+                query = query.Where(b => publishers.Contains(b.PublisherId));
             }
 
             if (!string.IsNullOrWhiteSpace(sortPrice))

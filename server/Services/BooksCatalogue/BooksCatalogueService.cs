@@ -24,6 +24,7 @@ namespace BookNook.Services.BooksCatalogue
             decimal? maxPrice,
             string? sortPrice,
             string? tab,
+            List<int>? publishers = null,
             int page = 1,
             int pageSize = 8)
         {
@@ -41,7 +42,7 @@ namespace BookNook.Services.BooksCatalogue
                     await _repository.AddSampleDataAsync();
                 }
 
-                var (books, totalCount) = await _repository.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab, page, pageSize);
+                var (books, totalCount) = await _repository.GetBooksAsync(search, genres, authors, languages, minPrice, maxPrice, sortPrice, tab, publishers, page, pageSize);
                 _logger.LogInformation("Found {Count} books matching the criteria", books.Count());
 
                 return new PagedBooksDto {

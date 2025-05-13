@@ -14,6 +14,7 @@ namespace BookNook.Repositories.BooksCatalogue
             decimal? maxPrice,
             string? sortPrice,
             string? tab,
+            List<int>? publishers = null,
             int page = 1,
             int pageSize = 8);
         Task<bool> AddSampleDataAsync();

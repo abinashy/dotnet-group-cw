@@ -13,6 +13,7 @@ namespace BookNook.Services.BooksCatalogue
             decimal? maxPrice,
             string? sortPrice,
             string? tab,
+            List<int>? publishers = null,
             int page = 1,
             int pageSize = 8);
     }
