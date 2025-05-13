@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using BookNook.Services;
 using BookNook.DTOs;
+using BookNook.DTOs.Order;
+using BookNook.DTOs.Books;
 using System.Security.Claims;
 using BookNook.Data;
 using BookNook.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using BookNook.Services.Email;
+using BookNook.Services.Order;
+using BookNook.Entities;
 
 namespace BookNook.Controllers
 {
@@ -234,25 +238,25 @@ namespace BookNook.Controllers
                 Console.WriteLine($"[OrderController] Orders fetched: {orders.Count}");
 
                 // Map to DTOs to avoid cycles
-                var orderDtos = orders.Select(order => new DTOs.OrderHistoryDto
+                var orderDtos = orders.Select(order => new OrderHistoryDto
                 {
                     OrderId = order.OrderId,
                     ClaimCode = order.ClaimCode,
                     OrderDate = order.OrderDate,
                     Status = order.Status,
                     FinalAmount = order.FinalAmount,
-                    OrderItems = order.OrderItems?.Select(oi => new DTOs.OrderItemDto
+                    OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
                     {
                         OrderItemId = oi.OrderItemId,
                         Quantity = oi.Quantity,
                         UnitPrice = oi.UnitPrice,
-                        Book = oi.Book == null ? null : new DTOs.BookDto
+                        Book = oi.Book == null ? null : new BookDto
                         {
                             BookId = oi.Book.BookId,
                             Title = oi.Book.Title
                         }
                     }).ToList(),
-                    OrderHistory = order.OrderHistory == null ? null : new DTOs.OrderHistoryDetailsDto
+                    OrderHistory = order.OrderHistory == null ? null : new OrderHistoryDetailsDto
                     {
                         Status = order.OrderHistory.Status,
                         StatusDate = order.OrderHistory.StatusDate,
@@ -271,7 +275,7 @@ namespace BookNook.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Staff,Admin")]
-        public async Task<IActionResult> GetAllOrders([FromQuery] string search = null)
+        public async Task<IActionResult> GetAllOrders([FromQuery] string? search = null)
         {
             var orders = await _orderService.GetAllOrdersAsync(search);
             var orderDtos = (from order in orders

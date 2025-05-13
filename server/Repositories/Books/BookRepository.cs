@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using BookNook.Data;
 using BookNook.Entities;
 
-namespace BookNook.Repositories
+namespace BookNook.Repositories.Books
 {
     public class BookRepository : IBookRepository
     {

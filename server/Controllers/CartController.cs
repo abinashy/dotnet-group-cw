@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookNook.Data;
 using BookNook.DTOs;
+using BookNook.DTOs.Cart;
+using BookNook.DTOs.Order;
 using System.Linq;
 using System.Threading.Tasks;
 using System;

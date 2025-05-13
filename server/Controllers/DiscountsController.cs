@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookNook.Data;
-using BookNook.DTOs;
 using BookNook.Entities;
 using System.Text.Json;
+using BookNook.DTOs.Discount;
 
 namespace BookNook.Controllers
 {

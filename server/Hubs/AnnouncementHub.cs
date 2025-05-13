@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
-using BookNook.DTOs;
 using System.Threading.Tasks;
+using BookNook.DTOs.Announcement;
 
 namespace BookNook.Hubs
 {

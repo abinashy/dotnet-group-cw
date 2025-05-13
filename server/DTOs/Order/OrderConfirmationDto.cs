@@ -1,6 +1,6 @@
 using System;
 
-namespace BookNook.DTOs
+namespace BookNook.DTOs.Order
 {
     public class OrderConfirmationDto
     {

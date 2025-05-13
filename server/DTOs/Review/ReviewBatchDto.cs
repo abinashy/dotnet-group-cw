@@ -1,4 +1,4 @@
-namespace BookNook.DTOs
+namespace BookNook.DTOs.Review
 {
     public class ReviewBatchDto
     {

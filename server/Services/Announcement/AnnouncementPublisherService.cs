@@ -1,19 +1,18 @@
-using BookNook.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using BookNook.Services.Announcements;
 
-namespace BookNook.Services
+namespace BookNook.Services.Announcements
 {
     public class AnnouncementPublisherService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<AnnouncementPublisherService> _logger;
         private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(1);
-        private Task _executingTask;
         
         public AnnouncementPublisherService(
             IServiceProvider serviceProvider, 

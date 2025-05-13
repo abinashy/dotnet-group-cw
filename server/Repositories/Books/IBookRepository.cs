@@ -1,6 +1,6 @@
 using BookNook.Entities;
 
-namespace BookNook.Repositories
+namespace BookNook.Repositories.Books
 {
     public interface IBookRepository
     {

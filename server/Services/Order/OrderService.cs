@@ -1,21 +1,23 @@
 using BookNook.Data;
 using BookNook.DTOs;
+using BookNook.DTOs.Order;
 using BookNook.Entities;
 using BookNook.Hubs;
+using BookNook.Services.Email;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BookNook.Services
+namespace BookNook.Services.Order
 {
     public interface IOrderService
     {
-        Task<Order> CreateOrderAsync(long userId, CreateOrderDto orderDto);
-        Task<Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false);
+        Task<Entities.Order> CreateOrderAsync(long userId, CreateOrderDto orderDto);
+        Task<Entities.Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false);
         Task CancelOrderAsync(int orderId, long userId);
-        Task<List<Order>> GetOrderHistoryAsync(long userId);
-        Task<List<Order>> GetAllOrdersAsync(string searchTerm = null);
+        Task<List<Entities.Order>> GetOrderHistoryAsync(long userId);
+        Task<List<Entities.Order>> GetAllOrdersAsync(string? searchTerm = null);
         Task SaveChangesAsync();
         Task CompleteOrderAsync(int orderId, string claimCode);
     }
@@ -36,7 +38,7 @@ namespace BookNook.Services
             _orderHubContext = orderHubContext;
         }
 
-        public async Task<Order> CreateOrderAsync(long userId, CreateOrderDto orderDto)
+        public async Task<Entities.Order> CreateOrderAsync(long userId, CreateOrderDto orderDto)
         {
             // No navigation property for Orders on User, so query directly
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -124,7 +126,7 @@ namespace BookNook.Services
             if (string.IsNullOrWhiteSpace(claimCode))
                 throw new Exception("Claim code cannot be null or empty.");
 
-            var order = new Order
+            var order = new Entities.Order
             {
                 UserId = userId,
                 OrderDate = DateTime.UtcNow,
@@ -203,7 +205,7 @@ namespace BookNook.Services
             return order;
         }
 
-        public async Task<Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false)
+        public async Task<Entities.Order?> GetOrderByIdAsync(int orderId, long? userId = null, bool allowAnyUser = false)
         {
             if (allowAnyUser)
             {
@@ -243,16 +245,28 @@ namespace BookNook.Services
                 var book = await _context.Books
                     .Include(b => b.Inventory)
                     .FirstOrDefaultAsync(b => b.BookId == item.BookId);
-                if (book?.Inventory != null)
+                if (book != null && book.Inventory != null)
                 {
                     book.Inventory.Quantity += item.Quantity;
                 }
             }
 
             order.Status = "Cancelled";
-            order.OrderHistory.Status = "Cancelled";
-            order.OrderHistory.StatusDate = DateTime.UtcNow;
-            order.OrderHistory.Notes = "Order cancelled by user";
+            if (order.OrderHistory != null)
+            {
+                order.OrderHistory.Status = "Cancelled";
+                order.OrderHistory.StatusDate = DateTime.UtcNow;
+                order.OrderHistory.Notes = "Order cancelled by user";
+            }
+            else
+            {
+                order.OrderHistory = new OrderHistory
+                {
+                    Status = "Cancelled",
+                    StatusDate = DateTime.UtcNow,
+                    Notes = "Order cancelled by user"
+                };
+            }
 
             await _context.SaveChangesAsync();
 
@@ -311,7 +325,7 @@ namespace BookNook.Services
             }
         }
 
-        public async Task<List<Order>> GetOrderHistoryAsync(long userId)
+        public async Task<List<Entities.Order>> GetOrderHistoryAsync(long userId)
         {
             Console.WriteLine($"[OrderService] Fetching orders for userId: {userId}");
             var orders = await _context.Orders
@@ -336,7 +350,7 @@ namespace BookNook.Services
             return orders;
         }
 
-        public async Task<List<Order>> GetAllOrdersAsync(string searchTerm = null)
+        public async Task<List<Entities.Order>> GetAllOrdersAsync(string? searchTerm = null)
         {
             var query = _context.Orders
                 .Include(o => o.OrderItems)

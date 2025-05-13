@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BookNook.DTOs
+namespace BookNook.DTOs.Discount
 {
     public class DiscountDTO
     {

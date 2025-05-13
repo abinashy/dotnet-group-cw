@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using BookNook.DTOs;
 using BookNook.Data;
 using BookNook.Entities;
 using System.Security.Claims;
+using BookNook.DTOs.Review;
 
 namespace BookNook.Controllers
 {

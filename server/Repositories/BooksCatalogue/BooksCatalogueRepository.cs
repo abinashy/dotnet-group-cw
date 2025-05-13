@@ -291,7 +291,7 @@ namespace BookNook.Repositories.BooksCatalogue
         {
             try
             {
-                var publisher = new Publisher
+                var publisher = new Entities.Publisher
                 {
                     Name = "Sample Publisher",
                     Description = "A sample publisher for testing",
@@ -300,7 +300,7 @@ namespace BookNook.Repositories.BooksCatalogue
                 _context.Publishers.Add(publisher);
                 await _context.SaveChangesAsync();
 
-                var author = new Author
+                var author = new Entities.Author
                 {
                     FirstName = "John",
                     LastName = "Doe",
@@ -309,7 +309,7 @@ namespace BookNook.Repositories.BooksCatalogue
                 _context.Authors.Add(author);
                 await _context.SaveChangesAsync();
 
-                var genre = new Genre
+                var genre = new Entities.Genre
                 {
                     Name = "Fiction",
                     Description = "Fictional works"
@@ -317,9 +317,9 @@ namespace BookNook.Repositories.BooksCatalogue
                 _context.Genres.Add(genre);
                 await _context.SaveChangesAsync();
 
-                var books = new List<Book>
+                var books = new List<Entities.Book>
                 {
-                    new Book
+                    new Entities.Book
                     {
                         Title = "The Great Adventure",
                         ISBN = "978-1234567890",
@@ -330,16 +330,16 @@ namespace BookNook.Repositories.BooksCatalogue
                         Format = "Hardcover",
                         Description = "An exciting adventure story",
                         PublisherId = publisher.PublisherId,
-                        BookAuthors = new List<BookAuthor>
+                        BookAuthors = new List<Entities.BookAuthor>
                         {
-                            new BookAuthor { AuthorId = author.AuthorId }
+                            new Entities.BookAuthor { AuthorId = author.AuthorId }
                         },
-                        BookGenres = new List<BookGenre>
+                        BookGenres = new List<Entities.BookGenre>
                         {
-                            new BookGenre { GenreId = genre.GenreId }
+                            new Entities.BookGenre { GenreId = genre.GenreId }
                         }
                     },
-                    new Book
+                    new Entities.Book
                     {
                         Title = "Mystery Manor",
                         ISBN = "978-0987654321",
@@ -350,13 +350,13 @@ namespace BookNook.Repositories.BooksCatalogue
                         Format = "Paperback",
                         Description = "A thrilling mystery novel",
                         PublisherId = publisher.PublisherId,
-                        BookAuthors = new List<BookAuthor>
+                        BookAuthors = new List<Entities.BookAuthor>
                         {
-                            new BookAuthor { AuthorId = author.AuthorId }
+                            new Entities.BookAuthor { AuthorId = author.AuthorId }
                         },
-                        BookGenres = new List<BookGenre>
+                        BookGenres = new List<Entities.BookGenre>
                         {
-                            new BookGenre { GenreId = genre.GenreId }
+                            new Entities.BookGenre { GenreId = genre.GenreId }
                         }
                     }
                 };
@@ -366,7 +366,7 @@ namespace BookNook.Repositories.BooksCatalogue
 
                 foreach (var book in books)
                 {
-                    _context.Inventories.Add(new Inventory
+                    _context.Inventories.Add(new Entities.Inventory
                     {
                         BookId = book.BookId,
                         Quantity = 10

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
-using BookNook.DTOs;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using System;
+using BookNook.DTOs.Order;
 
 namespace BookNook.Hubs
 {

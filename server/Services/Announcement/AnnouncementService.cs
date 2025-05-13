@@ -1,11 +1,11 @@
 using BookNook.Data;
-using BookNook.DTOs;
+using BookNook.DTOs.Announcement;
 using BookNook.Entities;
 using BookNook.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookNook.Services
+namespace BookNook.Services.Announcements
 {
     public interface IAnnouncementService
     {
@@ -32,7 +32,7 @@ namespace BookNook.Services
 
         public async Task<AnnouncementDto> CreateAnnouncementAsync(CreateAnnouncementDto dto, long userId)
         {
-            var ann = new Announcement
+            var ann = new Entities.Announcement
             {
                 Title = dto.Title,
                 Content = dto.Content,
@@ -206,7 +206,7 @@ namespace BookNook.Services
             return await ToDtoAsync(announcement);
         }
 
-        private async Task<AnnouncementDto> ToDtoAsync(Announcement a)
+        private async Task<AnnouncementDto> ToDtoAsync(Entities.Announcement a)
         {
             var user = a.User ?? await _db.Users.FindAsync(a.CreatedBy);
             return new AnnouncementDto

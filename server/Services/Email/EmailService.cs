@@ -6,13 +6,13 @@ using BookNook.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookNook.Services
+namespace BookNook.Services.Email
 {
     public interface IEmailService
     {
-        Task SendOrderConfirmationEmailAsync(Order order);
-        Task SendOrderNotificationToStaffAsync(Order order);
-        Task SendOrderCancellationToStaffAsync(Order order);
+        Task SendOrderConfirmationEmailAsync(Entities.Order order);
+        Task SendOrderNotificationToStaffAsync(Entities.Order order);
+        Task SendOrderCancellationToStaffAsync(Entities.Order order);
     }
 
     public class EmailService : IEmailService
@@ -28,7 +28,7 @@ namespace BookNook.Services
             _userManager = userManager;
         }
 
-        public async Task SendOrderConfirmationEmailAsync(Order order)
+        public async Task SendOrderConfirmationEmailAsync(Entities.Order order)
         {
             var user = await _context.Users.FindAsync(order.UserId);
             if (user == null || string.IsNullOrEmpty(user.Email))
@@ -68,7 +68,7 @@ namespace BookNook.Services
             var perBookDiscount = order.OrderItems.Sum(item => {
                 var book = _context.Books.Find(item.BookId);
                 var originalPrice = book?.Price ?? item.UnitPrice;
-                return (originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0);
+                return originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0;
             });
             var member5PercentDiscount = 0m;
             var member10PercentDiscount = 0m;
@@ -209,7 +209,7 @@ namespace BookNook.Services
             {
                 var book = await _context.Books.FindAsync(item.BookId);
                 var originalPrice = book?.Price ?? item.UnitPrice;
-                var discount = originalPrice > 0 ? (1 - (item.UnitPrice / originalPrice)) * 100 : 0;
+                var discount = originalPrice > 0 ? (1 - item.UnitPrice / originalPrice) * 100 : 0;
                 var isDiscounted = item.UnitPrice < originalPrice;
                 var savings = (originalPrice - item.UnitPrice) * item.Quantity;
                 body += $@"
@@ -239,7 +239,7 @@ namespace BookNook.Services
             await smtpClient.SendMailAsync(message);
         }
 
-        public async Task SendOrderNotificationToStaffAsync(Order order)
+        public async Task SendOrderNotificationToStaffAsync(Entities.Order order)
         {
             var staffUsers = await _userManager.GetUsersInRoleAsync("Staff");
             if (staffUsers == null || staffUsers.Count == 0)
@@ -276,7 +276,7 @@ namespace BookNook.Services
             var perBookDiscount = order.OrderItems.Sum(item => {
                 var book = _context.Books.Find(item.BookId);
                 var originalPrice = book?.Price ?? item.UnitPrice;
-                return (originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0);
+                return originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0;
             });
             var member5PercentDiscount = 0m;
             var member10PercentDiscount = 0m;
@@ -343,7 +343,7 @@ namespace BookNook.Services
             {
                 var book = await _context.Books.FindAsync(item.BookId);
                 var originalPrice = book?.Price ?? item.UnitPrice;
-                var discount = originalPrice > 0 ? (1 - (item.UnitPrice / originalPrice)) * 100 : 0;
+                var discount = originalPrice > 0 ? (1 - item.UnitPrice / originalPrice) * 100 : 0;
                 var isDiscounted = item.UnitPrice < originalPrice;
                 var savings = (originalPrice - item.UnitPrice) * item.Quantity;
                 body += $@"
@@ -366,7 +366,7 @@ namespace BookNook.Services
             await smtpClient.SendMailAsync(message);
         }
 
-        public async Task SendOrderCancellationToStaffAsync(Order order)
+        public async Task SendOrderCancellationToStaffAsync(Entities.Order order)
         {
             var staffUsers = await _userManager.GetUsersInRoleAsync("Staff");
             if (staffUsers == null || staffUsers.Count == 0)
@@ -403,7 +403,7 @@ namespace BookNook.Services
             var perBookDiscount = order.OrderItems.Sum(item => {
                 var book = _context.Books.Find(item.BookId);
                 var originalPrice = book?.Price ?? item.UnitPrice;
-                return (originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0);
+                return originalPrice > item.UnitPrice ? (originalPrice - item.UnitPrice) * item.Quantity : 0;
             });
             var member5PercentDiscount = 0m;
             var member10PercentDiscount = 0m;
@@ -470,7 +470,7 @@ namespace BookNook.Services
             {
                 var book = await _context.Books.FindAsync(item.BookId);
                 var originalPrice = book?.Price ?? item.UnitPrice;
-                var discount = originalPrice > 0 ? (1 - (item.UnitPrice / originalPrice)) * 100 : 0;
+                var discount = originalPrice > 0 ? (1 - item.UnitPrice / originalPrice) * 100 : 0;
                 var isDiscounted = item.UnitPrice < originalPrice;
                 var savings = (originalPrice - item.UnitPrice) * item.Quantity;
                 body += $@"

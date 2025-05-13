@@ -101,4 +101,10 @@ namespace BookNook.DTOs.Books
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
     }
+
+    public class BookDto
+    {
+        public int BookId { get; set; }
+        public string Title { get; set; } = string.Empty;
+    }
 } 

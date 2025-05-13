@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BookNook.DTOs
+namespace BookNook.DTOs.Order
 {
     public class CheckoutItemDto
     {

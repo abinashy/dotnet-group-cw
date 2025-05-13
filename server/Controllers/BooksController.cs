@@ -4,11 +4,11 @@ using BookNook.Services.Books;
 using BookNook.Data;
 using BookNook.Entities;
 using Microsoft.EntityFrameworkCore;
-using BookNook.Repositories;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using BookNook.Repositories.Books;
 
 namespace BookNook.Controllers
 {

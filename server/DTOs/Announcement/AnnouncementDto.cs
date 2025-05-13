@@ -1,6 +1,6 @@
 using System;
 
-namespace BookNook.DTOs
+namespace BookNook.DTOs.Announcement
 {
     public class AnnouncementDto
     {

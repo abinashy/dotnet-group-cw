@@ -1,6 +1,7 @@
 using BookNook.DTOs.Inventory;
 using BookNook.Entities;
-using BookNook.Repositories;
+using BookNook.Repositories.Books;
+using BookNook.Repositories.Inventory;
 
 namespace BookNook.Services.Inventory
 {

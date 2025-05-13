@@ -3,8 +3,6 @@ using BookNook.Services.Auth;
 using BookNook.Services.Books;
 using BookNook.Services.Cloudinary;
 using BookNook.Services.Inventory;
-using BookNook.Services;
-using BookNook.Repositories;
 using BookNook.Services.BooksCatalogue;
 using BookNook.Repositories.BooksCatalogue;
 using BookNook.Services.Cart;
@@ -20,6 +18,12 @@ using BookNook.Entities;
 using Microsoft.OpenApi.Models;
 using BookNook.Hubs;
 using System.Net.WebSockets;
+using BookNook.Services.Announcements;
+using BookNook.Services.Discount;
+using BookNook.Services.Email;
+using BookNook.Services.Order;
+using BookNook.Repositories.Books;
+using BookNook.Repositories.Inventory;
 
 var builder = WebApplication.CreateBuilder(args);
 

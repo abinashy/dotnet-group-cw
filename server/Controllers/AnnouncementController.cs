@@ -1,10 +1,10 @@
-using BookNook.DTOs;
-using BookNook.Services;
 using BookNook.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
+using BookNook.Services.Announcements;
+using BookNook.DTOs.Announcement;
 
 namespace BookNook.Controllers
 {

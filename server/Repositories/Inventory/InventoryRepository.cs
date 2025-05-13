@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using BookNook.Data;
 using BookNook.Entities;
 
-namespace BookNook.Repositories
+namespace BookNook.Repositories.Inventory
 {
     public class InventoryRepository : IInventoryRepository
     {
@@ -13,28 +13,28 @@ namespace BookNook.Repositories
             _context = context;
         }
 
-        public async Task<Inventory> CreateAsync(Inventory inventory)
+        public async Task<Entities.Inventory> CreateAsync(Entities.Inventory inventory)
         {
             _context.Inventories.Add(inventory);
             await _context.SaveChangesAsync();
             return inventory;
         }
 
-        public async Task<Inventory?> GetByBookIdAsync(int bookId)
+        public async Task<Entities.Inventory?> GetByBookIdAsync(int bookId)
         {
             return await _context.Inventories
                 .Include(i => i.Book)
                 .FirstOrDefaultAsync(i => i.BookId == bookId);
         }
 
-        public async Task<List<Inventory>> GetAllAsync()
+        public async Task<List<Entities.Inventory>> GetAllAsync()
         {
             return await _context.Inventories
                 .Include(i => i.Book)
                 .ToListAsync();
         }
 
-        public async Task<Inventory> UpdateAsync(Inventory inventory)
+        public async Task<Entities.Inventory> UpdateAsync(Entities.Inventory inventory)
         {
             _context.Entry(inventory).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -51,7 +51,7 @@ namespace BookNook.Repositories
             return true;
         }
 
-        public async Task<Inventory?> GetByIdAsync(int inventoryId)
+        public async Task<Entities.Inventory?> GetByIdAsync(int inventoryId)
         {
             return await _context.Inventories
                 .Include(i => i.Book)

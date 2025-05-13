@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace BookNook.Services
+namespace BookNook.Services.Discount
 {
     public class DiscountExpirationService : BackgroundService
     {
