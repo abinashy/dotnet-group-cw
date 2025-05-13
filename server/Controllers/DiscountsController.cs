@@ -211,5 +211,98 @@ namespace BookNook.Controllers
         {
             return _context.Discounts.Any(e => e.DiscountId == id);
         }
+
+        // PUT: api/Discounts/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateDiscount(int id, DiscountDTO discountDTO)
+        {
+            if (id != discountDTO.DiscountId)
+            {
+                _logger.LogWarning("ID mismatch: {Id} != {DtoId}", id, discountDTO.DiscountId);
+                return BadRequest("ID mismatch");
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Updating discount: {DiscountDTO}", JsonSerializer.Serialize(discountDTO));
+
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Invalid model state: {ModelState}", JsonSerializer.Serialize(ModelState));
+                    return BadRequest(ModelState);
+                }
+
+                var discount = await _context.Discounts.FindAsync(id);
+                if (discount == null)
+                {
+                    _logger.LogWarning("Discount not found with ID: {Id}", id);
+                    return NotFound();
+                }
+
+                var book = await _context.Books.FindAsync(discountDTO.BookId);
+                if (book == null)
+                {
+                    _logger.LogWarning("Book not found with ID: {BookId}", discountDTO.BookId);
+                    return BadRequest("Book not found");
+                }
+
+                // Get the user ID from claims
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long updatedBy))
+                {
+                    _logger.LogWarning("Could not determine the current user for discount update.");
+                    return Unauthorized("Could not determine the current user.");
+                }
+
+                // Check if the user exists in the database
+                var userExists = await _context.Users.AnyAsync(u => u.Id == updatedBy);
+                if (!userExists)
+                {
+                    _logger.LogWarning("User with ID {UpdatedBy} does not exist.", updatedBy);
+                    return Unauthorized("User does not exist.");
+                }
+
+                // Update discount properties
+                discount.BookId = discountDTO.BookId;
+                discount.DiscountPercentage = discountDTO.DiscountPercentage;
+                discount.StartDate = discountDTO.StartDate.ToUniversalTime();
+                discount.EndDate = discountDTO.EndDate.ToUniversalTime();
+                discount.IsActive = true; // Ensure the discount is active after update
+                discount.IsOnSale = discountDTO.IsOnSale;
+
+                _context.Entry(discount).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                // Create new discount history entry
+                var discountHistory = new BookDiscountHistory
+                {
+                    BookId = discountDTO.BookId,
+                    OriginalPrice = book.Price,
+                    DiscountedPrice = book.Price * (1 - discountDTO.DiscountPercentage / 100),
+                    DiscountPercentage = discountDTO.DiscountPercentage,
+                    StartDate = discountDTO.StartDate.ToUniversalTime(),
+                    EndDate = discountDTO.EndDate.ToUniversalTime(),
+                    IsActive = true,
+                    CreatedBy = updatedBy,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.BookDiscountHistories.Add(discountHistory);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Successfully updated discount with ID: {DiscountId}", discount.DiscountId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error updating discount: {DiscountDTO}", JsonSerializer.Serialize(discountDTO));
+                return StatusCode(500, "An error occurred while updating the discount");
+            }
+        }
     }
 } 

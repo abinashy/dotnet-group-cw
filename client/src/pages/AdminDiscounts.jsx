@@ -44,6 +44,8 @@ export default function AdminDiscounts() {
   const [discounts, setDiscounts] = useState([]);
   const [books, setBooks] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentDiscount, setCurrentDiscount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formError, setFormError] = useState(null);
@@ -105,6 +107,65 @@ export default function AdminDiscounts() {
       setFormSuccess(null);
       console.error('Error adding discount:', error);
     }
+  };
+
+  const handleEditDiscount = async (values, { resetForm }) => {
+    try {
+      setFormError(null);
+      setFormSuccess(null);
+      
+      // Create full datetime by combining date and time inputs
+      const startDateTime = new Date(`${values.startDate}T${values.startTime}`);
+      const endDateTime = new Date(`${values.endDate}T${values.endTime}`);
+      
+      // Convert dates to UTC
+      const discountData = {
+        ...values,
+        startDate: startDateTime.toISOString(),
+        endDate: endDateTime.toISOString()
+      };
+      
+      // Remove the separate time fields before sending to API
+      delete discountData.startTime;
+      delete discountData.endTime;
+      
+      await api.put(`/Discounts/${discountData.discountId}`, discountData);
+      setIsEditModalOpen(false);
+      resetForm();
+      fetchData();
+      setFormError(null); // Clear any previous error
+      setFormSuccess('Discount updated successfully!');
+      setTimeout(() => setFormSuccess(null), 3000);
+    } catch (error) {
+      const errorMessage = error.response?.data || 'Failed to update discount. Please try again.';
+      setFormError(errorMessage);
+      setFormSuccess(null);
+      console.error('Error updating discount:', error);
+    }
+  };
+
+  const handleEditClick = (discount) => {
+    // Format dates for form inputs
+    const startDate = new Date(discount.startDate);
+    const endDate = new Date(discount.endDate);
+    
+    const formattedStartDate = startDate.toISOString().split('T')[0];
+    const formattedEndDate = endDate.toISOString().split('T')[0];
+    
+    const formattedStartTime = startDate.toTimeString().slice(0, 5);
+    const formattedEndTime = endDate.toTimeString().slice(0, 5);
+    
+    setCurrentDiscount({
+      ...discount,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      startTime: formattedStartTime,
+      endTime: formattedEndTime
+    });
+    
+    setIsEditModalOpen(true);
+    setFormError(null);
+    setFormSuccess(null);
   };
 
   const handleDeleteDiscount = async (discountId) => {
@@ -221,6 +282,12 @@ export default function AdminDiscounts() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEditClick(discount)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                    >
+                      Edit
+                    </button>
                     <button
                       onClick={() => handleDeleteDiscount(discount.discountId)}
                       className="text-red-600 hover:text-red-900"
@@ -375,6 +442,152 @@ export default function AdminDiscounts() {
                       className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                     >
                       {isSubmitting ? 'Adding...' : 'Add Discount'}
+                    </button>
+                  </div>
+                </Form>
+              )}
+            </Formik>
+          </div>
+        </div>
+      )}
+
+      {isEditModalOpen && currentDiscount && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Edit Discount</h2>
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setFormError(null);
+                  setFormSuccess(null);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {formError && (
+              <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                {formError}
+              </div>
+            )}
+
+            <Formik
+              initialValues={{
+                discountId: currentDiscount.discountId,
+                bookId: currentDiscount.bookId,
+                discountPercentage: currentDiscount.discountPercentage,
+                startDate: currentDiscount.startDate,
+                startTime: currentDiscount.startTime,
+                endDate: currentDiscount.endDate,
+                endTime: currentDiscount.endTime,
+                isOnSale: currentDiscount.isOnSale,
+                isActive: currentDiscount.isActive
+              }}
+              validationSchema={DiscountSchema}
+              onSubmit={handleEditDiscount}
+            >
+              {({ isSubmitting }) => (
+                <Form className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Book</label>
+                    <Field
+                      name="bookId"
+                      as="select"
+                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                    >
+                      <option value="">Select a book</option>
+                      {books.map((book) => (
+                        <option key={book.bookId} value={book.bookId}>
+                          {book.title}
+                        </option>
+                      ))}
+                    </Field>
+                    <ErrorMessage name="bookId" component="div" className="mt-1 text-sm text-red-600" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Discount Percentage</label>
+                    <Field
+                      name="discountPercentage"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                    />
+                    <ErrorMessage name="discountPercentage" component="div" className="mt-1 text-sm text-red-600" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                      <Field
+                        name="startDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Start Time</label>
+                      <Field
+                        name="startTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="startTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Date</label>
+                      <Field
+                        name="endDate"
+                        type="date"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endDate" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">End Time</label>
+                      <Field
+                        name="endTime"
+                        type="time"
+                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500"
+                      />
+                      <ErrorMessage name="endTime" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <Field
+                      name="isOnSale"
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-black focus:ring-gray-500"
+                    />
+                    <label className="ml-2 block text-sm text-gray-700">Mark as On Sale</label>
+                  </div>
+
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditModalOpen(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    >
+                      {isSubmitting ? 'Updating...' : 'Update Discount'}
                     </button>
                   </div>
                 </Form>
