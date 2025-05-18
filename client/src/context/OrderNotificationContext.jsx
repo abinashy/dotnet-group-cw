@@ -29,7 +29,12 @@ export function OrderNotificationProvider({ children }) {
                       tokenPayload["UserId"] || 
                       tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
         
-        setUserId(userId);
+        if (!userId) {
+          console.error('Could not find userId in token payload:', tokenPayload);
+        } else {
+          setUserId(userId);
+          console.log('Successfully set userId:', userId);
+        }
         
         // Get roles from the correct claim
         const userRoles = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || [];
@@ -47,9 +52,12 @@ export function OrderNotificationProvider({ children }) {
         });
         
         setIsStaff(isUserStaff);
+        console.log('Successfully set isStaff flag to:', isUserStaff);
       } catch (err) {
         console.error('Error parsing JWT token:', err);
       }
+    } else {
+      console.error('No token found in localStorage');
     }
   }, []);
 
@@ -245,23 +253,42 @@ export function OrderNotificationProvider({ children }) {
     connection.on('ReceiveOrderCompleted', (order) => {
       console.log('📣 Received order completed notification:', order);
       
+      // Log connection and user details for debugging
+      console.log('Connection state:', connection.state);
+      console.log('User is staff:', isStaff);
+      console.log('User ID:', userId);
+      
+      // Play a sound notification
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(e => console.log('Audio play error:', e));
+      } catch (err) {
+        console.log('Could not play notification sound:', err);
+      }
+      
       // Add to notifications list (avoid duplicates)
       setNotifications(prev => {
+        // Log current notifications for debugging
+        console.log('Current notifications before update:', prev);
+        
         // Check if we already have this notification
         if (isOrderAlreadyInNotifications(order.orderId, 'completed-order', prev)) {
           console.log('Duplicate notification, ignoring');
           return prev;
         }
         
-        return [
-          {
-            id: `completed-order-${order.orderId}-${Date.now()}`,
-            type: 'completed-order',
-            order,
-            timestamp: new Date()
-          },
-          ...prev
-        ];
+        // Create the new notification object
+        const newNotification = {
+          id: `completed-order-${order.orderId}-${Date.now()}`,
+          type: 'completed-order',
+          order,
+          timestamp: new Date()
+        };
+        
+        // Add the new notification
+        const newNotifications = [newNotification, ...prev];
+        console.log('Updated notifications array:', newNotifications);
+        return newNotifications;
       });
     });
     

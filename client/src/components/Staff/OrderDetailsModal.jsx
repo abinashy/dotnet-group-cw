@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const OrderDetailsModal = ({ order, show, onClose, onOrderCompleted }) => {
@@ -7,6 +7,16 @@ const OrderDetailsModal = ({ order, show, onClose, onOrderCompleted }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (show && order) {
+      setShowClaimInput(false);
+      setClaimInput('');
+      setError('');
+      setLoading(false);
+      setSuccess('');
+    }
+  }, [order, show]);
 
   if (!show || !order) return null;
 

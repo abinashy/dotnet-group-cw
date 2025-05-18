@@ -5,9 +5,15 @@ function OrderNotification({ notifications, onClose }) {
   const [visibleNotifications, setVisibleNotifications] = useState({});
   const navigate = useNavigate();
   
+  // Log notifications for debugging
+  console.log('OrderNotification component received notifications:', notifications);
+  
   // Check if the user is staff (check current URL path)
   const isStaffPage = window.location.pathname.startsWith('/staff') || 
                       window.location.pathname.startsWith('/admin');
+                      
+  console.log('OrderNotification component rendering with path:', window.location.pathname);
+  console.log('isStaffPage detected as:', isStaffPage);
   
   // Initialize visibility state for each notification
   useEffect(() => {

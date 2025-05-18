@@ -173,10 +173,8 @@ namespace BookNook.Services.Order
                 {
                     try
                     {
+                        // Only send to staff group, not to all clients
                         await _orderHubContext.Clients.Group("staff").SendAsync("ReceiveNewOrder", confirmationDto);
-                        
-                        // Also send directly to all clients to ensure delivery
-                        await _orderHubContext.Clients.All.SendAsync("ReceiveNewOrder", confirmationDto);
                         
                         Console.WriteLine($"Notification sent successfully to staff group (attempt {attempt})");
                         break; // Success, exit the retry loop
@@ -260,10 +258,8 @@ namespace BookNook.Services.Order
                 {
                     try
                     {
+                        // Only send to staff group, not to all clients
                         await _orderHubContext.Clients.Group("staff").SendAsync("ReceiveOrderCancelled", confirmationDto);
-                        
-                        // Also try sending to all clients as a backup
-                        await _orderHubContext.Clients.All.SendAsync("ReceiveOrderCancelled", confirmationDto);
                         
                         Console.WriteLine($"Cancellation notification sent successfully to staff group (attempt {attempt})");
                         break; // Success, exit the retry loop
@@ -405,8 +401,23 @@ namespace BookNook.Services.Order
             try
             {
                 Console.WriteLine($"Sending order completion notification to user {order.UserId} for order {order.OrderId}");
-                await _orderHubContext.Clients.Group(order.UserId.ToString()).SendAsync("ReceiveOrderCompleted", confirmationDto);
-                Console.WriteLine($"Order completion notification sent successfully to user {order.UserId}");
+                
+                // Multiple attempts to ensure delivery to the user
+                for (int attempt = 1; attempt <= 3; attempt++)
+                {
+                    try
+                    {
+                        await _orderHubContext.Clients.Group(order.UserId.ToString()).SendAsync("ReceiveOrderCompleted", confirmationDto);
+                        Console.WriteLine($"Order completion notification sent successfully to user {order.UserId} (attempt {attempt})");
+                        break; // Success, exit the retry loop
+                    }
+                    catch (Exception retryEx)
+                    {
+                        Console.WriteLine($"Attempt {attempt} failed: {retryEx.Message}");
+                        if (attempt == 3) throw; // Rethrow on last attempt
+                        await Task.Delay(500); // Wait before retrying
+                    }
+                }
             }
             catch (Exception ex)
             {
